@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -79,7 +80,7 @@ func TestSignerSetConfirmSig(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			err = ValidateEthereumSignature(hashBytes, sigBytes, spec.srcETHAddr)
+			err = ValidateEthereumSignature(hashBytes, sigBytes, common.HexToAddress(spec.srcETHAddr))
 			if spec.expErr {
 				assert.Error(t, err)
 				return

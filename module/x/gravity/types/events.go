@@ -22,7 +22,9 @@ const (
 	AttributeKeySignerSetNonce            = "signerset_nonce"
 	AttributeKeyBatchNonce                = "batch_nonce"
 	AttributeKeyBridgeChainID             = "bridge_chain_id"
-	AttributeKeySetOperatorAddr           = "set_operator_address"
+	AttributeKeySetOrchestratorAddr       = "set_orchestrator_address"
+	AttributeKeySetEthereumAddr           = "set_ethereum_address"
+	AttributeKeyValidatorAddr             = "validator_address"
 	AttributeKeyInvalidationID            = "logic_call_invalidation_id"
 	AttributeKeyInvalidationNonce         = "logic_call_invalidation_nonce"
 )

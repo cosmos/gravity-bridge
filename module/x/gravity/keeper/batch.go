@@ -23,7 +23,7 @@ const BatchTxSize = 100
 // - emit an event
 func (k Keeper) BuildBatchTx(
 	ctx sdk.Context,
-	contractAddress string,
+	contractAddress common.Address,
 	maxElements int) (*types.BatchTx, error) {
 
 	if maxElements == 0 {
@@ -42,16 +42,16 @@ func (k Keeper) BuildBatchTx(
 		}
 	}
 
-	selectedTx, err := k.pickUnbatchedTX(ctx, contractAddress, maxElements)
+	selectedTx, err := k.PickUnbatchedTX(ctx, contractAddress, maxElements)
 	if len(selectedTx) == 0 || err != nil {
 		return nil, err
 	}
-	nextID := k.autoIncrementID(ctx, []byte{types.KeyLastOutgoingBatchID})
+	nextID := k.autoIncrementID(ctx, []byte{types.LastOutgoingBatchIDKey})
 	batch := &types.BatchTx{
 		Nonce:         nextID,
 		Timeout:       k.getBatchTimeoutHeight(ctx),
 		Transactions:  selectedTx,
-		TokenContract: contractAddress,
+		TokenContract: contractAddress.Hex(),
 	}
 	k.SetOutgoingTx(ctx, batch)
 
@@ -117,10 +117,10 @@ func (k Keeper) BatchTxExecuted(ctx sdk.Context, tokenContract common.Address, n
 	return err
 }
 
-// pickUnbatchedTX find TX in pool and remove from "available" second index
-func (k Keeper) pickUnbatchedTX(
+// PickUnbatchedTX find TX in pool and remove from "available" second index
+func (k Keeper) PickUnbatchedTX(
 	ctx sdk.Context,
-	contractAddress string,
+	contractAddress common.Address,
 	maxElements int) ([]*types.SendToEthereum, error) {
 	var selectedTx []*types.SendToEthereum
 	var err error
@@ -145,7 +145,7 @@ func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, non
 	batch, _ := otx.(*types.BatchTx)
 	for _, tx := range batch.Transactions {
 		tx.Erc20Fee = types.NewERC20Token(tx.Erc20Fee.Amount.Uint64(), tokenContract.String())
-		k.prependToUnbatchedTXIndex(ctx, tokenContract.String(), tx.Erc20Fee, tx.Id)
+		k.PrependToUnbatchedTXIndex(ctx, tokenContract, tx.Erc20Fee, tx.Id)
 	}
 
 	// Delete batch since it is finished
@@ -181,12 +181,12 @@ func (k Keeper) GetBatchTxes(ctx sdk.Context) (out []*types.BatchTx) {
 }
 
 // GetLastOutgoingBatchByTokenType gets the latest outgoing tx batch by token type
-func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token string) *types.BatchTx {
+func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token common.Address) *types.BatchTx {
 	batches := k.GetBatchTxes(ctx)
 	var lastBatch *types.BatchTx = nil
 	lastNonce := uint64(0)
 	for _, batch := range batches {
-		if batch.TokenContract == token && batch.Nonce > lastNonce {
+		if common.HexToAddress(batch.TokenContract) == token && batch.Nonce > lastNonce {
 			lastBatch = batch
 			lastNonce = batch.Nonce
 		}
@@ -197,13 +197,13 @@ func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token string) *
 // SetLastSlashedBatchBlock sets the latest slashed Batch block height
 func (k Keeper) SetLastSlashedBatchBlock(ctx sdk.Context, blockHeight uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte{types.LastSlashedBatchBlock}, types.UInt64Bytes(blockHeight))
+	store.Set([]byte{types.LastSlashedBatchBlockKey}, types.UInt64Bytes(blockHeight))
 }
 
 // GetLastSlashedBatchBlock returns the latest slashed Batch block
 func (k Keeper) GetLastSlashedBatchBlock(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get([]byte{types.LastSlashedBatchBlock})
+	bytes := store.Get([]byte{types.LastSlashedBatchBlockKey})
 
 	if len(bytes) == 0 {
 		return 0

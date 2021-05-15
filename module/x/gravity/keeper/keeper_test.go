@@ -74,7 +74,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 				}
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
-			r := input.GravityKeeper.GetCurrentSignerSetTx(ctx)
+			r := input.GravityKeeper.NewSignerSetTx(ctx)
 			assert.Equal(t, spec.expPowers, types.EthereumSigners(r.Signers).GetPowers())
 		})
 	}
@@ -163,7 +163,7 @@ func TestLastSlashedValsetNonce(t *testing.T) {
 	k := input.GravityKeeper
 	ctx := input.Context
 
-	vs := k.GetCurrentSignerSetTx(ctx)
+	vs := k.NewSignerSetTx(ctx)
 
 	i := 1
 	for ; i < 10; i++ {
@@ -171,13 +171,13 @@ func TestLastSlashedValsetNonce(t *testing.T) {
 		k.SetOutgoingTx(ctx, vs)
 	}
 
-	latestValsetNonce := k.GetLatestValsetNonce(ctx)
+	latestValsetNonce := k.GetLatestSignerSetTxNonce(ctx)
 	assert.Equal(t, latestValsetNonce, uint64(i-1))
 
 	//  lastSlashedValsetNonce should be zero initially.
 	lastSlashedValsetNonce := k.GetLastSlashedValsetNonce(ctx)
 	assert.Equal(t, lastSlashedValsetNonce, uint64(0))
-	unslashedValsets := k.GetUnSlashedValsets(ctx, uint64(12))
+	unslashedValsets := k.GetUnSlashedSignerSetTxs(ctx, uint64(12))
 	assert.Equal(t, len(unslashedValsets), 9)
 
 	// check if last Slashed Valset nonce is set properly or not

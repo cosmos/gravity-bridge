@@ -37,20 +37,6 @@ func TestValsetConfirmHash(t *testing.T) {
 	assert.Equal(t, correctHash, hexHash)
 }
 
-func TestValsetCheckpointGold1(t *testing.T) {
-	src := NewSignerSetTx(0xc, 0xc, EthereumSigners{{
-		Power:           0xffffffff,
-		EthereumAddress: gethcommon.Address{0xb4, 0x62, 0x86, 0x4e, 0x39, 0x5d, 0x88, 0xd6, 0xbc, 0x7c, 0x5d, 0xd5, 0xf3, 0xf5, 0xeb, 0x4c, 0xc2, 0x59, 0x92, 0x55}.String(),
-	}})
-
-	// TODO: this is hardcoded to foo, replace
-	ourHash := src.GetCheckpoint([]byte("foo"))
-
-	// hash from bridge contract
-	goldHash := "0xf024ab7404464494d3919e5a7f0d8ac40804fb9bd39ad5d16cdb3e66aa219b64"[2:]
-	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
-}
-
 func TestValsetPowerDiff(t *testing.T) {
 	specs := map[string]struct {
 		start EthereumSigners

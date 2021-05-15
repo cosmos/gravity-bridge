@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -39,7 +40,7 @@ func (a EthereumEventProcessor) Handle(ctx sdk.Context, eve types.EthereumEvent)
 			}
 		}
 	case *types.BatchExecutedEvent:
-		return a.keeper.BatchTxExecuted(ctx, event.TokenContract, event.GetNonce())
+		return a.keeper.BatchTxExecuted(ctx, common.HexToAddress(event.TokenContract), event.GetNonce())
 	case *types.ERC20DeployedEvent:
 		// Check if it already exists
 		if existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, event.CosmosDenom); exists {

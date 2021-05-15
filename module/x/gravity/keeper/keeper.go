@@ -23,18 +23,16 @@ import (
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	StakingKeeper types.StakingKeeper
-
-	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
-	paramSpace paramtypes.Subspace
-
-	cdc            codec.BinaryMarshaler // The wire codec for binary encoding/decoding.
-	bankKeeper     types.BankKeeper
-	SlashingKeeper types.SlashingKeeper
-
+	StakingKeeper          types.StakingKeeper
 	EthereumEventProcessor interface {
 		Handle(sdk.Context, types.EthereumEvent) error
 	}
+
+	storeKey       sdk.StoreKey
+	paramSpace     paramtypes.Subspace
+	cdc            codec.BinaryMarshaler
+	bankKeeper     types.BankKeeper
+	SlashingKeeper types.SlashingKeeper
 }
 
 // NewKeeper returns a new instance of the gravity keeper
@@ -203,9 +201,17 @@ func (k Keeper) GetValidatorEthereumAddress(ctx sdk.Context, validator sdk.ValAd
 // ETH -> ORC ADDRESS //
 ////////////////////////
 
-func (k Keeper) SetEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.Address, orch sdk.AccAddress)
+// SetEthereumOrchestratorAddress sets the eth orch addr mapping
+func (k Keeper) SetEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.Address, orch sdk.AccAddress) {
+	ctx.KVStore(k.storeKey).Set(types.GetEthereumOrchestratorAddressKey(ethAddr), orch.Bytes())
+}
 
-// GetCurrentSignerSetTx gets powers from the store and normalizes them
+// GetEthereumOrchestratorAddress gets the orch address for a given eth address
+func (k Keeper) GetEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.Address) sdk.AccAddress {
+	return sdk.AccAddress(ctx.KVStore(k.storeKey).Get(types.GetEthereumOrchestratorAddressKey(ethAddr)))
+}
+
+// NewSignerSetTx gets powers from the store and normalizes them
 // into an integer percentage with a resolution of uint32 Max meaning
 // a given validators 'gravity power' is computed as
 // Cosmos power / total cosmos power = x / uint32 Max
@@ -216,7 +222,7 @@ func (k Keeper) SetEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.A
 // total voting power. This is an acceptable rounding error since floating
 // point may cause consensus problems if different floating point unit
 // implementations are involved.
-func (k Keeper) GetCurrentSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
+func (k Keeper) NewSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 	ethereumSigners := make([]types.EthereumSigner, len(validators))
 	var totalPower uint64
@@ -229,7 +235,7 @@ func (k Keeper) GetCurrentSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 		totalPower += p
 
 		ethereumSigners[i] = types.EthereumSigner{Power: p}
-		if ethAddr := k.GetEthAddress(ctx, val); ethAddr.Hex() == "0x0000000000000000000000000000000000000000" {
+		if ethAddr := k.GetValidatorEthereumAddress(ctx, val); ethAddr.Hex() == "0x0000000000000000000000000000000000000000" {
 			ethereumSigners[i].EthereumAddress = ethAddr.Hex()
 		}
 	}

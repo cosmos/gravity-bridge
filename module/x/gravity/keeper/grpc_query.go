@@ -23,7 +23,7 @@ package keeper
 // func (k Keeper) CurrentValset(
 // 	c context.Context,
 // 	req *types.QueryCurrentValsetRequest) (*types.QueryCurrentValsetResponse, error) {
-// 	return &types.QueryCurrentValsetResponse{Valset: k.GetCurrentSignerSetTx(sdk.UnwrapSDKContext(c))}, nil
+// 	return &types.QueryCurrentValsetResponse{Valset: k.NewSignerSetTx(sdk.UnwrapSDKContext(c))}, nil
 // }
 
 // // ValsetRequest queries the ValsetRequest of the gravity module

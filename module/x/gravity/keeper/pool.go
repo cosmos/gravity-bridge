@@ -72,7 +72,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	k.SetPoolEntry(ctx, outgoing)
 
 	// add a second index with the fee
-	k.appendToUnbatchedTXIndex(ctx, tokenContract, erc20Fee, nextID)
+	k.AppendToUnbatchedTXIndex(ctx, tokenContract, erc20Fee, nextID)
 
 	// todo: add second index for sender so that we can easily query: give pending Tx by sender
 	// todo: what about a second index for receiver?
@@ -159,8 +159,8 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 	return nil
 }
 
-// appendToUnbatchedTXIndex add at the end when tx with same fee exists
-func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) {
+// AppendToUnbatchedTXIndex add at the end when tx with same fee exists
+func (k Keeper) AppendToUnbatchedTXIndex(ctx sdk.Context, tokenContract common.Address, fee types.ERC20Token, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
 	idxKey := types.GetFeeSecondIndexKey(fee.GravityCoin())
 	var idSet types.IDSet
@@ -172,8 +172,8 @@ func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, 
 	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(&idSet))
 }
 
-// appendToUnbatchedTXIndex add at the top when tx with same fee exists
-func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) {
+// PrependToUnbatchedTXIndex add at the top when tx with same fee exists
+func (k Keeper) PrependToUnbatchedTXIndex(ctx sdk.Context, tokenContract common.Address, fee types.ERC20Token, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
 	idxKey := types.GetFeeSecondIndexKey(fee.GravityCoin())
 	var idSet types.IDSet
@@ -239,15 +239,16 @@ func (k Keeper) IteratePoolEntries(ctx sdk.Context, cb func(id uint64, ste *type
 func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.SendToEthereum {
 	// we must use the second index key here because transactions are left in the store, but removed
 	// from the tx sorting key, while in batches
-	iter := ctx.KVStore(k.storeKey).ReverseIterator(prefixRange([]byte{types.SecondIndexOutgoingTXFeeKey}))
+
+	iter := ctx.KVStore(k.storeKey).ReverseIterator(prefixRange([]byte{types.SecondIndexSendToEthereumFeeKey}))
 	var ret []*types.SendToEthereum
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var ids types.IDSet
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ids)
 		for _, id := range ids.Ids {
-			tx, err := k.getPoolEntry(ctx, id)
-			if err != nil {
+			tx := k.GetPoolEntry(ctx, id)
+			if tx == nil {
 				panic("Invalid id in tx index!")
 			}
 			ret = append(ret, tx)
@@ -257,17 +258,17 @@ func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.SendToEthereum {
 }
 
 // IterateOutgoingPoolByFee iterates over the outgoing pool which is sorted by fee
-func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.SendToEthereum) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SecondIndexOutgoingTXFeeKey})
-	iter := prefixStore.ReverseIterator(prefixRange(common.HexToAddress(contract).Bytes()))
+func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract common.Address, cb func(uint64, *types.SendToEthereum) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SecondIndexSendToEthereumFeeKey})
+	iter := prefixStore.ReverseIterator(prefixRange(contract.Bytes()))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var ids types.IDSet
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ids)
 		// cb returns true to stop early
 		for _, id := range ids.Ids {
-			tx, err := k.getPoolEntry(ctx, id)
-			if err != nil {
+			tx := k.GetPoolEntry(ctx, id)
+			if tx == nil {
 				panic("Invalid id in tx index!")
 			}
 			if cb(id, tx) {
@@ -281,9 +282,9 @@ func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb fu
 // have if created. This info is both presented to relayers for the purpose of determining
 // when to request batches and also used by the batch creation process to decide not to create
 // a new batch
-func (k Keeper) GetBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr string) *types.ERC20Token {
+func (k Keeper) GetBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr common.Address) *types.ERC20Token {
 	batchFeesMap := k.createBatchFees(ctx)
-	return batchFeesMap[tokenContractAddr]
+	return batchFeesMap[tokenContractAddr.Hex()]
 }
 
 // GetAllBatchFees creates a fee entry for every batch type currently in the store
@@ -310,7 +311,7 @@ func (k Keeper) GetAllBatchFees(ctx sdk.Context) (batchFees []*types.ERC20Token)
 
 // CreateBatchFees iterates over the outgoing pool and creates batch token fee map
 func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.ERC20Token {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SecondIndexOutgoingTXFeeKey})
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SecondIndexSendToEthereumFeeKey})
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 
@@ -340,7 +341,7 @@ func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.ERC20Token {
 				if _, ok := batchFeesMap[tokenContractAddr]; ok {
 					batchFeesMap[tokenContractAddr].Amount = batchFeesMap[tokenContractAddr].Amount.Add(sdk.NewIntFromBigInt(feeAmount))
 				} else {
-					token := types.NewSDKIntERC20Token(sdk.NewIntFromBigInt(feeAmount), tokenContractAddr)
+					token := types.NewSDKIntERC20Token(sdk.NewIntFromBigInt(feeAmount), common.HexToAddress(tokenContractAddr))
 					batchFeesMap[tokenContractAddr] = &token
 
 				}

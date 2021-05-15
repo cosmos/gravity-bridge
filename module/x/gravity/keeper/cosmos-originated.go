@@ -41,7 +41,7 @@ func (k Keeper) setCosmosOriginatedDenomToERC20(ctx sdk.Context, denom string, t
 // and get its corresponding ERC20 address.
 // This will return an error if it cant parse the denom as a gravity denom, and then also can't find the denom
 // in an index of ERC20 contracts deployed on Ethereum to serve as synthetic Cosmos assets.
-func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, string, error) {
+func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, common.Address, error) {
 	// First try parsing the ERC20 out of the denom
 	tc1, err := types.GravityDenomToERC20(denom)
 
@@ -49,15 +49,15 @@ func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, string,
 		// Look up ERC20 contract in index and error if it's not in there.
 		tc2, exists := k.GetCosmosOriginatedERC20(ctx, denom)
 		if !exists {
-			return false, "",
+			return false, common.Address{},
 				fmt.Errorf("denom not a gravity voucher coin: %s, and also not in cosmos-originated ERC20 index", err)
 		}
 		// This is a cosmos-originated asset
-		return true, tc2, nil
+		return true, common.HexToAddress(tc2), nil
 	}
 
 	// This is an ethereum-originated asset
-	return false, tc1, nil
+	return false, common.HexToAddress(tc1), nil
 }
 
 // ERC20ToDenom returns (bool isCosmosOriginated, string denom, err)

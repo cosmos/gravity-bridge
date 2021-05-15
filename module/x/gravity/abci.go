@@ -28,7 +28,7 @@ func createValsets(ctx sdk.Context, k keeper.Keeper) {
 	latestValset := k.GetLatestSignerSetTx(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
-	powerDiff := types.EthereumSigners(k.GetCurrentSignerSetTx(ctx).Signers).PowerDiff(latestValset.Signers)
+	powerDiff := types.EthereumSigners(k.NewSignerSetTx(ctx).Signers).PowerDiff(latestValset.Signers)
 	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (powerDiff > 0.05) {
 		k.SetSignerSetTxRequest(ctx)
 	}

@@ -48,6 +48,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
+	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
@@ -181,21 +182,21 @@ var (
 
 	// TestingGravityParams is a set of gravity params for testing
 	TestingGravityParams = types.Params{
-		GravityId:                     "testgravityid",
-		ContractSourceHash:            "62328f7bc12efb28f86111d08c29b39285680a906ea0e524e0209d6f6657b713",
-		BridgeEthereumAddress:         "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
-		BridgeChainId:                 11,
-		SignedBatchesWindow:           10,
-		SignedValsetsWindow:           10,
-		UnbondSlashingValsetsWindow:   15,
-		SignedClaimsWindow:            10,
-		TargetBatchTimeout:            60001,
-		AverageBlockTime:              5000,
-		AverageEthereumBlockTime:      15000,
-		SlashFractionValset:           sdk.NewDecWithPrec(1, 2),
-		SlashFractionBatch:            sdk.NewDecWithPrec(1, 2),
-		SlashFractionClaim:            sdk.NewDecWithPrec(1, 2),
-		SlashFractionConflictingClaim: sdk.NewDecWithPrec(1, 2),
+		GravityId:                                 "testgravityid",
+		ContractSourceHash:                        "62328f7bc12efb28f86111d08c29b39285680a906ea0e524e0209d6f6657b713",
+		BridgeEthereumAddress:                     "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
+		BridgeChainId:                             11,
+		SignedBatchesWindow:                       10,
+		SignedSignerSetTxsWindow:                  10,
+		UnbondSlashingSignerSetTxsWindow:          15,
+		EthereumSignaturesWindow:                  10,
+		TargetBatchTimeout:                        60001,
+		AverageBlockTime:                          5000,
+		AverageEthereumBlockTime:                  15000,
+		SlashFractionSignerSetTx:                  sdk.NewDecWithPrec(1, 2),
+		SlashFractionBatch:                        sdk.NewDecWithPrec(1, 2),
+		SlashFractionEthereumSignature:            sdk.NewDecWithPrec(1, 2),
+		SlashFractionConflictingEthereumSignature: sdk.NewDecWithPrec(1, 2),
 	}
 )
 
@@ -211,6 +212,15 @@ type TestInput struct {
 	Context        sdk.Context
 	Marshaler      codec.Marshaler
 	LegacyAmino    *codec.LegacyAmino
+}
+
+func (input TestInput) AddSendToEthTxsToPool(t *testing.T, ctx sdk.Context, tokenContract common.Address, sender sdk.AccAddress, receiver common.Address, ids ...uint64) {
+	for i, v := range ids {
+		amount := types.NewERC20Token(uint64(i+100), tokenContract.Hex()).GravityCoin()
+		fee := types.NewERC20Token(v, tokenContract.Hex()).GravityCoin()
+		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, sender, receiver.Hex(), amount, fee)
+		require.NoError(t, err)
+	}
 }
 
 // SetupFiveValChain does all the initialization for a 5 Validator chain using the keys here
@@ -253,7 +263,7 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 
 	// Register eth addresses for each validator
 	for i, addr := range ValAddrs {
-		input.GravityKeeper.SetEthAddress(input.Context, addr, EthAddrs[i])
+		input.GravityKeeper.SetValidatorEthereumAddress(input.Context, addr, EthAddrs[i])
 	}
 
 	// Return the test input

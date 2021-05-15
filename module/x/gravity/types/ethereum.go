@@ -8,6 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -50,15 +51,15 @@ func ValidateEthereumAddress(a string) error {
 // NewERC20Token returns a new instance of an ERC20
 func NewERC20Token(amount uint64, contract string) ERC20Token {
 	return ERC20Token{
-		Amount: sdk.NewIntFromUint64(amount),
+		Amount:   sdk.NewIntFromUint64(amount),
 		Contract: contract,
 	}
 }
 
-func NewSDKIntERC20Token(amount sdk.Int, contract string) ERC20Token {
+func NewSDKIntERC20Token(amount sdk.Int, contract common.Address) ERC20Token {
 	return ERC20Token{
-		Amount: amount,
-		Contract: contract,
+		Amount:   amount,
+		Contract: contract.Hex(),
 	}
 }
 
@@ -68,7 +69,7 @@ func (e ERC20Token) GravityCoin() sdk.Coin {
 }
 
 func NewERC20TokenFromCoin(coin sdk.Coin) ERC20Token {
-	return NewSDKIntERC20Token(coin.Amount, strings.TrimPrefix(coin.Denom, GravityDenomPrefix + GravityDenomSeparator))
+	return NewSDKIntERC20Token(coin.Amount, common.HexToAddress(strings.TrimPrefix(coin.Denom, GravityDenomPrefix+GravityDenomSeparator)))
 }
 
 // ValidateBasic permforms stateless validation
@@ -109,3 +110,19 @@ func GravityDenomToERC20(denom string) (string, error) {
 		return contract, nil
 	}
 }
+
+func NewSendToEthereumTx(id uint64, tokenContract common.Address, sender sdk.AccAddress, recipent common.Address, amount, feeAmount uint64) *SendToEthereum {
+	return &SendToEthereum{
+		Id:                id,
+		Erc20Fee:          NewERC20Token(feeAmount, tokenContract.Hex()),
+		Sender:            sender.String(),
+		EthereumRecipient: recipent.Hex(),
+		Erc20Token:        NewERC20Token(amount, tokenContract.Hex()),
+	}
+}
+
+// Id:                2,
+// Erc20Fee:          types.NewERC20Token(3, myTokenContractAddr),
+// Sender:            mySender.String(),
+// EthereumRecipient: myReceiver,
+// Erc20Token:        types.NewERC20Token(101, myTokenContractAddr),

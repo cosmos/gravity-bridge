@@ -51,7 +51,7 @@ func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
 	pk := input.GravityKeeper
 	params := input.GravityKeeper.GetParams(ctx)
 
-	vs := pk.GetCurrentSignerSetTx(ctx)
+	vs := pk.NewSignerSetTx(ctx)
 	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
 	vs.Height = height
 	vs.Nonce = height
@@ -72,7 +72,7 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 	params := input.GravityKeeper.GetParams(ctx)
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
-	vs := pk.GetCurrentSignerSetTx(ctx)
+	vs := pk.NewSignerSetTx(ctx)
 	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
 	vs.Height = height
 	vs.Nonce = height
@@ -123,7 +123,7 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 
 	// Create Valset request
 	ctx = ctx.WithBlockHeight(valsetRequestHeight)
-	vs := pk.GetCurrentSignerSetTx(ctx)
+	vs := pk.NewSignerSetTx(ctx)
 	vs.Height = uint64(valsetRequestHeight)
 	vs.Nonce = uint64(valsetRequestHeight)
 	pk.StoreSignerSetTxUnsafe(ctx, vs)
@@ -221,7 +221,7 @@ func TestValsetEmission(t *testing.T) {
 	pk := input.GravityKeeper
 
 	// Store a validator set with a power change as the most recent validator set
-	vs := pk.GetCurrentSignerSetTx(ctx)
+	vs := pk.NewSignerSetTx(ctx)
 	vs.Nonce--
 	delta := float64(types.BridgeValidators(vs.Members).TotalPower()) * 0.05
 	vs.Members[0].Power = uint64(float64(vs.Members[0].Power) - delta/2)

@@ -26,36 +26,30 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys) (*types.MsgDelegateKeysResponse, error) {
-	// ensure that this passes validation
-	err := msg.ValidateBasic()
-	if err != nil {
-		return nil, err
-	}
-
 	ctx := sdk.UnwrapSDKContext(c)
+
+	// these errors are checked in validate basic
 	val, _ := sdk.ValAddressFromBech32(msg.ValidatorAddress)
 	orch, _ := sdk.AccAddressFromBech32(msg.OrchestratorAddress)
+	eth := common.HexToAddress(msg.EthereumAddress)
 
 	// ensure that the validator exists
 	if k.Keeper.StakingKeeper.Validator(ctx, val) == nil {
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, val.String())
 	}
 
-	// TODO consider impact of maliciously setting duplicate delegate
-	// addresses since no signatures from the private keys of these addresses
-	// are required for this message it could be sent in a hostile way.
-
-	// set the orchestrator address
-	k.SetOrchestratorValidator(ctx, val, orch)
-	// set the ethereum address
-	k.SetEthAddress(ctx, val, common.HexToAddress(msg.EthereumAddress))
-	// TODO: set the third index from eth addr -> orch addr so we can query all of them
+	// set the three indexes
+	k.SetOrchestratorValidatorAddress(ctx, val, orch)
+	k.SetValidatorEthereumAddress(ctx, val, eth)
+	k.SetEthereumOrchestratorAddress(ctx, eth, orch)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeySetOperatorAddr, orch.String()),
+			sdk.NewAttribute(types.AttributeKeySetOrchestratorAddr, orch.String()),
+			sdk.NewAttribute(types.AttributeKeySetEthereumAddr, eth.Hex()),
+			sdk.NewAttribute(types.AttributeKeyValidatorAddr, val.String()),
 		),
 	)
 
@@ -85,8 +79,8 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 	gravityID := k.GetGravityID(ctx)
 	checkpoint := otx.GetCheckpoint([]byte(gravityID))
 
-	ethAddress := k.GetEthAddress(ctx, val)
-	if ethAddress == "" || ethAddress != signature.GetSigner().String() {
+	ethAddress := k.GetValidatorEthereumAddress(ctx, val)
+	if ethAddress != signature.GetSigner() {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
 
@@ -192,7 +186,7 @@ func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchT
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyContract, tokenContract),
+			sdk.NewAttribute(types.AttributeKeyContract, tokenContract.Hex()),
 			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batchID.Nonce)),
 		),
 	)
@@ -222,12 +216,15 @@ func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelS
 	return &types.MsgCancelSendToEthereumResponse{}, nil
 }
 
+// getSignerValidator takes an sdk.AccAddress that represents either a validator or orchestrator address and returns
+// the assoicated validator address
 func (k Keeper) getSignerValidator(ctx sdk.Context, signerString string) (sdk.ValAddress, error) {
-	signer, _ := sdk.AccAddressFromBech32(signerString)
-
+	signer, err := sdk.AccAddressFromBech32(signerString)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "signer address")
+	}
 	var validatorI stakingtypes.ValidatorI
-	validator := k.GetOrchestratorValidator(ctx, signer)
-	if validator == nil {
+	if validator := k.GetOrchestratorValidatorAddress(ctx, signer); validator == nil {
 		validatorI = k.StakingKeeper.Validator(ctx, sdk.ValAddress(signer))
 	} else {
 		validatorI = k.StakingKeeper.Validator(ctx, validator)
