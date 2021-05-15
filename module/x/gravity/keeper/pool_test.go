@@ -38,39 +38,39 @@ func TestAddToOutgoingPool(t *testing.T) {
 		t.Logf("___ response: %#v", r)
 	}
 	// then
-	var got []*types.OutgoingTransferTx
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
+	var got []*types.SendToEthereum
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		got = append(got, tx)
 		return false
 	})
-	exp := []*types.OutgoingTransferTx{
+	exp := []*types.SendToEthereum{
 		{
-			Id:          2,
-			Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
+			Id:                2,
+			Erc20Fee:          types.NewERC20Token(3, myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewERC20Token(101, myTokenContractAddr),
 		},
 		{
-			Id:          1,
-			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
+			Id:                1,
+			Erc20Fee:          types.NewERC20Token(2, myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewERC20Token(100, myTokenContractAddr),
 		},
 		{
-			Id:          3,
-			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(102, myTokenContractAddr),
+			Id:                3,
+			Erc20Fee:          types.NewERC20Token(2, myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewERC20Token(102, myTokenContractAddr),
 		},
 		{
-			Id:          4,
-			Erc20Fee:    types.NewERC20Token(1, myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(103, myTokenContractAddr),
+			Id:                4,
+			Erc20Fee:          types.NewERC20Token(1, myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewERC20Token(103, myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, exp, got)
@@ -135,7 +135,7 @@ func TestTotalBatchFeeInPool(t *testing.T) {
 		tokenFeeMap should be
 		map[0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5:8 0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0:500]
 		**/
-	assert.Equal(t, batchFees[0].TotalFees.BigInt(), big.NewInt(int64(8)))
-	assert.Equal(t, batchFees[1].TotalFees.BigInt(), big.NewInt(int64(500)))
+	assert.Equal(t, batchFees[0].Amount.BigInt(), big.NewInt(int64(8)))
+	assert.Equal(t, batchFees[1].Amount.BigInt(), big.NewInt(int64(500)))
 
 }

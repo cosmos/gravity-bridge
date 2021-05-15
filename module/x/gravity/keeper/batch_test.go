@@ -49,7 +49,7 @@ func TestBatches(t *testing.T) {
 	require.NoError(t, err)
 
 	// then batch is persisted
-	gotFirstBatch := input.GravityKeeper.GetBatchTx(ctx, firstBatch.TokenContract, firstBatch.Nonce)
+	gotFirstBatch := input.GravityKeeper.GetOutgoingTx(ctx, firstBatch.GetStoreIndex())
 	require.NotNil(t, gotFirstBatch)
 
 	expFirstBatch := &types.BatchTx{
@@ -119,8 +119,8 @@ func TestBatches(t *testing.T) {
 
 	// check that the more profitable batch has the right txs in it
 	expSecondBatch := &types.BatchTx{
-		BatchNonce: 2,
-		Transactions: []*types.OutgoingTransferTx{
+		Nonce: 2,
+		Transactions: []*types.SendToEthereum{
 			{
 				Id:                6,
 				Erc20Fee:          types.NewERC20Token(5, myTokenContractAddr),
@@ -146,20 +146,20 @@ func TestBatches(t *testing.T) {
 	// =================================
 
 	// Execute the batch
-	err = input.GravityKeeper.BatchTxExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	err = input.GravityKeeper.BatchTxExecuted(ctx, secondBatch.TokenContract, secondBatch.Nonce)
 	require.NoError(t, err)
 
 	// check batch has been deleted
-	gotSecondBatch := input.GravityKeeper.GetBatchTx(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	gotSecondBatch := input.GravityKeeper.GetBatchTx(ctx, secondBatch.TokenContract, secondBatch.Nonce)
 	require.Nil(t, gotSecondBatch)
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx = []*types.OutgoingTransferTx{
+	expUnbatchedTx = []*types.SendToEthereum{
 		{
 			Id:                2,
 			Erc20Fee:          types.NewERC20Token(3, myTokenContractAddr),
@@ -235,12 +235,12 @@ func TestBatchesFullCoins(t *testing.T) {
 	require.NoError(t, err)
 
 	// then batch is persisted
-	gotFirstBatch := input.GravityKeeper.GetBatchTx(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
+	gotFirstBatch := input.GravityKeeper.GetBatchTx(ctx, firstBatch.TokenContract, firstBatch.Nonce)
 	require.NotNil(t, gotFirstBatch)
 
 	expFirstBatch := &types.BatchTx{
-		BatchNonce: 1,
-		Transactions: []*types.OutgoingTransferTx{
+		Nonce: 1,
+		Transactions: []*types.SendToEthereum{
 			{
 				Id:                2,
 				Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
@@ -262,12 +262,12 @@ func TestBatchesFullCoins(t *testing.T) {
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
 	// and verify remaining available Tx in the pool
-	var gotUnbatchedTx []*types.OutgoingTransferTx
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
+	var gotUnbatchedTx []*types.SendToEthereum
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx := []*types.OutgoingTransferTx{
+	expUnbatchedTx := []*types.SendToEthereum{
 		{
 			Id:                1,
 			Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
@@ -305,8 +305,8 @@ func TestBatchesFullCoins(t *testing.T) {
 
 	// check that the more profitable batch has the right txs in it
 	expSecondBatch := &types.BatchTx{
-		BatchNonce: 2,
-		Transactions: []*types.OutgoingTransferTx{
+		Nonce: 2,
+		Transactions: []*types.SendToEthereum{
 			{
 				Id:                1,
 				Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
@@ -332,20 +332,20 @@ func TestBatchesFullCoins(t *testing.T) {
 	// =================================
 
 	// Execute the batch
-	err = input.GravityKeeper.BatchTxExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	err = input.GravityKeeper.BatchTxExecuted(ctx, secondBatch.TokenContract, secondBatch.Nonce)
 	require.NoError(t, err)
 
 	// check batch has been deleted
-	gotSecondBatch := input.GravityKeeper.GetBatchTx(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	gotSecondBatch := input.GravityKeeper.GetBatchTx(ctx, secondBatch.TokenContract, secondBatch.Nonce)
 	require.Nil(t, gotSecondBatch)
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx = []*types.OutgoingTransferTx{
+	expUnbatchedTx = []*types.SendToEthereum{
 		{
 			Id:                2,
 			Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),

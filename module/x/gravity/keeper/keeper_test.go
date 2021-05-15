@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -74,7 +75,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
 			r := input.GravityKeeper.GetCurrentSignerSetTx(ctx)
-			assert.Equal(t, spec.expPowers, types.BridgeValidators(r.Members).GetPowers())
+			assert.Equal(t, spec.expPowers, types.EthereumSigners(r.Signers).GetPowers())
 		})
 	}
 }
@@ -84,35 +85,33 @@ func TestAttestationIterator(t *testing.T) {
 	ctx := input.Context
 	// add some attestations to the store
 
-	att1 := &types.Attestation{
-		Observed: true,
+	att1 := &types.EthereumEventVoteRecord{
+		Accepted: true,
 		Votes:    []string{},
 	}
-	dep1 := &types.MsgDepositClaim{
+	dep1 := &types.SendToCosmosEvent{
 		EventNonce:     1,
 		TokenContract:  TokenContractAddrs[0],
 		Amount:         sdk.NewInt(100),
 		EthereumSender: EthAddrs[0].String(),
 		CosmosReceiver: AccAddrs[0].String(),
-		Orchestrator:   AccAddrs[0].String(),
 	}
-	att2 := &types.Attestation{
-		Observed: true,
+	att2 := &types.EthereumEventVoteRecord{
+		Accepted: true,
 		Votes:    []string{},
 	}
-	dep2 := &types.MsgDepositClaim{
+	dep2 := &types.SendToCosmosEvent{
 		EventNonce:     2,
 		TokenContract:  TokenContractAddrs[0],
 		Amount:         sdk.NewInt(100),
 		EthereumSender: EthAddrs[0].String(),
 		CosmosReceiver: AccAddrs[0].String(),
-		Orchestrator:   AccAddrs[0].String(),
 	}
-	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, dep1.EventNonce, dep1.ClaimHash(), att1)
-	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)
+	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, dep1.EventNonce, dep1.Hash(), att1)
+	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, dep2.EventNonce, dep2.Hash(), att2)
 
-	atts := []types.Attestation{}
-	input.GravityKeeper.IterateEthereumEventVoteRecords(ctx, func(_ []byte, att types.Attestation) bool {
+	atts := []types.EthereumEventVoteRecord{}
+	input.GravityKeeper.IterateEthereumEventVoteRecords(ctx, func(_ []byte, att types.EthereumEventVoteRecord) bool {
 		atts = append(atts, att)
 		return false
 	})
@@ -146,15 +145,15 @@ func TestDelegateKeys(t *testing.T) {
 		// set the orchestrator address
 		k.SetOrchestratorValidator(ctx, val, orch)
 		// set the ethereum address
-		k.SetEthAddress(ctx, val, ethAddrs[i])
+		k.SetEthAddress(ctx, val, common.HexToAddress(ethAddrs[i]))
 	}
 
 	addresses := k.GetDelegateKeys(ctx)
 	for i := range addresses {
 		res := addresses[i]
-		assert.Equal(t, valAddrs[i], res.Validator)
-		assert.Equal(t, orchAddrs[i], res.Orchestrator)
-		assert.Equal(t, ethAddrs[i], res.EthAddress)
+		assert.Equal(t, valAddrs[i], res.ValidatorAddress)
+		assert.Equal(t, orchAddrs[i], res.OrchestratorAddress)
+		assert.Equal(t, ethAddrs[i], res.EthereumAddress)
 	}
 
 }
@@ -168,7 +167,6 @@ func TestLastSlashedValsetNonce(t *testing.T) {
 
 	i := 1
 	for ; i < 10; i++ {
-		vs.Height = uint64(i)
 		vs.Nonce = uint64(i)
 		k.StoreSignerSetTxUnsafe(ctx, vs)
 	}

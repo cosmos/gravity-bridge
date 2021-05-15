@@ -1,7 +1,10 @@
 package keeper
 
 import (
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -9,76 +12,27 @@ import (
 // InitGenesis starts a chain from a genesis state
 func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	k.SetParams(ctx, *data.Params)
-	// reset valsets in state
-	for _, vs := range data.SignerSetTxs {
-		// TODO: block height?
-		k.StoreSignerSetTxUnsafe(ctx, vs)
-	}
-
-	// reset valset confirmations in state
-	for _, conf := range data.SignerSetTxSignatures {
-		k.SetEthereumSignature(ctx, conf, nil)
-	}
-
-	// reset batches in state
-	for _, batch := range data.BatchTxs {
-		// TODO: block height?
-		k.StoreBatchUnsafe(ctx, batch)
-	}
-
-	// reset batch confirmations in state
-	for _, conf := range data.BatchTxSignatures {
-		conf := conf
-		k.SetBatchConfirm(ctx, &conf)
-	}
-
-	// reset logic calls in state
-	for _, call := range data.ContractCallTxs {
-		k.SetContractCallTx(ctx, call)
-	}
-
-	// reset batch confirmations in state
-	for _, conf := range data.ContractCallTxSignatures {
-		conf := conf
-		k.SetContractCallTxSignature(ctx, &conf)
-	}
 
 	// reset pool transactions in state
 	for _, tx := range data.UnbatchedSendToEthereumTxs {
-		if err := k.setPoolEntry(ctx, tx); err != nil {
-			panic(err)
-		}
+		k.setPoolEntry(ctx, tx)
 	}
 
-	// reset attestations in state
-	for _, eventVoteRecord := range data.EthereumEventVoteRecords {
-		att := eventVoteRecord
-		event, err := types.UnpackEvent(att.Event)
+	// reset ethereum event vote recoreds in state
+	for _, evr := range data.EthereumEventVoteRecords {
+		event, err := types.UnpackEvent(evr.Event)
 		if err != nil {
 			panic("couldn't cast to event")
 		}
-
-		// TODO: block height?
-		k.SetEthereumEventVoteRecord(ctx, event.GetNonce(), event.Hash(), &att)
+		k.SetEthereumEventVoteRecord(ctx, event.GetNonce(), event.Hash(), &evr)
 	}
+
+	// reset last observed event nonce
 	k.setLastObservedEventNonce(ctx, data.LastObservedEventNonce)
 
-	// reset attestation state of specific validators
-	// this must be done after the above to be correct
+	// reset attestation state of all validators
 	for _, eventVoteRecord := range data.EthereumEventVoteRecords {
-		event, err := types.UnpackEvent(eventVoteRecord.Event)
-		if err != nil {
-			panic("couldn't cast to event")
-		}
-		// reconstruct the latest event nonce for every validator
-		// if somehow this genesis state is saved when all attestations
-		// have been cleaned up GetLastEventNonceByValidator handles that case
-		//
-		// if we where to save and load the last event nonce for every validator
-		// then we would need to carry that state forever across all chain restarts
-		// but since we've already had to handle the edge case of new validators joining
-		// while all attestations have already been cleaned up we can do this instead and
-		// not carry around every validators event nonce counter forever.
+		event, _ := types.UnpackEvent(eventVoteRecord.Event)
 		for _, vote := range eventVoteRecord.Votes {
 			val, err := sdk.ValAddressFromBech32(vote)
 			if err != nil {
@@ -93,29 +47,42 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// reset delegate keys in state
 	for _, keys := range data.DelegateKeys {
-		err := keys.ValidateBasic()
-		if err != nil {
+		if err := keys.ValidateBasic(); err != nil {
 			panic("Invalid delegate key in Genesis!")
 		}
-		val, err := sdk.ValAddressFromBech32(keys.ValidatorAddress)
-		if err != nil {
-			panic(err)
-		}
-
-		orch, err := sdk.AccAddressFromBech32(keys.OrchestratorAddress)
-		if err != nil {
-			panic(err)
-		}
+		val, _ := sdk.ValAddressFromBech32(keys.ValidatorAddress)
+		orch, _ := sdk.AccAddressFromBech32(keys.OrchestratorAddress)
 
 		// set the orchestrator address
 		k.SetOrchestratorValidator(ctx, val, orch)
 		// set the ethereum address
-		k.SetEthAddress(ctx, val, keys.EthereumAddress)
+		k.SetEthAddress(ctx, val, common.HexToAddress(keys.EthereumAddress))
 	}
 
 	// populate state with cosmos originated denom-erc20 mapping
 	for _, item := range data.Erc20ToDenoms {
 		k.setCosmosOriginatedDenomToERC20(ctx, item.Denom, item.Erc20)
+	}
+
+	// reset outgoing txs in state
+	for _, ota := range data.OutgoingTxs {
+		otx, err := types.UnpackOutgoingTx(ota)
+		if err != nil {
+			panic("invalid outgoing tx any in genesis file")
+		}
+		k.SetOutgoingTx(ctx, otx)
+	}
+
+	// reset signatures in state
+	for _, siga := range data.Signatures {
+		sig, err := types.UnpackSignature(siga)
+		if err != nil {
+			panic("invalid etheruem signature in genesis")
+		}
+		// TODO: not currently an easy way to get the validator address from the
+		// etherum address here. once we implement the third index for keys
+		// this will be easy.
+		k.SetEthereumSignature(ctx, sig, sdk.ValAddress{})
 	}
 }
 
@@ -123,41 +90,16 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p                           = k.GetParams(ctx)
-		contractCallTxs             = k.GetContractCallTxs(ctx)
-		batchTxs                    = k.GetBatchTxes(ctx)
-		updateSignerSetTxs          = k.GetSignerSetTxs(ctx)
-		attmap                      = k.GetEthereumEventVoteRecordMapping(ctx)
-		updateSignerSetTxSignatures []*types.SignerSetTxSignature
-		batchTxSignatures           []types.BatchTxSignature
-		contractCallTxSignatures    []types.ContractCallTxSignature
-		ethereumEventVoteRecords    []types.EthereumEventVoteRecord
-		delegates                   = k.GetDelegateKeys(ctx)
-		lastobserved                = k.GetLastObservedEventNonce(ctx)
-		erc20ToDenoms               []*types.ERC20ToDenom
-		unbatchedTransfers          = k.GetPoolTransactions(ctx)
+		p                        = k.GetParams(ctx)
+		outgoingTxs              []*cdctypes.Any
+		ethereumSignatures       []*cdctypes.Any
+		attmap                   = k.GetEthereumEventVoteRecordMapping(ctx)
+		ethereumEventVoteRecords []types.EthereumEventVoteRecord
+		delegates                = k.GetDelegateKeys(ctx)
+		lastobserved             = k.GetLastObservedEventNonce(ctx)
+		erc20ToDenoms            []*types.ERC20ToDenom
+		unbatchedTransfers       = k.GetPoolTransactions(ctx)
 	)
-
-	// export valset confirmations from state
-	for _, updateSignerSetTx := range updateSignerSetTxs {
-		// TODO: set height = 0?
-
-		updateSignerSetTxSignatures = append(updateSignerSetTxSignatures, k.GetEthereumSignatures(ctx, updateSignerSetTx)...)
-	}
-
-	// export batch confirmations from state
-	for _, batch := range batchTxs {
-		// TODO: set height = 0?
-		batchTxSignatures = append(batchTxSignatures,
-			k.GetBatchTxSignatureByNonceAndTokenContract(ctx, batch.Nonce, batch.TokenContract)...)
-	}
-
-	// export logic call confirmations from state
-	for _, call := range contractCallTxs {
-		// TODO: set height = 0?
-		contractCallTxSignatures = append(contractCallTxSignatures,
-			k.GetContractCallTxSignatureByInvalidationIDAndNonce(ctx, call.InvalidationScope, call.InvalidationNonce)...)
-	}
 
 	// export ethereumEventVoteRecords from state
 	for _, atts := range attmap {
@@ -171,18 +113,53 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		return false
 	})
 
+	// export signer set txs and sigs
+	k.IterateOutgoingTxs(ctx, types.SignerSetTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
+		ota, _ := types.PackOutgoingTx(otx)
+		outgoingTxs = append(outgoingTxs, ota)
+		sstx, _ := otx.(*types.SignerSetTx)
+		k.IterateEthereumSignatures(ctx, sstx.GetStoreIndex(), func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+			siga, _ := types.PackSignature(&types.SignerSetTxSignature{sstx.Nonce, k.GetEthAddress(ctx, val), sig})
+			ethereumSignatures = append(ethereumSignatures, siga)
+			return false
+		})
+		return false
+	})
+
+	// export batch txs and sigs
+	k.IterateOutgoingTxs(ctx, types.BatchTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
+		ota, _ := types.PackOutgoingTx(otx)
+		outgoingTxs = append(outgoingTxs, ota)
+		btx, _ := otx.(*types.BatchTx)
+		k.IterateEthereumSignatures(ctx, btx.GetStoreIndex(), func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+			siga, _ := types.PackSignature(&types.BatchTxSignature{btx.TokenContract, btx.Nonce, k.GetEthAddress(ctx, val), sig})
+			ethereumSignatures = append(ethereumSignatures, siga)
+			return false
+		})
+		return false
+	})
+
+	// export contract call txs and sigs
+	k.IterateOutgoingTxs(ctx, types.ContractCallTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
+		ota, _ := types.PackOutgoingTx(otx)
+		outgoingTxs = append(outgoingTxs, ota)
+		btx, _ := otx.(*types.ContractCallTx)
+		k.IterateEthereumSignatures(ctx, btx.GetStoreIndex(), func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+			siga, _ := types.PackSignature(&types.ContractCallTxSignature{btx.InvalidationScope, btx.InvalidationNonce, k.GetEthAddress(ctx, val), sig})
+			ethereumSignatures = append(ethereumSignatures, siga)
+			return false
+		})
+		return false
+	})
+
 	return types.GenesisState{
-		Params:                      &p,
-		LastObservedEventNonce:      lastobserved,
-		SignerSetTxs:          updateSignerSetTxs,
-		SignerSetTxSignatures: updateSignerSetTxSignatures,
-		BatchTxs:                    batchTxs,
-		BatchTxSignatures:           batchTxSignatures,
-		ContractCallTxs:             contractCallTxs,
-		ContractCallTxSignatures:    contractCallTxSignatures,
-		EthereumEventVoteRecords:    ethereumEventVoteRecords,
-		DelegateKeys:                delegates,
-		Erc20ToDenoms:               erc20ToDenoms,
-		UnbatchedSendToEthereumTxs:  unbatchedTransfers,
+		Params:                     &p,
+		LastObservedEventNonce:     lastobserved,
+		OutgoingTxs:                outgoingTxs,
+		Signatures:                 ethereumSignatures,
+		EthereumEventVoteRecords:   ethereumEventVoteRecords,
+		DelegateKeys:               delegates,
+		Erc20ToDenoms:              erc20ToDenoms,
+		UnbatchedSendToEthereumTxs: unbatchedTransfers,
 	}
 }

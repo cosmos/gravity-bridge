@@ -152,7 +152,7 @@ func GetEthereumEventVoteRecordKey(eventNonce uint64, claimHash []byte) []byte {
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
 func GetEthereumEventVoteRecordKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
-	return bytes.Join([][]byte{{EthereumEventVoteRecordKey}, sdk.Uint64ToBigEndian(eventNonce), claimHash} , []byte{})
+	return bytes.Join([][]byte{{EthereumEventVoteRecordKey}, sdk.Uint64ToBigEndian(eventNonce), claimHash}, []byte{})
 }
 
 // GetOutgoingTxPoolKey returns the following key format

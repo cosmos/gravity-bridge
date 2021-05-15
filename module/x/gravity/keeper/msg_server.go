@@ -112,6 +112,9 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 	return &types.MsgSubmitEthereumSignatureResponse{}, nil
 }
 
+// func (k Keeper) ValidateEthereumSignature
+
+// SubmitEthereumEvent handles MsgSubmitEthereumEvent
 func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEthereumEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -170,6 +173,7 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 
 // RequestBatchTx handles MsgRequestBatchTx
 func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchTx) (*types.MsgRequestBatchTxResponse, error) {
+	// TODO: limit this to only orchestrators and validators?
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Check if the denom is a gravity coin, if not, check if there is a deployed ERC20 representing it.

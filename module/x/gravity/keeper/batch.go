@@ -24,17 +24,12 @@ func (k Keeper) BuildBatchTx(
 	ctx sdk.Context,
 	contractAddress string,
 	maxElements int) (*types.BatchTx, error) {
+
 	if maxElements == 0 {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "max elements value")
 	}
 
-	lastBatch := k.GetLastOutgoingBatchByTokenType(ctx, contractAddress)
-
-	// lastBatch may be nil if there are no existing batches, we only need
-	// to perform this check if a previous batch exists
-	if lastBatch != nil {
-		// this traverses the current tx pool for this token type and determines what
-		// fees a hypothetical batch would have if created
+	if lastBatch := k.GetLastOutgoingBatchByTokenType(ctx, contractAddress); lastBatch != nil {
 		currentFees := k.GetBatchFeesByTokenType(ctx, contractAddress)
 		if currentFees == nil {
 			return nil, sdkerrors.Wrap(types.ErrInvalid, "error getting fees from tx pool")
@@ -57,7 +52,7 @@ func (k Keeper) BuildBatchTx(
 		Transactions:  selectedTx,
 		TokenContract: contractAddress,
 	}
-	k.StoreBatch(ctx, batch)
+	k.SetOutgoingTx(ctx, batch)
 
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatch,
@@ -212,17 +207,10 @@ func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract string, nonce uint6
 
 // IterateBatchTxes iterates through all outgoing batches in DESC order.
 func (k Keeper) IterateBatchTxes(ctx sdk.Context, cb func(key []byte, batch *types.BatchTx) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.BatchTxKey})
-	iter := prefixStore.ReverseIterator(nil, nil)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var batch types.BatchTx
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &batch)
-		// cb returns true to stop early
-		if cb(iter.Key(), &batch) {
-			break
-		}
-	}
+	k.IterateOutgoingTxs(ctx, types.BatchTxPrefixByte, func(key []byte, otx types.OutgoingTx) bool {
+		btx, _ := otx.(*types.BatchTx)
+		return cb(key, btx)
+	})
 }
 
 // GetBatchTxes returns the outgoing tx batches
