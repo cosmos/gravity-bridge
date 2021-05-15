@@ -19,8 +19,7 @@ func TestBatchTxCheckpoint(t *testing.T) {
 	)
 
 	src := BatchTx{
-		Nonce: 1,
-		//
+		Nonce:   1,
 		Timeout: 2111,
 		Transactions: []*SendToEthereum{
 			{

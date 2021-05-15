@@ -33,9 +33,11 @@ const (
 func MakeSignerSetTxKey(nonce uint64) []byte {
 	return append([]byte{SignerSetTxPrefixByte}, sdk.Uint64ToBigEndian(nonce)...)
 }
+
 func MakeBatchTxKey(addr common.Address, nonce uint64) []byte {
 	return bytes.Join([][]byte{{BatchTxPrefixByte}, addr.Bytes(), sdk.Uint64ToBigEndian(nonce)}, []byte{})
 }
+
 func MakeContractCallTxKey(invalscope []byte, invalnonce uint64) []byte {
 	return bytes.Join([][]byte{{ContractCallTxPrefixByte}, invalscope, sdk.Uint64ToBigEndian(invalnonce)}, []byte{})
 }
