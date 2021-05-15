@@ -49,14 +49,14 @@ func (k Keeper) BatchTx(c context.Context, req *types.BatchTxRequest) (*types.Ba
 		// handle not found case
 	}
 
-	btx, ok := otx.(*types.BatchTx)
+	batch, ok := otx.(*types.BatchTx)
 	if !ok {
 		// panic()
 	}
 
 	// TODO: handle special case nonce = 0 to find latest by contract address
 
-	return &types.BatchTxResponse{btx}, nil
+	return &types.BatchTxResponse{batch}, nil
 }
 
 func (k Keeper) ContractCallTx(c context.Context, req *types.ContractCallTxRequest) (*types.ContractCallTxResponse, error) {
@@ -77,45 +77,43 @@ func (k Keeper) ContractCallTx(c context.Context, req *types.ContractCallTxReque
 }
 
 func (k Keeper) SignerSetTxs(c context.Context, req *types.SignerSetTxsRequest) (*types.SignerSetTxsResponse, error) {
-	var out []*types.SignerSetTx
+	var signers []*types.SignerSetTx
 	k.IterateOutgoingTxs(sdk.UnwrapSDKContext(c), types.SignerSetTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
-		sstx, ok := otx.(*types.SignerSetTx)
+		signer, ok := otx.(*types.SignerSetTx)
 		if !ok {
 			// handle error case
 		}
-		out = append(out, sstx)
-		if len(out) < int(req.Count) {
-			return true
-		}
-		return false
+		signers = append(signers, signer)
+
+		return len(signers) < int(req.Count)
 	})
-	return &types.SignerSetTxsResponse{out}, nil
+	return &types.SignerSetTxsResponse{signers}, nil
 }
 
 func (k Keeper) BatchTxs(c context.Context, req *types.BatchTxsRequest) (*types.BatchTxsResponse, error) {
-	var out []*types.BatchTx
+	var batches []*types.BatchTx
 	k.IterateOutgoingTxs(sdk.UnwrapSDKContext(c), types.BatchTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
-		sstx, ok := otx.(*types.BatchTx)
+		batch, ok := otx.(*types.BatchTx)
 		if !ok {
 			// handle error case
 		}
-		out = append(out, sstx)
+		batches = append(batches, batch)
 		return false
 	})
-	return &types.BatchTxsResponse{}, nil
+	return &types.BatchTxsResponse{batches}, nil
 }
 
 func (k Keeper) ContractCallTxs(c context.Context, req *types.ContractCallTxsRequest) (*types.ContractCallTxsResponse, error) {
-	var out []*types.ContractCallTx
+	var calls []*types.ContractCallTx
 	k.IterateOutgoingTxs(sdk.UnwrapSDKContext(c), types.ContractCallTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
-		sstx, ok := otx.(*types.ContractCallTx)
+		call, ok := otx.(*types.ContractCallTx)
 		if !ok {
 			// handle error case
 		}
-		out = append(out, sstx)
+		calls = append(calls, call)
 		return false
 	})
-	return &types.ContractCallTxsResponse{}, nil
+	return &types.ContractCallTxsResponse{calls}, nil
 }
 
 func (k Keeper) SignerSetTxEthereumSignatures(c context.Context, req *types.SignerSetTxEthereumSignaturesRequest) (*types.SignerSetTxEthereumSignaturesResponse, error) {
