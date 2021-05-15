@@ -13,3 +13,4 @@ orchestrator/bins
 cache
 artifacts
 *.test
+*-stamp
