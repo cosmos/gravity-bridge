@@ -543,7 +543,7 @@ pub struct LogicCallExecutedEvent {
 }
 
 impl LogicCallExecutedEvent {
-    pub fn from_log(input: &Log) -> Result<LogicCallExecutedEvent, GravityError> {
+    pub fn from_log(_input: &Log) -> Result<LogicCallExecutedEvent, GravityError> {
         unimplemented!()
     }
     pub fn from_logs(input: &[Log]) -> Result<Vec<LogicCallExecutedEvent>, GravityError> {
@@ -569,7 +569,7 @@ impl LogicCallExecutedEvent {
 /// Function used for debug printing hex dumps
 /// of ethereum events with each uint256 on a new
 /// line
-fn debug_print_data(input: &[u8]) {
+fn _debug_print_data(input: &[u8]) {
     let count = input.len() / 32;
     println!("data hex dump");
     for i in 0..count {
