@@ -17,6 +17,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgRequestBatchTx{},
 		&MsgSubmitEthereumEvent{},
 		&MsgSubmitEthereumSignature{},
+		&MsgDelegateKeys{},
 	)
 
 	registry.RegisterInterface(
@@ -26,6 +27,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&BatchExecutedEvent{},
 		&ERC20DeployedEvent{},
 		&ContractCallExecutedEvent{},
+		&SignerSetTxExecutedEvent{},
 	)
 
 	registry.RegisterInterface(
@@ -91,7 +93,6 @@ func UnpackSignature(any *types.Any) (EthereumSignature, error) {
 	return confirm, nil
 }
 
-
 func PackSignature(signature EthereumSignature) (*types.Any, error) {
 	msg, ok := signature.(proto.Message)
 	if !ok {
@@ -105,7 +106,6 @@ func PackSignature(signature EthereumSignature) (*types.Any, error) {
 
 	return anyEvent, nil
 }
-
 
 func PackOutgoingTx(outgoing OutgoingTx) (*types.Any, error) {
 	msg, ok := outgoing.(proto.Message)
@@ -133,4 +133,3 @@ func UnpackOutgoingTx(any *types.Any) (OutgoingTx, error) {
 
 	return confirm, nil
 }
-

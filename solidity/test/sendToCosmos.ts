@@ -45,11 +45,11 @@ async function runTest(opts: {}) {
       await signers[0].getAddress(),
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000, 
-      1
+      2
     );
 
   expect((await testERC20.functions.balanceOf(gravity.address))[0]).to.equal(1000);
-  expect((await gravity.functions.state_lastEventNonce())[0]).to.equal(1);
+  expect((await gravity.functions.state_lastEventNonce())[0]).to.equal(2);
 
 
     
@@ -69,7 +69,7 @@ async function runTest(opts: {}) {
     );
 
   expect((await testERC20.functions.balanceOf(gravity.address))[0]).to.equal(2000);
-  expect((await gravity.functions.state_lastEventNonce())[0]).to.equal(2);
+  expect((await gravity.functions.state_lastEventNonce())[0]).to.equal(3);
 }
 
 describe("sendToCosmos tests", function () {

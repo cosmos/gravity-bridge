@@ -16,6 +16,7 @@ var (
 	_ EthereumEvent = &BatchExecutedEvent{}
 	_ EthereumEvent = &ContractCallExecutedEvent{}
 	_ EthereumEvent = &ERC20DeployedEvent{}
+	_ EthereumEvent = &SignerSetTxExecutedEvent{}
 )
 
 //////////////
@@ -36,6 +37,10 @@ func (ccee *ContractCallExecutedEvent) GetNonce() uint64 {
 
 func (e20de *ERC20DeployedEvent) GetNonce() uint64 {
 	return e20de.EventNonce
+}
+
+func (sse *SignerSetTxExecutedEvent) GetNonce() uint64 {
+	return sse.EventNonce
 }
 
 //////////
@@ -63,6 +68,12 @@ func (ccee *ContractCallExecutedEvent) Hash() tmbytes.HexBytes {
 func (e20de *ERC20DeployedEvent) Hash() tmbytes.HexBytes {
 	path := fmt.Sprintf("%s/%s/%s/%s/%d/", e20de.CosmosDenom, e20de.TokenContract, e20de.Erc20Name, e20de.Erc20Symbol, e20de.Erc20Decimals)
 	hash := sha256.Sum256([]byte(path))
+	return hash[:]
+}
+
+func (sse *SignerSetTxExecutedEvent) Hash() tmbytes.HexBytes {
+	path := fmt.Sprintf("%s/%s/%s", sse.EthereumHeight, sse.EventNonce, sse.SignerSetTxNonce)
+	hash := sha256.Sum256(([]byte(path)))
 	return hash[:]
 }
 
@@ -142,6 +153,22 @@ func (e20de *ERC20DeployedEvent) Validate() error {
 	}
 	if e20de.EthereumHeight == 0 {
 		return fmt.Errorf("ethereum height cannot be 0")
+	}
+	return nil
+}
+
+func (sse *SignerSetTxExecutedEvent) Validate() error {
+	if sse.EventNonce == 0 {
+		return fmt.Errorf("nonce cannot be 0")
+	}
+	if sse.GetSignerSetTxNonce() == 0 {
+		return fmt.Errorf("nonce cannot be 0")
+	}
+	if sse.EthereumHeight == 0 {
+		return fmt.Errorf("ethereum height cannot be 0")
+	}
+	if sse.Members == nil {
+		return fmt.Errorf("members cannot be nil")
 	}
 	return nil
 }

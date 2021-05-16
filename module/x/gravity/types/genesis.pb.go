@@ -78,7 +78,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // is important that governance updates these in case of any major, prolonged
 // change in the time it takes to produce a block
 //
-// slash_fraction_valset
+// slash_fraction_signer_set_tx
 // slash_fraction_batch
 // slash_fraction_ethereum_signature
 // slash_fraction_conflicting_ethereum_signature
@@ -87,16 +87,17 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // The first three refer to not submitting a particular message, the third for
 // submitting a different ethereum_signature for the same Ethereum event
 type Params struct {
-	GravityId                                 string                                 `protobuf:"bytes,1,opt,name=gravity_id,json=gravityId,proto3" json:"gravity_id,omitempty"`
-	ContractSourceHash                        string                                 `protobuf:"bytes,2,opt,name=contract_source_hash,json=contractSourceHash,proto3" json:"contract_source_hash,omitempty"`
-	BridgeEthereumAddress                     string                                 `protobuf:"bytes,4,opt,name=bridge_ethereum_address,json=bridgeEthereumAddress,proto3" json:"bridge_ethereum_address,omitempty"`
-	BridgeChainId                             uint64                                 `protobuf:"varint,5,opt,name=bridge_chain_id,json=bridgeChainId,proto3" json:"bridge_chain_id,omitempty"`
-	SignedSignerSetTxsWindow                  uint64                                 `protobuf:"varint,6,opt,name=signed_signer_set_txs_window,json=signedSignerSetTxsWindow,proto3" json:"signed_signer_set_txs_window,omitempty"`
-	SignedBatchesWindow                       uint64                                 `protobuf:"varint,7,opt,name=signed_batches_window,json=signedBatchesWindow,proto3" json:"signed_batches_window,omitempty"`
-	EthereumSignaturesWindow                  uint64                                 `protobuf:"varint,8,opt,name=ethereum_signatures_window,json=ethereumSignaturesWindow,proto3" json:"ethereum_signatures_window,omitempty"`
-	TargetBatchTimeout                        uint64                                 `protobuf:"varint,10,opt,name=target_batch_timeout,json=targetBatchTimeout,proto3" json:"target_batch_timeout,omitempty"`
-	AverageBlockTime                          uint64                                 `protobuf:"varint,11,opt,name=average_block_time,json=averageBlockTime,proto3" json:"average_block_time,omitempty"`
-	AverageEthereumBlockTime                  uint64                                 `protobuf:"varint,12,opt,name=average_ethereum_block_time,json=averageEthereumBlockTime,proto3" json:"average_ethereum_block_time,omitempty"`
+	GravityId                string `protobuf:"bytes,1,opt,name=gravity_id,json=gravityId,proto3" json:"gravity_id,omitempty"`
+	ContractSourceHash       string `protobuf:"bytes,2,opt,name=contract_source_hash,json=contractSourceHash,proto3" json:"contract_source_hash,omitempty"`
+	BridgeEthereumAddress    string `protobuf:"bytes,4,opt,name=bridge_ethereum_address,json=bridgeEthereumAddress,proto3" json:"bridge_ethereum_address,omitempty"`
+	BridgeChainId            uint64 `protobuf:"varint,5,opt,name=bridge_chain_id,json=bridgeChainId,proto3" json:"bridge_chain_id,omitempty"`
+	SignedSignerSetTxsWindow uint64 `protobuf:"varint,6,opt,name=signed_signer_set_txs_window,json=signedSignerSetTxsWindow,proto3" json:"signed_signer_set_txs_window,omitempty"`
+	SignedBatchesWindow      uint64 `protobuf:"varint,7,opt,name=signed_batches_window,json=signedBatchesWindow,proto3" json:"signed_batches_window,omitempty"`
+	EthereumSignaturesWindow uint64 `protobuf:"varint,8,opt,name=ethereum_signatures_window,json=ethereumSignaturesWindow,proto3" json:"ethereum_signatures_window,omitempty"`
+	TargetBatchTimeout       uint64 `protobuf:"varint,10,opt,name=target_batch_timeout,json=targetBatchTimeout,proto3" json:"target_batch_timeout,omitempty"`
+	AverageBlockTime         uint64 `protobuf:"varint,11,opt,name=average_block_time,json=averageBlockTime,proto3" json:"average_block_time,omitempty"`
+	AverageEthereumBlockTime uint64 `protobuf:"varint,12,opt,name=average_ethereum_block_time,json=averageEthereumBlockTime,proto3" json:"average_ethereum_block_time,omitempty"`
+	// TODO: slash fraction for contract call txs too
 	SlashFractionSignerSetTx                  github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,13,opt,name=slash_fraction_signer_set_tx,json=slashFractionSignerSetTx,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_signer_set_tx"`
 	SlashFractionBatch                        github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,14,opt,name=slash_fraction_batch,json=slashFractionBatch,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_batch"`
 	SlashFractionEthereumSignature            github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,15,opt,name=slash_fraction_ethereum_signature,json=slashFractionEthereumSignature,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_ethereum_signature"`

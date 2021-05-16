@@ -65,6 +65,8 @@ const (
 
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
 	LastUnBondingBlockHeight
+
+	LastObservedValsetKey
 )
 
 ////////////////////

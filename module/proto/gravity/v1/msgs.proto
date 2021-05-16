@@ -170,10 +170,20 @@ message ERC20DeployedEvent {
   string cosmos_denom = 2;
   string token_contract = 3;
   string erc20_name = 4;
-  string erc20_symbol = 5;
+  string erc20_symbol = 5; 
   uint64 erc20_decimals = 6;
   uint64 ethereum_height = 7;
 }
+
+// This informs the Cosmos module that a validator
+// set has been updated.
+message SignerSetTxExecutedEvent {
+  uint64 event_nonce              = 1;
+  uint64 signer_set_tx_nonce      = 2;
+  uint64 ethereum_height          = 3;
+  repeated EthereumSigner members = 4;
+}
+
 
 message MsgSubmitEthereumEventResponse {}
 

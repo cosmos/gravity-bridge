@@ -101,6 +101,15 @@ func (a EthereumEventProcessor) Handle(ctx sdk.Context, eve types.EthereumEvent)
 
 	case *types.ContractCallExecutedEvent:
 		// todo: issue event hook for consumer modules
+	case *types.SignerSetTxExecutedEvent:
+		// TODO here we should check the contents of the validator set against
+		// the store, if they differ we should take some action to indicate to the
+		// user that bridge highjacking has occurred
+		a.keeper.SetLastObservedValset(ctx, types.SignerSetTx{
+			Nonce:   event.SignerSetTxNonce,
+			Signers: event.Members,
+		})
+
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %T", event)
 	}

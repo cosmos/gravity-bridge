@@ -224,7 +224,7 @@ func (k Keeper) GetEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.A
 // implementations are involved.
 func (k Keeper) NewSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-	ethereumSigners := make([]types.EthereumSigner, len(validators))
+	ethereumSigners := make([]*types.EthereumSigner, len(validators))
 	var totalPower uint64
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
@@ -234,7 +234,7 @@ func (k Keeper) NewSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
 		totalPower += p
 
-		ethereumSigners[i] = types.EthereumSigner{Power: p}
+		ethereumSigners[i] = &types.EthereumSigner{Power: p}
 		if ethAddr := k.GetValidatorEthereumAddress(ctx, val); ethAddr.Hex() == "0x0000000000000000000000000000000000000000" {
 			ethereumSigners[i].EthereumAddress = ethAddr.Hex()
 		}
@@ -482,4 +482,15 @@ func (k Keeper) IterateOutgoingTxs(ctx sdk.Context, prefixByte byte, cb func(key
 			break
 		}
 	}
+}
+
+// GetLastObservedValset retrieves the last observed validator set from the store
+func (k Keeper) GetLastObservedValset(ctx sdk.Context) (out *types.SignerSetTx) {
+	k.cdc.MustUnmarshalBinaryBare(ctx.KVStore(k.storeKey).Get([]byte{types.LastObservedValsetKey}), out)
+	return
+}
+
+// SetLastObservedValset updates the last observed validator set in the stor e
+func (k Keeper) SetLastObservedValset(ctx sdk.Context, valset types.SignerSetTx) {
+	ctx.KVStore(k.storeKey).Set([]byte{types.LastObservedValsetKey}, k.cdc.MustMarshalBinaryBare(&valset))
 }

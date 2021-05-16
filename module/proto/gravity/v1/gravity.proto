@@ -40,8 +40,7 @@ message EthereumSigner {
 message SignerSetTx {
   uint64 nonce = 1;
   repeated EthereumSigner signers = 2 [
-    (gogoproto.castrepeated) = "EthereumSigners",
-    (gogoproto.nullable) = false
+    (gogoproto.castrepeated) = "EthereumSigners"
   ];
 }
 
