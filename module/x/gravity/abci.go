@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // EndBlocker is called at the end of every block
@@ -16,6 +17,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	cleanupTimedOutBatches(ctx, k)
 	cleanupTimedOutLogicCalls(ctx, k)
 	createValsets(ctx, k)
+	pruneSignerSetTxs(ctx, k)
 }
 
 func createValsets(ctx sdk.Context, k keeper.Keeper) {
@@ -30,7 +32,30 @@ func createValsets(ctx sdk.Context, k keeper.Keeper) {
 
 	powerDiff := types.EthereumSigners(k.NewSignerSetTx(ctx).Signers).PowerDiff(latestValset.Signers)
 	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (powerDiff > 0.05) {
-		k.SetSignerSetTxRequest(ctx)
+		k.SetOutgoingTx(ctx, k.NewSignerSetTx(ctx))
+	}
+}
+
+func pruneSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
+	params := k.GetParams(ctx)
+	// Validator set pruning
+	// prune all validator sets with a nonce less than the
+	// last observed nonce, they can't be submitted any longer
+	//
+	// Only prune valsets after the signed valsets window has passed
+	// so that slashing can occur the block before we remove them
+	lastObserved := k.GetLastObservedValset(ctx)
+	currentBlock := uint64(ctx.BlockHeight())
+	tooEarly := currentBlock < params.SignedSignerSetTxsWindow
+	if lastObserved != nil && !tooEarly {
+		//earliestToPrune := currentBlock - params.SignedSignerSetTxsWindow
+		sets := k.GetSignerSetTxs(ctx)
+		for _, set := range sets {
+			// TODO: do we need height on signersettx?
+			if set.Nonce < lastObserved.Nonce { // && set.Height < earliestToPrune {
+				k.DeleteOutgoingTx(ctx, set.GetStoreIndex())
+			}
+		}
 	}
 }
 
@@ -106,7 +131,7 @@ func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
 	batches := k.GetBatchTxes(ctx)
 	for _, batch := range batches {
 		if batch.Timeout < ethereumHeight {
-			k.CancelBatchTx(ctx, batch.TokenContract, batch.Nonce)
+			k.CancelBatchTx(ctx, common.HexToAddress(batch.TokenContract), batch.Nonce)
 		}
 	}
 }
@@ -122,7 +147,12 @@ func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutLogicCalls(ctx sdk.Context, k keeper.Keeper) {
 	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumHeight
-	calls := k.GetContractCallTxs(ctx)
+	var calls []*types.ContractCallTx
+	k.IterateOutgoingTxs(ctx, types.ContractCallTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
+		cctx, _ := otx.(*types.ContractCallTx)
+		calls = append(calls, cctx)
+		return true
+	})
 	for _, call := range calls {
 		if call.Timeout < ethereumHeight {
 			k.CancelContractCallTx(ctx, call.InvalidationScope, call.InvalidationNonce)

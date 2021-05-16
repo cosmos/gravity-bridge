@@ -249,6 +249,16 @@ func (k Keeper) NewSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	return types.NewSignerSetTx(uint64(ctx.BlockHeight()), uint64(ctx.BlockHeight()), ethereumSigners)
 }
 
+// GetSignerSetTxs returns all the signer set txs from the store
+func (k Keeper) GetSignerSetTxs(ctx sdk.Context) (out []*types.SignerSetTx) {
+	k.IterateOutgoingTxs(ctx, types.SignerSetTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
+		sstx, _ := otx.(*types.SignerSetTx)
+		out = append(out, sstx)
+		return true
+	})
+	return
+}
+
 /////////////////////////////
 //       PARAMETERS        //
 /////////////////////////////
