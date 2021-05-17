@@ -270,7 +270,18 @@ func (k Keeper) DelegateKeysByValidator(c context.Context, req *types.DelegateKe
 }
 
 func (k Keeper) DelegateKeysByEthereumSigner(c context.Context, req *types.DelegateKeysByEthereumSignerRequest) (*types.DelegateKeysByEthereumSignerResponse, error) {
-	return &types.DelegateKeysByEthereumSignerResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	if !common.IsHexAddress(req.EthereumSigner) {
+		return nil, nil // TODO(levi) make and return an error
+	}
+	ethAddr := common.HexToAddress(req.EthereumSigner)
+	orchAddr := k.GetEthereumOrchestratorAddress(ctx, ethAddr)
+	valAddr := k.GetOrchestratorValidatorAddress(ctx, orchAddr)
+	res := &types.DelegateKeysByEthereumSignerResponse{
+		ValidatorAddress:    valAddr.String(),
+		OrchestratorAddress: orchAddr.String(),
+	}
+	return res, nil
 }
 
 func (k Keeper) DelegateKeysByOrchestrator(c context.Context, req *types.DelegateKeysByOrchestratorAddress) (*types.DelegateKeysByOrchestratorAddressResponse, error) {
