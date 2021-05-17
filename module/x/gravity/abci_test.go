@@ -208,7 +208,7 @@ func TestBatchSlashing(t *testing.T) {
 	require.False(t, input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1]).IsJailed())
 
 	// Ensure that the last slashed valset nonce is set properly
-	assert.Equal(t, input.GravityKeeper.GetLastSlashedBatchBlock(ctx), batch.Height)
+	assert.Equal(t, input.GravityKeeper.GetLastSlashedBatchBlockHeight(ctx), batch.Height)
 
 }
 

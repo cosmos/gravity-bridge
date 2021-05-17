@@ -109,11 +109,11 @@ func (k Keeper) BatchTxExecuted(ctx sdk.Context, tokenContract common.Address, n
 	// Iterate through remaining batches
 	k.IterateOutgoingTxs(ctx, types.BatchTxPrefixByte, func(key []byte, otx types.OutgoingTx) bool {
 		// If the iterated batches nonce is lower than the one that was just executed, cancel it
-		iterBatch, _ := otx.(*types.BatchTx)
+		btx, _ := otx.(*types.BatchTx)
 		// todo: reformat the store to additionally prefix by token type,
 		// and also sort by nonce, to save on needless iteration
-		if (iterBatch.Nonce < batchTx.Nonce) && (batchTx.TokenContract == tokenContract.Hex()) {
-			err = k.CancelBatchTx(ctx, tokenContract, iterBatch.Nonce)
+		if (btx.Nonce < batchTx.Nonce) && (batchTx.TokenContract == tokenContract.Hex()) {
+			err = k.CancelBatchTx(ctx, tokenContract, btx.Nonce)
 		}
 		return false
 	})
@@ -132,13 +132,9 @@ func (k Keeper) PickUnbatchedTX(
 	var selectedTx []*types.SendToEthereum
 	var err error
 	k.IterateOutgoingPoolByFee(ctx, contractAddress, func(txID uint64, tx *types.SendToEthereum) bool {
-		if tx != nil && tx.Erc20Fee.GravityCoin().IsZero() {
-			selectedTx = append(selectedTx, tx)
-			err = k.removeFromUnbatchedTXIndex(ctx, tx.Erc20Fee, txID)
-			return err != nil || len(selectedTx) == maxElements
-		}
-
-		return true
+		selectedTx = append(selectedTx, tx)
+		err = k.removeFromUnbatchedTXIndex(ctx, tx.Erc20Fee, txID)
+		return err != nil || len(selectedTx) == maxElements
 	})
 	return selectedTx, err
 }
@@ -169,61 +165,43 @@ func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, non
 	return nil
 }
 
-// IterateBatchTxs iterates through all outgoing batches in DESC order.
-func (k Keeper) IterateBatchTxs(ctx sdk.Context, cb func(key []byte, batch *types.BatchTx) bool) {
-	k.IterateOutgoingTxs(ctx, types.BatchTxPrefixByte, func(key []byte, otx types.OutgoingTx) bool {
-		btx, _ := otx.(*types.BatchTx)
-		return cb(key, btx)
-	})
-}
-
-// GetBatchTxes returns the outgoing tx batches
-func (k Keeper) GetBatchTxes(ctx sdk.Context) (out []*types.BatchTx) {
-	k.IterateBatchTxs(ctx, func(_ []byte, batch *types.BatchTx) bool {
-		out = append(out, batch)
-		return false
-	})
-	return
-}
-
 // GetLastOutgoingBatchByTokenType gets the latest outgoing tx batch by token type
 func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token common.Address) *types.BatchTx {
-	batches := k.GetBatchTxes(ctx)
 	var lastBatch *types.BatchTx = nil
 	lastNonce := uint64(0)
-	for _, batch := range batches {
-		if common.HexToAddress(batch.TokenContract) == token && batch.Nonce > lastNonce {
-			lastBatch = batch
-			lastNonce = batch.Nonce
+
+	k.IterateOutgoingTxs(ctx, types.BatchTxPrefixByte, func(key []byte, otx types.OutgoingTx) bool {
+		btx, _ := otx.(*types.BatchTx)
+		// TODO: if we had an additional token type prefix on these, we could simply just take
+		// the first one, iterating only once.
+		if common.HexToAddress(btx.TokenContract) == token && btx.Nonce > lastNonce {
+			lastBatch = btx
+			lastNonce = btx.Nonce
 		}
-	}
+		return false
+	})
+
 	return lastBatch
 }
 
-// SetLastSlashedBatchBlock sets the latest slashed Batch block height
-func (k Keeper) SetLastSlashedBatchBlock(ctx sdk.Context, blockHeight uint64) {
+// SetLastSlashedBatchBlockHeight sets the latest slashed Batch block height
+func (k Keeper) SetLastSlashedBatchBlockHeight(ctx sdk.Context, blockHeight uint64) {
 	ctx.KVStore(k.storeKey).Set([]byte{types.LastSlashedBatchBlockKey}, types.UInt64Bytes(blockHeight))
 }
 
-// GetLastSlashedBatchBlock returns the latest slashed Batch block
-func (k Keeper) GetLastSlashedBatchBlock(ctx sdk.Context) uint64 {
-	if bz := ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedBatchBlockKey}); bz == nil {
-		return 0
-	} else {
-		return types.UInt64FromBytes(bz)
-	}
+// GetLastSlashedBatchBlockHeight returns the latest slashed Batch block
+func (k Keeper) GetLastSlashedBatchBlockHeight(ctx sdk.Context) uint64 {
+	return types.UInt64FromBytes(ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedBatchBlockKey}))
 }
 
 // GetUnSlashedBatches returns all the unslashed batches in state
 func (k Keeper) GetUnSlashedBatches(ctx sdk.Context, maxHeight uint64) (out []*types.BatchTx) {
-	lastSlashedBatchBlock := k.GetLastSlashedBatchBlock(ctx)
+	lastSlashedBatchBlockHeight := k.GetLastSlashedBatchBlockHeight(ctx)
 	k.IterateBatchBySlashedBatchBlock(ctx,
-		lastSlashedBatchBlock,
+		lastSlashedBatchBlockHeight,
 		maxHeight,
 		func(_ []byte, batch *types.BatchTx) bool {
-			if batch.Height > lastSlashedBatchBlock {
-				out = append(out, batch)
-			}
+			out = append(out, batch)
 			return false
 		})
 	return

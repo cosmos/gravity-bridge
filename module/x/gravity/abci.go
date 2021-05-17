@@ -129,12 +129,15 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutBatchTxs(ctx sdk.Context, k keeper.Keeper) {
 	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumHeight
-	batches := k.GetBatchTxes(ctx)
-	for _, batch := range batches {
-		if batch.Timeout < ethereumHeight {
-			k.CancelBatchTx(ctx, common.HexToAddress(batch.TokenContract), batch.Nonce)
+	k.IterateOutgoingTxs(ctx, types.BatchTxPrefixByte, func(key []byte, otx types.OutgoingTx) bool {
+		btx, _ := otx.(*types.BatchTx)
+
+		if btx.Timeout < ethereumHeight {
+			k.CancelBatchTx(ctx, common.HexToAddress(btx.TokenContract), btx.Nonce)
 		}
-	}
+
+		return false
+	})
 }
 
 // cleanupTimedOutBatchTxs deletes logic calls that have passed their expiration on Ethereum
@@ -240,7 +243,7 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	unslashedBatches := k.GetUnSlashedBatches(ctx, maxHeight)
 	for _, batch := range unslashedBatches {
 
-		// SLASH BONDED VALIDTORS who didn't attest batch requests
+		// SLASH BONDED VALIDATORS who didn't sign batch txs
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 		signatures := k.GetEthereumSignatures(ctx, batch.GetStoreIndex())
 		for _, val := range currentBondedSet {
@@ -259,7 +262,7 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			}
 		}
 		// then we set the latest slashed batch block
-		k.SetLastSlashedBatchBlock(ctx, batch.Height)
+		k.SetLastSlashedBatchBlockHeight(ctx, batch.Height)
 
 	}
 }

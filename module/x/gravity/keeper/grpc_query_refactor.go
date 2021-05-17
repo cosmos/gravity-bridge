@@ -243,12 +243,15 @@ func (k Keeper) LastSubmittedEthereumEvent(c context.Context, req *types.LastSub
 func (k Keeper) BatchTxFees(c context.Context, req *types.BatchTxFeesRequest) (*types.BatchTxFeesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	res := &types.BatchTxFeesResponse{}
-	batches := k.GetBatchTxes(ctx)
-	for _, batch := range batches {
-		for _, tx := range batch.Transactions {
+
+	k.IterateOutgoingTxs(ctx, types.BatchTxPrefixByte, func(key []byte, otx types.OutgoingTx) bool {
+		btx, _ := otx.(*types.BatchTx)
+		for _, tx := range btx.Transactions {
 			res.Fees = append(res.Fees, tx.Erc20Fee.GravityCoin())
 		}
-	}
+		return false
+	})
+
 	return res, nil
 }
 
