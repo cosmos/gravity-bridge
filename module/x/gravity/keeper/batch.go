@@ -166,6 +166,8 @@ func (k Keeper) pickUnbatchedTX(
 			selectedTx = append(selectedTx, tx)
 			err = k.removeFromUnbatchedTXIndex(ctx, *tx.Erc20Fee, txID)
 			return err != nil || len(selectedTx) == maxElements
+		} else {
+			panic("tx and fee should never be nil!")
 		}
 
 		return true
