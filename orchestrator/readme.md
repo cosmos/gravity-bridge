@@ -1,4 +1,8 @@
-First run
+# Gravity bridge orchestrator
+
+This folder contains the Gravity bridge orchestrator and it's components
+
+First build
 
 1. sudo dnf install openssl-devel perl
 2. cargo check --all
