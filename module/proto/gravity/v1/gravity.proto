@@ -39,9 +39,9 @@ message EthereumSigner {
 // savings.
 message SignerSetTx {
   uint64 nonce = 1;
-  repeated EthereumSigner signers = 2 [
-    (gogoproto.castrepeated) = "EthereumSigners"
-  ];
+  uint64 height = 2;
+  repeated EthereumSigner signers = 3
+      [ (gogoproto.castrepeated) = "EthereumSigners" ];
 }
 
 // BatchTx represents a batch of transactions going from Cosmos to Ethereum.
@@ -52,7 +52,7 @@ message BatchTx {
   uint64 timeout = 2;
   repeated SendToEthereum transactions = 3;
   string token_contract = 4;
-  uint64 ethereum_block = 5;
+  uint64 height = 5;
 }
 
 // SendToEthereum represents an individual SendToEthereum from Cosmos to

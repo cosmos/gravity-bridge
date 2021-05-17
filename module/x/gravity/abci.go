@@ -14,22 +14,21 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// Question: what here can be epoched?
 	slashing(ctx, k)
 	attestationTally(ctx, k)
-	cleanupTimedOutBatches(ctx, k)
-	cleanupTimedOutLogicCalls(ctx, k)
-	createValsets(ctx, k)
+	cleanupTimedOutBatchTxs(ctx, k)
+	cleanupTimedOutContractCallTxs(ctx, k)
+	createSignerSetTxs(ctx, k)
 	pruneSignerSetTxs(ctx, k)
 }
 
-func createValsets(ctx sdk.Context, k keeper.Keeper) {
+func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	// Auto ValsetRequest Creation.
 	// 1. If there are no valset requests, create a new one.
 	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
-	//      This will make sure the unbonding validator has to provide an attestation to a new Valset
+	//      This will make sure the unbonding validator has to provide an ethereum signature to a new signer set tx
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
 	// 3. If power change between validators of CurrentValset and latest valset request is > 5%
 	latestValset := k.GetLatestSignerSetTx(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
-
 	powerDiff := types.EthereumSigners(k.NewSignerSetTx(ctx).Signers).PowerDiff(latestValset.Signers)
 	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (powerDiff > 0.05) {
 		k.SetOutgoingTx(ctx, k.NewSignerSetTx(ctx))
@@ -44,15 +43,13 @@ func pruneSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	//
 	// Only prune valsets after the signed valsets window has passed
 	// so that slashing can occur the block before we remove them
-	lastObserved := k.GetLastObservedValset(ctx)
+	lastObserved := k.GetLastObservedSignerSetTx(ctx)
 	currentBlock := uint64(ctx.BlockHeight())
 	tooEarly := currentBlock < params.SignedSignerSetTxsWindow
 	if lastObserved != nil && !tooEarly {
-		//earliestToPrune := currentBlock - params.SignedSignerSetTxsWindow
-		sets := k.GetSignerSetTxs(ctx)
-		for _, set := range sets {
-			// TODO: do we need height on signersettx?
-			if set.Nonce < lastObserved.Nonce { // && set.Height < earliestToPrune {
+		earliestToPrune := currentBlock - params.SignedSignerSetTxsWindow
+		for _, set := range k.GetSignerSetTxs(ctx) {
+			if set.Nonce < lastObserved.Nonce && set.Height < earliestToPrune {
 				k.DeleteOutgoingTx(ctx, set.GetStoreIndex())
 			}
 		}
@@ -64,7 +61,7 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
 
 	// Slash validator for not confirming valset requests, batch requests and not attesting claims rightfully
-	ValsetSlashing(ctx, k, params)
+	SignerSetTxSlashing(ctx, k, params)
 	BatchSlashing(ctx, k, params)
 	// TODO slashing for arbitrary logic is missing
 
@@ -117,7 +114,7 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 	}
 }
 
-// cleanupTimedOutBatches deletes batches that have passed their expiration on Ethereum
+// cleanupTimedOutBatchTxs deletes batches that have passed their expiration on Ethereum
 // keep in mind several things when modifying this function
 // A) unlike nonces timeouts are not monotonically increasing, meaning batch 5 can have a later timeout than batch 6
 //    this means that we MUST only cleanup a single batch at a time
@@ -126,7 +123,7 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 //    here is the Ethereum block height at the time of the last Deposit or Withdraw to be observed. It's very important we do not
 //    project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
-func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
+func cleanupTimedOutBatchTxs(ctx sdk.Context, k keeper.Keeper) {
 	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumHeight
 	batches := k.GetBatchTxes(ctx)
 	for _, batch := range batches {
@@ -136,7 +133,7 @@ func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
 	}
 }
 
-// cleanupTimedOutBatches deletes logic calls that have passed their expiration on Ethereum
+// cleanupTimedOutBatchTxs deletes logic calls that have passed their expiration on Ethereum
 // keep in mind several things when modifying this function
 // A) unlike nonces timeouts are not monotonically increasing, meaning call 5 can have a later timeout than batch 6
 //    this means that we MUST only cleanup a single call at a time
@@ -145,61 +142,45 @@ func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
 //    here is the Ethereum block height at the time of the last Deposit or Withdraw to be observed. It's very important we do not
 //    project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
-func cleanupTimedOutLogicCalls(ctx sdk.Context, k keeper.Keeper) {
+func cleanupTimedOutContractCallTxs(ctx sdk.Context, k keeper.Keeper) {
 	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumHeight
-	var calls []*types.ContractCallTx
 	k.IterateOutgoingTxs(ctx, types.ContractCallTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
 		cctx, _ := otx.(*types.ContractCallTx)
-		calls = append(calls, cctx)
+		if cctx.Timeout < ethereumHeight {
+			k.DeleteOutgoingTx(ctx, cctx.GetStoreIndex())
+		}
 		return true
 	})
-	for _, call := range calls {
-		if call.Timeout < ethereumHeight {
-			k.CancelContractCallTx(ctx, call.InvalidationScope, call.InvalidationNonce)
-		}
-	}
 }
 
-func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
+func SignerSetTxSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 	maxHeight := uint64(0)
 
 	// don't slash in the beginning before there aren't even SignedValsetsWindow blocks yet
-	if uint64(ctx.BlockHeight()) > params.SignedValsetsWindow {
-		maxHeight = uint64(ctx.BlockHeight()) - params.SignedValsetsWindow
+	if uint64(ctx.BlockHeight()) > params.SignedSignerSetTxsWindow {
+		maxHeight = uint64(ctx.BlockHeight()) - params.SignedSignerSetTxsWindow
 	}
 
-	unslashedValsets := k.GetUnSlashedValsets(ctx, maxHeight)
+	unslashedsignerSetTxs := k.GetUnSlashedSignerSetTxs(ctx, maxHeight)
 
-	// unslashedValsets are sorted by nonce in ASC order
-	// Question: do we need to sort each time? See if this can be epoched
-	for _, vs := range unslashedValsets {
-		confirms := k.GetEthereumSignatures(ctx, vs.Nonce)
+	// unslashedsignerSetTxs are sorted by nonce in ASC order
+	for _, sstx := range unslashedsignerSetTxs {
+		signatures := k.GetEthereumSignatures(ctx, sstx.GetStoreIndex())
 
 		// SLASH BONDED VALIDTORS who didn't attest valset request
-		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-		for _, val := range currentBondedSet {
+		for _, val := range k.StakingKeeper.GetBondedValidatorsByPower(ctx) {
 			consAddr, _ := val.GetConsAddr()
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
 
 			//  Slash validator ONLY if he joined after valset is created
-			if exist && valSigningInfo.StartHeight < int64(vs.Nonce) {
-				// Check if validator has confirmed valset or not
-				found := false
-				for _, conf := range confirms {
-					if conf.EthereumSigner == k.GetEthAddress(ctx, val.GetOperator()) {
-						found = true
-						break
-					}
-				}
-				// slash validators for not confirming valsets
-				if !found {
-					cons, _ := val.GetConsAddr()
-					k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionValset)
+			if exist && valSigningInfo.StartHeight < int64(sstx.Height) {
+				if _, found := signatures[val.GetOperator().String()]; !found {
 					if !val.IsJailed() {
-						k.StakingKeeper.Jail(ctx, cons)
+						// TODO: do we want to slash jailed validators?
+						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBatch)
+						k.StakingKeeper.Jail(ctx, consAddr)
 					}
-
 				}
 			}
 		}
@@ -215,29 +196,18 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			unbondingValidators := k.GetUnbondingvalidators(unbondingValIterator.Value())
 
 			for _, valAddr := range unbondingValidators.Addresses {
-				addr, err := sdk.ValAddressFromBech32(valAddr)
-				if err != nil {
-					panic(err)
-				}
+				addr, _ := sdk.ValAddressFromBech32(valAddr)
 				validator, _ := k.StakingKeeper.GetValidator(ctx, sdk.ValAddress(addr))
 				valConsAddr, _ := validator.GetConsAddr()
 				valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, valConsAddr)
 
-				// Only slash validators who joined after valset is created and they are unbonding and UNBOND_SLASHING_WINDOW didn't passed
-				if exist && valSigningInfo.StartHeight < int64(vs.Nonce) && validator.IsUnbonding() && vs.Nonce < uint64(validator.UnbondingHeight)+params.UnbondSlashingValsetsWindow {
+				// Only slash validators who joined after valset is created and they are unbonding and UNBOND_SLASHING_WINDOW didn't pass
+				if exist && valSigningInfo.StartHeight < int64(sstx.Nonce) && validator.IsUnbonding() && sstx.Height < uint64(validator.UnbondingHeight)+params.UnbondSlashingSignerSetTxsWindow {
 					// Check if validator has confirmed valset or not
-					found := false
-					for _, conf := range confirms {
-						if conf.EthereumSigner == k.GetEthAddress(ctx, validator.GetOperator()) {
-							found = true
-							break
-						}
-					}
-
-					// slash validators for not confirming valsets
-					if !found {
-						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionValset)
+					if _, found := signatures[validator.GetOperator().String()]; !found {
 						if !validator.IsJailed() {
+							// TODO: do we want to slash jailed validators
+							k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionSignerSetTx)
 							k.StakingKeeper.Jail(ctx, valConsAddr)
 						}
 					}
@@ -245,7 +215,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			}
 		}
 		// then we set the latest slashed valset  nonce
-		k.SetLastSlashedValsetNonce(ctx, vs.Nonce)
+		k.SetLastSlashedSignerSetTxNonce(ctx, sstx.Nonce)
 	}
 }
 
@@ -259,6 +229,8 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	// don't slash in the beginning before there aren't even SignedBatchesWindow blocks yet
 	if uint64(ctx.BlockHeight()) > params.SignedBatchesWindow {
 		maxHeight = uint64(ctx.BlockHeight()) - params.SignedBatchesWindow
+	} else {
+		return
 	}
 
 	unslashedBatches := k.GetUnSlashedBatches(ctx, maxHeight)
@@ -266,64 +238,24 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 		// SLASH BONDED VALIDTORS who didn't attest batch requests
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-		confirms := k.GetBatchTxSignatureByNonceAndTokenContract(ctx, batch.Nonce, batch.TokenContract)
+		signatures := k.GetEthereumSignatures(ctx, batch.GetStoreIndex())
 		for _, val := range currentBondedSet {
 			// Don't slash validators who joined after batch is created
 			consAddr, _ := val.GetConsAddr()
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
-			if exist && valSigningInfo.StartHeight > int64(batch.EthereumBlock) {
+			if exist && valSigningInfo.StartHeight > int64(batch.Height) {
 				continue
 			}
 
-			found := false
-			for _, conf := range confirms {
-				// TODO: review this thoroughly
-				// TODO: This is currently WRONG! We need to use the EthereumSigner here to
-				// get the validator address.
-				confVal, _ := sdk.AccAddressFromBech32(conf.EthereumSigner)
-				if k.GetOrchestratorValidator(ctx, confVal).Equals(val.GetOperator()) {
-					found = true
-					break
-				}
-			}
-			if !found {
-				cons, _ := val.GetConsAddr()
-				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBatch)
+			if _, ok := signatures[val.GetOperator().String()]; !ok {
+				k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBatch)
 				if !val.IsJailed() {
-					k.StakingKeeper.Jail(ctx, cons)
+					k.StakingKeeper.Jail(ctx, consAddr)
 				}
 			}
 		}
 		// then we set the latest slashed batch block
-		k.SetLastSlashedBatchBlock(ctx, batch.EthereumBlock)
+		k.SetLastSlashedBatchBlock(ctx, batch.Height)
 
-	}
-}
-
-// TestingEndBlocker is a second endblocker function only imported in the Gravity codebase itself
-// if you are a consuming Cosmos chain DO NOT IMPORT THIS, it simulates a chain using the arbitrary
-// logic API to request logic calls
-func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
-	// if this is nil we have not set our test outgoing logic call yet
-	if k.GetContractCallTx(ctx, []byte("GravityTesting"), 0).Payload == nil {
-		// TODO this call isn't actually very useful for testing, since it always
-		// throws, being just junk data that's expected. But it prevents us from checking
-		// the full lifecycle of the call. We need to find some way for this to read data
-		// and encode a simple testing call, probably to one of the already deployed ERC20
-		// contracts so that we can get the full lifecycle.
-		token := []types.ERC20Token{{
-			Contract: "0x7580bfe88dd3d07947908fae12d95872a260f2d8",
-			Amount:   sdk.NewIntFromUint64(5000),
-		}}
-		_ = types.ContractCallTx{
-			Tokens:            token,
-			Fees:              token,
-			Address:           "0x510ab76899430424d209a6c9a5b9951fb8a6f47d",
-			Payload:           []byte("fake bytes"),
-			Timeout:           10000,
-			InvalidationScope: []byte("GravityTesting"),
-			InvalidationNonce: 1,
-		}
-		//k.SetContractCallTx(ctx, &call)
 	}
 }

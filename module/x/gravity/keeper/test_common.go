@@ -264,6 +264,8 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 	// Register eth addresses for each validator
 	for i, addr := range ValAddrs {
 		input.GravityKeeper.SetValidatorEthereumAddress(input.Context, addr, EthAddrs[i])
+		input.GravityKeeper.SetOrchestratorValidatorAddress(input.Context, addr, AccAddrs[i])
+		input.GravityKeeper.SetEthereumOrchestratorAddress(input.Context, EthAddrs[i], AccAddrs[i])
 	}
 
 	// Return the test input

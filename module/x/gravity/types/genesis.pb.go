@@ -59,10 +59,10 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // signed_ethereum_signatures_window
 //
 // These values represent the time in blocks that a validator has to submit
-// a signature for a batch or valset, or to submit a ethereum_signature for a particular
-// attestation nonce. In the case of attestations this clock starts when the
-// attestation is created, but only allows for slashing once the event has
-// passed
+// a signature for a batch or valset, or to submit a ethereum_signature for a
+// particular attestation nonce. In the case of attestations this clock starts
+// when the attestation is created, but only allows for slashing once the event
+// has passed
 //
 // target_batch_timeout:
 //

@@ -202,19 +202,12 @@ func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token common.Ad
 
 // SetLastSlashedBatchBlock sets the latest slashed Batch block height
 func (k Keeper) SetLastSlashedBatchBlock(ctx sdk.Context, blockHeight uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte{types.LastSlashedBatchBlockKey}, types.UInt64Bytes(blockHeight))
+	ctx.KVStore(k.storeKey).Set([]byte{types.LastSlashedBatchBlockKey}, types.UInt64Bytes(blockHeight))
 }
 
 // GetLastSlashedBatchBlock returns the latest slashed Batch block
 func (k Keeper) GetLastSlashedBatchBlock(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get([]byte{types.LastSlashedBatchBlockKey})
-
-	if len(bytes) == 0 {
-		return 0
-	}
-	return types.UInt64FromBytes(bytes)
+	return types.UInt64FromBytes(ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedBatchBlockKey}))
 }
 
 // GetUnSlashedBatches returns all the unslashed batches in state
@@ -224,7 +217,7 @@ func (k Keeper) GetUnSlashedBatches(ctx sdk.Context, maxHeight uint64) (out []*t
 		lastSlashedBatchBlock,
 		maxHeight,
 		func(_ []byte, batch *types.BatchTx) bool {
-			if batch.EthereumBlock > lastSlashedBatchBlock {
+			if batch.Height > lastSlashedBatchBlock {
 				out = append(out, batch)
 			}
 			return false

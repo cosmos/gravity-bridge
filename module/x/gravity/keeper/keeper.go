@@ -62,19 +62,17 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 //     SignerSetTxNonce    //
 /////////////////////////////
 
-// SetLatestSignerSetTxNonce sets the latest valset nonce
-func (k Keeper) SetLatestSignerSetTxNonce(ctx sdk.Context, nonce uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte{types.LatestSignerSetTxNonceKey}, types.UInt64Bytes(nonce))
+// IncrementLatestSignerSetTxNonce sets the latest valset nonce
+func (k Keeper) IncrementLatestSignerSetTxNonce(ctx sdk.Context) uint64 {
+	current := k.GetLatestSignerSetTxNonce(ctx)
+	new := current + 1
+	ctx.KVStore(k.storeKey).Set([]byte{types.LatestSignerSetTxNonceKey}, types.UInt64Bytes(new))
+	return new
 }
 
 // GetLatestSignerSetTxNonce returns the latest valset nonce
 func (k Keeper) GetLatestSignerSetTxNonce(ctx sdk.Context) uint64 {
-	if bz := ctx.KVStore(k.storeKey).Get([]byte{types.LatestSignerSetTxNonceKey}); len(bz) == 0 {
-		return 0
-	} else {
-		return binary.BigEndian.Uint64(bz)
-	}
+	return binary.BigEndian.Uint64(ctx.KVStore(k.storeKey).Get([]byte{types.LatestSignerSetTxNonceKey}))
 }
 
 // GetLatestSignerSetTx returns the latest validator set in state
@@ -90,17 +88,30 @@ func (k Keeper) GetLatestSignerSetTx(ctx sdk.Context) (out *types.SignerSetTx) {
 
 // SetLastSlashedSignerSetTxNonce sets the latest slashed valset nonce
 func (k Keeper) SetLastSlashedSignerSetTxNonce(ctx sdk.Context, nonce uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte{types.LastSlashedValsetNonceKey}, types.UInt64Bytes(nonce))
+	ctx.KVStore(k.storeKey).Set([]byte{types.LastSlashedSignerSetTxNonceKey}, types.UInt64Bytes(nonce))
 }
 
-// GetLastSlashedValsetNonce returns the latest slashed valset nonce
-func (k Keeper) GetLastSlashedValsetNonce(ctx sdk.Context) uint64 {
-	if bz := ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedValsetNonceKey}); len(bz) == 0 {
-		return 0
-	} else {
-		return types.UInt64FromBytes(bz)
-	}
+// GetLastSlashedSignerSetTxNonce returns the latest slashed valset nonce
+func (k Keeper) GetLastSlashedSignerSetTxNonce(ctx sdk.Context) uint64 {
+	return types.UInt64FromBytes(ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedSignerSetTxNonceKey}))
+}
+
+// GetUnSlashedSignerSetTxs returns all the unslashed validator sets in state
+func (k Keeper) GetUnSlashedSignerSetTxs(ctx sdk.Context, maxHeight uint64) (out []*types.SignerSetTx) {
+	lastSlashedSignerSetTx := k.GetLastSlashedSignerSetTxNonce(ctx)
+	k.IterateOutgoingTxs(ctx, types.SignerSetTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
+		sstx, _ := otx.(*types.SignerSetTx)
+		if sstx.Nonce > lastSlashedSignerSetTx {
+			out = append(out, sstx)
+		}
+		return false
+	})
+
+	// TODO: review order and potentially sort
+	// sort.Slice(out, func(i, j int) bool {
+	// 	return out[i].Nonce > out[j].Nonce
+	// })
+	return
 }
 
 //////////////////////////////
@@ -245,8 +256,7 @@ func (k Keeper) NewSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	}
 
 	// TODO: make the nonce an incrementing one (i.e. fetch last nonce from state, increment, set here)
-	k.GetLatestSignerSetTxNonce(ctx)
-	return types.NewSignerSetTx(uint64(ctx.BlockHeight()), uint64(ctx.BlockHeight()), ethereumSigners)
+	return types.NewSignerSetTx(k.IncrementLatestSignerSetTxNonce(ctx), uint64(ctx.BlockHeight()), ethereumSigners)
 }
 
 // GetSignerSetTxs returns all the signer set txs from the store
@@ -489,13 +499,13 @@ func (k Keeper) IterateOutgoingTxs(ctx sdk.Context, prefixByte byte, cb func(key
 	}
 }
 
-// GetLastObservedValset retrieves the last observed validator set from the store
-func (k Keeper) GetLastObservedValset(ctx sdk.Context) (out *types.SignerSetTx) {
+// GetLastObservedSignerSetTx retrieves the last observed validator set from the store
+func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) (out *types.SignerSetTx) {
 	k.cdc.MustUnmarshalBinaryBare(ctx.KVStore(k.storeKey).Get([]byte{types.LastObservedValsetKey}), out)
 	return
 }
 
-// SetLastObservedValset updates the last observed validator set in the stor e
-func (k Keeper) SetLastObservedValset(ctx sdk.Context, valset types.SignerSetTx) {
+// SetLastObservedSignerSetTx updates the last observed validator set in the stor e
+func (k Keeper) SetLastObservedSignerSetTx(ctx sdk.Context, valset types.SignerSetTx) {
 	ctx.KVStore(k.storeKey).Set([]byte{types.LastObservedValsetKey}, k.cdc.MustMarshalBinaryBare(&valset))
 }

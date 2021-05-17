@@ -55,7 +55,7 @@ func TestBatches(t *testing.T) {
 			types.NewSendToEthereumTx(1, myTokenContractAddr, mySender, myReceiver, 100, 3),
 		},
 		TokenContract: myTokenContractAddr.Hex(),
-		EthereumBlock: 1234567,
+		Height:        1234567,
 	}
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
@@ -91,7 +91,7 @@ func TestBatches(t *testing.T) {
 			types.NewSendToEthereumTx(5, myTokenContractAddr, mySender, myReceiver, 100, 4),
 		},
 		TokenContract: myTokenContractAddr.Hex(),
-		EthereumBlock: 1234567,
+		Height:        1234567,
 	}
 
 	assert.Equal(t, expSecondBatch, secondBatch)
@@ -175,7 +175,7 @@ func TestBatchesFullCoins(t *testing.T) {
 			types.NewSendToEthereumTx(3, myTokenContractAddr, mySender, myReceiver, 25, 25),
 		},
 		TokenContract: myTokenContractAddr.Hex(),
-		EthereumBlock: 1234567,
+		Height:        1234567,
 	}
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
@@ -217,7 +217,7 @@ func TestBatchesFullCoins(t *testing.T) {
 			types.NewSendToEthereumTx(4, myTokenContractAddr, mySender, myReceiver, 10, 10),
 		},
 		TokenContract: myTokenContractAddr.Hex(),
-		EthereumBlock: 1234567,
+		Height:        1234567,
 	}
 
 	assert.Equal(t, expSecondBatch, secondBatch)

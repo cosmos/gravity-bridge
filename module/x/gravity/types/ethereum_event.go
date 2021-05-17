@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"strings"
@@ -47,8 +48,19 @@ func (sse *SignerSetTxExecutedEvent) GetNonce() uint64 {
 // Hash //
 //////////
 
+// TODO: rewrite all hashes to match this one
 func (stce *SendToCosmosEvent) Hash() tmbytes.HexBytes {
-	path := fmt.Sprintf("%s/%s/%s/", stce.TokenContract, stce.EthereumSender, stce.CosmosReceiver)
+	rcv, _ := sdk.AccAddressFromBech32(stce.CosmosReceiver)
+	path := bytes.Join(
+		[][]byte{
+			sdk.Uint64ToBigEndian(stce.EventNonce),
+			stce.Amount.BigInt().Bytes(),
+			common.Hex2Bytes(stce.TokenContract),
+			common.Hex2Bytes(stce.EthereumSender),
+			rcv.Bytes(),
+		},
+		[]byte{},
+	)
 	hash := sha256.Sum256([]byte(path))
 	return hash[:]
 }

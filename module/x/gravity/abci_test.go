@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -15,21 +16,23 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-func TestValsetCreationIfNotAvailable(t *testing.T) {
+func TestSignerSetTxCreationIfNotAvailable(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
-	pk := input.GravityKeeper
+	gravity := input.GravityKeeper
 
 	// EndBlocker should set a new validator set if not available
-	EndBlocker(ctx, pk)
-	require.NotNil(t, pk.GetSignerSetTx(ctx, uint64(ctx.BlockHeight())))
-	valsets := pk.GetSignerSetTxs(ctx)
-	require.True(t, len(valsets) == 1)
+	EndBlocker(ctx, gravity)
+	otx := gravity.GetOutgoingTx(ctx, types.MakeSignerSetTxKey(1))
+	require.NotNil(t, otx)
+	_, ok := otx.(*types.SignerSetTx)
+	require.True(t, ok)
+	require.True(t, len(gravity.GetSignerSetTxs(ctx)) == 1)
 }
 
-func TestValsetCreationUponUnbonding(t *testing.T) {
+func TestSignerSetTxCreationUponUnbonding(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
-	pk := input.GravityKeeper
-	pk.SetSignerSetTxRequest(ctx)
+	gravity := input.GravityKeeper
+	gravity.NewSignerSetTx(ctx)
 
 	input.Context = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	// begin unbonding
@@ -39,23 +42,22 @@ func TestValsetCreationUponUnbonding(t *testing.T) {
 
 	// Run the staking endblocker to ensure valset is set in state
 	staking.EndBlocker(input.Context, input.StakingKeeper)
-	EndBlocker(input.Context, pk)
+	EndBlocker(input.Context, gravity)
 
-	assert.Equal(t, uint64(input.Context.BlockHeight()), pk.GetLatestValsetNonce(ctx))
+	assert.Equal(t, 2, gravity.GetLatestSignerSetTxNonce(ctx))
 }
 
-func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
+func TestSignerSetTxSlashing_SignerSetTxCreated_Before_ValidatorBonded(t *testing.T) {
 	//	Don't slash validators if valset is created before he is bonded.
 
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
 	params := input.GravityKeeper.GetParams(ctx)
 
-	vs := pk.NewSignerSetTx(ctx)
-	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
-	vs.Height = height
-	vs.Nonce = height
-	pk.StoreSignerSetTxUnsafe(ctx, vs)
+	signerSet := pk.NewSignerSetTx(ctx)
+	height := uint64(ctx.BlockHeight()) - (params.SignedSignerSetTxsWindow + 1)
+	signerSet.Height = height
+	pk.SetOutgoingTx(ctx, signerSet)
 
 	EndBlocker(ctx, pk)
 
@@ -64,27 +66,25 @@ func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
 	require.False(t, val.IsJailed())
 }
 
-func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
+func TestSignerSetTxSlashing_SignerSetTxCreated_After_ValidatorBonded(t *testing.T) {
 	//	Slashing Conditions for Bonded Validator
 
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
 	params := input.GravityKeeper.GetParams(ctx)
 
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
-	vs := pk.NewSignerSetTx(ctx)
-	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
-	vs.Height = height
-	vs.Nonce = height
-	pk.StoreSignerSetTxUnsafe(ctx, vs)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedSignerSetTxsWindow) + 2)
+	signerSet := pk.NewSignerSetTx(ctx)
+	height := uint64(ctx.BlockHeight()) - (params.SignedSignerSetTxsWindow + 1)
+	signerSet.Height = height
+	pk.SetOutgoingTx(ctx, signerSet)
 
-	for i, val := range keeper.AccAddrs {
+	for i, val := range keeper.ValAddrs {
 		if i == 0 {
 			// don't sign with first validator
 			continue
 		}
-		conf := types.NewMsgSubmitEthereumSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetEthereumSignature(ctx, *conf, nil)
+		pk.SetEthereumSignature(ctx, &types.SignerSetTxSignature{signerSet.Nonce, keeper.AccAddrs[i].String(), []byte("dummysig")}, val)
 	}
 
 	EndBlocker(ctx, pk)
@@ -104,29 +104,29 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 
 	//  Create 5 validators
 	input, ctx := keeper.SetupFiveValChain(t)
-	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
-	fmt.Println("val1  tokens", val.GetTokens().ToDec())
+	// val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+	// fmt.Println("val1  tokens", val.GetTokens().ToDec())
 
-	pk := input.GravityKeeper
+	gravity := input.GravityKeeper
 	params := input.GravityKeeper.GetParams(ctx)
 
 	// Define slashing variables
-	validatorStartHeight := ctx.BlockHeight()                                                        // 0
-	valsetRequestHeight := validatorStartHeight + 1                                                  // 1
-	valUnbondingHeight := valsetRequestHeight + 1                                                    // 2
-	valsetRequestSlashedAt := valsetRequestHeight + int64(params.SignedValsetsWindow)                // 11
-	validatorUnbondingWindowExpiry := valUnbondingHeight + int64(params.UnbondSlashingValsetsWindow) // 17
-	currentBlockHeight := valsetRequestSlashedAt + 1                                                 // 12
+	validatorStartHeight := ctx.BlockHeight()                                                             // 0
+	signerSetTxHeight := validatorStartHeight + 1                                                         // 1
+	valUnbondingHeight := signerSetTxHeight + 1                                                           // 2
+	signerSetTxSlashedAt := signerSetTxHeight + int64(params.SignedSignerSetTxsWindow)                    // 11
+	validatorUnbondingWindowExpiry := valUnbondingHeight + int64(params.UnbondSlashingSignerSetTxsWindow) // 17
+	currentBlockHeight := signerSetTxSlashedAt + 1                                                        // 12
 
-	assert.True(t, valsetRequestSlashedAt < currentBlockHeight)
-	assert.True(t, valsetRequestHeight < validatorUnbondingWindowExpiry)
+	assert.True(t, signerSetTxSlashedAt < currentBlockHeight)
+	assert.True(t, signerSetTxHeight < validatorUnbondingWindowExpiry)
 
 	// Create Valset request
-	ctx = ctx.WithBlockHeight(valsetRequestHeight)
-	vs := pk.NewSignerSetTx(ctx)
-	vs.Height = uint64(valsetRequestHeight)
-	vs.Nonce = uint64(valsetRequestHeight)
-	pk.StoreSignerSetTxUnsafe(ctx, vs)
+	ctx = ctx.WithBlockHeight(signerSetTxHeight)
+	vs := gravity.NewSignerSetTx(ctx)
+	vs.Height = uint64(signerSetTxHeight)
+	vs.Nonce = uint64(signerSetTxHeight)
+	gravity.SetOutgoingTx(ctx, vs)
 
 	// Start Unbonding validators
 	// Validator-1  Unbond slash window is not expired. if not attested, slash
@@ -138,18 +138,17 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 	undelegateMsg2 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[1], keeper.StakingAmount)
 	sh(input.Context, undelegateMsg2)
 
-	for i, val := range keeper.AccAddrs {
+	for i, val := range keeper.ValAddrs {
 		if i == 0 {
 			// don't sign with first validator
 			continue
 		}
-		conf := types.NewMsgSubmitEthereumSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetEthereumSignature(ctx, *conf, nil)
+		gravity.SetEthereumSignature(ctx, &types.SignerSetTxSignature{vs.Nonce, keeper.EthAddrs[i].Hex(), []byte("dummySig")}, val)
 	}
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 
 	ctx = ctx.WithBlockHeight(currentBlockHeight)
-	EndBlocker(ctx, pk)
+	EndBlocker(ctx, gravity)
 
 	// Assertions
 	val1 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
@@ -165,21 +164,21 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 
 func TestBatchSlashing(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
-	pk := input.GravityKeeper
-	params := pk.GetParams(ctx)
+	gravity := input.GravityKeeper
+	params := gravity.GetParams(ctx)
 
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedBatchesWindow) + 2)
 
 	// First store a batch
 	batch := &types.BatchTx{
-		BatchNonce:    1,
-		Transactions:  []*types.OutgoingTransferTx{},
+		Nonce:         1,
+		Transactions:  []*types.SendToEthereum{},
 		TokenContract: keeper.TokenContractAddrs[0],
-		Block:         uint64(ctx.BlockHeight() - int64(params.SignedBatchesWindow+1)),
+		Height:        uint64(ctx.BlockHeight() - int64(params.SignedBatchesWindow+1)),
 	}
-	pk.StoreBatchUnsafe(ctx, batch)
+	gravity.SetOutgoingTx(ctx, batch)
 
-	for i, val := range keeper.AccAddrs {
+	for i, val := range keeper.ValAddrs {
 		if i == 0 {
 			// don't sign with first validator
 			continue
@@ -188,74 +187,66 @@ func TestBatchSlashing(t *testing.T) {
 			// don't sign with 2nd validator. set val bond height > batch block height
 			validator := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[i])
 			valConsAddr, _ := validator.GetConsAddr()
-			valSigningInfo := slashingtypes.ValidatorSigningInfo{StartHeight: int64(batch.Block + 1)}
+			valSigningInfo := slashingtypes.ValidatorSigningInfo{StartHeight: int64(batch.Height + 1)}
 			input.SlashingKeeper.SetValidatorSigningInfo(ctx, valConsAddr, valSigningInfo)
 			continue
 		}
-		pk.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
-			Nonce:         batch.BatchNonce,
-			TokenContract: keeper.TokenContractAddrs[0],
-			EthSigner:     keeper.EthAddrs[i].String(),
-			Orchestrator:  val.String(),
-		})
+		gravity.SetEthereumSignature(ctx, &types.BatchTxSignature{
+			Nonce:          batch.Nonce,
+			TokenContract:  keeper.TokenContractAddrs[0],
+			EthereumSigner: keeper.EthAddrs[i].String(),
+			Signature:      []byte("dummysig"),
+		}, val)
 	}
 
-	EndBlocker(ctx, pk)
+	EndBlocker(ctx, gravity)
 
 	// ensure that the  validator is jailed and slashed
-	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
-	require.True(t, val.IsJailed())
+	require.True(t, input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0]).IsJailed())
 
 	// ensure that the 2nd  validator is not jailed and slashed
-	val2 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
-	require.False(t, val2.IsJailed())
+	require.False(t, input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1]).IsJailed())
 
 	// Ensure that the last slashed valset nonce is set properly
-	lastSlashedBatchBlock := input.GravityKeeper.GetLastSlashedBatchBlock(ctx)
-	assert.Equal(t, lastSlashedBatchBlock, batch.Block)
+	assert.Equal(t, input.GravityKeeper.GetLastSlashedBatchBlock(ctx), batch.Height)
 
 }
 
-func TestValsetEmission(t *testing.T) {
+func TestSignerSetTxEmission(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
-	pk := input.GravityKeeper
+	gravity := input.GravityKeeper
 
 	// Store a validator set with a power change as the most recent validator set
-	vs := pk.NewSignerSetTx(ctx)
-	vs.Nonce--
-	delta := float64(types.BridgeValidators(vs.Members).TotalPower()) * 0.05
-	vs.Members[0].Power = uint64(float64(vs.Members[0].Power) - delta/2)
-	vs.Members[1].Power = uint64(float64(vs.Members[1].Power) + delta/2)
-	pk.StoreSignerSetTx(ctx, vs)
+	sstx := gravity.NewSignerSetTx(ctx)
+	// TODO: decrement height
+	delta := float64(types.EthereumSigners(sstx.Signers).TotalPower()) * 0.05
+	sstx.Signers[0].Power = uint64(float64(sstx.Signers[0].Power) - delta/2)
+	sstx.Signers[1].Power = uint64(float64(sstx.Signers[1].Power) + delta/2)
+	gravity.SetOutgoingTx(ctx, sstx)
 
 	// EndBlocker should set a new validator set
-	EndBlocker(ctx, pk)
-	require.NotNil(t, pk.GetSignerSetTx(ctx, uint64(ctx.BlockHeight())))
-	valsets := pk.GetSignerSetTxs(ctx)
-	require.True(t, len(valsets) == 2)
+	EndBlocker(ctx, gravity)
+	require.NotNil(t, gravity.GetOutgoingTx(ctx, types.MakeSignerSetTxKey(2)))
+	require.True(t, len(gravity.GetSignerSetTxs(ctx)) == 2)
 }
 
-func TestValsetSetting(t *testing.T) {
+func TestSignerSetTxSetting(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
-	pk := input.GravityKeeper
-	pk.SetSignerSetTxRequest(ctx)
-	valsets := pk.GetSignerSetTxs(ctx)
-	require.True(t, len(valsets) == 1)
+	input.GravityKeeper.NewSignerSetTx(ctx)
+	require.True(t, len(input.GravityKeeper.GetSignerSetTxs(ctx)) == 1)
 }
 
 /// Test batch timeout
-func TestBatchTimeout(t *testing.T) {
+func TestBatchTxTimeout(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
-	pk := input.GravityKeeper
-	params := pk.GetParams(ctx)
+	gravity := input.GravityKeeper
+	params := gravity.GetParams(ctx)
 	var (
 		now                 = time.Now().UTC()
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5" // Pickle
-		allVouchers         = sdk.NewCoins(
-			types.NewERC20Token(99999, myTokenContractAddr).GravityCoin(),
-		)
+		myReceiver          = common.HexToAddress("0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7")
+		myTokenContractAddr = common.HexToAddress("0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5") // Pickle
+		allVouchers         = sdk.NewCoins(types.NewERC20Token(99999, myTokenContractAddr.Hex()).GravityCoin())
 	)
 
 	require.Greater(t, params.AverageBlockTime, uint64(0))
@@ -268,62 +259,55 @@ func TestBatchTimeout(t *testing.T) {
 	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
 
 	// add some TX to the pool
-	for i, v := range []uint64{2, 3, 2, 1, 5, 6} {
-		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
-		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
-		require.NoError(t, err)
-	}
+	input.AddSendToEthTxsToPool(t, ctx, myTokenContractAddr, mySender, myReceiver, 2, 3, 2, 1, 5, 6)
 
 	// when
-	ctx = ctx.WithBlockTime(now)
-	ctx = ctx.WithBlockHeight(250)
+	ctx = ctx.WithBlockTime(now).WithBlockHeight(250)
 
 	// check that we can make a batch without first setting an ethereum block height
-	b1, err1 := pk.BuildBatchTx(ctx, myTokenContractAddr, 2)
+	b1, err1 := gravity.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err1)
-	require.Equal(t, b1.BatchTimeout, uint64(0))
+	require.Equal(t, b1.Timeout, uint64(0))
 
-	pk.SetLastObservedEthereumBlockHeight(ctx, 500)
+	gravity.SetLastObservedEthereumBlockHeight(ctx, 500)
 
-	b2, err2 := pk.BuildBatchTx(ctx, myTokenContractAddr, 2)
+	b2, err2 := gravity.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err2)
 	// this is exactly block 500 plus twelve hours
-	require.Equal(t, b2.BatchTimeout, uint64(504))
+	require.Equal(t, b2.Timeout, uint64(504))
 
 	// make sure the batches got stored in the first place
-	gotFirstBatch := input.GravityKeeper.GetBatchTx(ctx, b1.TokenContract, b1.BatchNonce)
+	gotFirstBatch := input.GravityKeeper.GetOutgoingTx(ctx, types.MakeBatchTxKey(common.HexToAddress(b1.TokenContract), b1.Nonce))
 	require.NotNil(t, gotFirstBatch)
-	gotSecondBatch := input.GravityKeeper.GetBatchTx(ctx, b2.TokenContract, b2.BatchNonce)
+	gotSecondBatch := input.GravityKeeper.GetOutgoingTx(ctx, types.MakeBatchTxKey(common.HexToAddress(b2.TokenContract), b2.Nonce))
 	require.NotNil(t, gotSecondBatch)
 
 	// when, way into the future
-	ctx = ctx.WithBlockTime(now)
-	ctx = ctx.WithBlockHeight(9)
+	ctx = ctx.WithBlockTime(now).WithBlockHeight(9)
 
-	b3, err2 := pk.BuildBatchTx(ctx, myTokenContractAddr, 2)
+	b3, err2 := gravity.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err2)
 
-	EndBlocker(ctx, pk)
+	EndBlocker(ctx, gravity)
 
 	// this had a timeout of zero should be deleted.
-	gotFirstBatch = input.GravityKeeper.GetBatchTx(ctx, b1.TokenContract, b1.BatchNonce)
+	gotFirstBatch = input.GravityKeeper.GetOutgoingTx(ctx, types.MakeBatchTxKey(common.HexToAddress(b1.TokenContract), b1.Nonce))
 	require.Nil(t, gotFirstBatch)
 	// make sure the end blocker does not delete these, as the block height has not officially
 	// been updated by a relay event
-	gotSecondBatch = input.GravityKeeper.GetBatchTx(ctx, b2.TokenContract, b2.BatchNonce)
+	gotSecondBatch = input.GravityKeeper.GetOutgoingTx(ctx, types.MakeBatchTxKey(common.HexToAddress(b2.TokenContract), b2.Nonce))
 	require.NotNil(t, gotSecondBatch)
-	gotThirdBatch := input.GravityKeeper.GetBatchTx(ctx, b3.TokenContract, b3.BatchNonce)
+	gotThirdBatch := input.GravityKeeper.GetOutgoingTx(ctx, types.MakeBatchTxKey(common.HexToAddress(b3.TokenContract), b3.Nonce))
 	require.NotNil(t, gotThirdBatch)
 
-	pk.SetLastObservedEthereumBlockHeight(ctx, 5000)
-	EndBlocker(ctx, pk)
+	gravity.SetLastObservedEthereumBlockHeight(ctx, 5000)
+	EndBlocker(ctx, gravity)
 
 	// make sure the end blocker does delete these, as we've got a new Ethereum block height
-	gotFirstBatch = input.GravityKeeper.GetBatchTx(ctx, b1.TokenContract, b1.BatchNonce)
+	gotFirstBatch = input.GravityKeeper.GetOutgoingTx(ctx, types.MakeBatchTxKey(common.HexToAddress(b1.TokenContract), b1.Nonce))
 	require.Nil(t, gotFirstBatch)
-	gotSecondBatch = input.GravityKeeper.GetBatchTx(ctx, b2.TokenContract, b2.BatchNonce)
+	gotSecondBatch = input.GravityKeeper.GetOutgoingTx(ctx, types.MakeBatchTxKey(common.HexToAddress(b2.TokenContract), b2.Nonce))
 	require.Nil(t, gotSecondBatch)
-	gotThirdBatch = input.GravityKeeper.GetBatchTx(ctx, b3.TokenContract, b3.BatchNonce)
+	gotThirdBatch = input.GravityKeeper.GetOutgoingTx(ctx, types.MakeBatchTxKey(common.HexToAddress(b3.TokenContract), b3.Nonce))
 	require.NotNil(t, gotThirdBatch)
 }

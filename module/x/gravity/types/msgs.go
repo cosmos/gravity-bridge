@@ -18,12 +18,12 @@ var (
 	_ sdk.Msg = &MsgSubmitEthereumSignature{}
 )
 
-// NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
-func NewMsgSetOrchestratorAddress(val sdk.ValAddress, oper sdk.AccAddress, eth string) *MsgDelegateKeys {
+// NewMsgDelegateKeys returns a new msgSetOrchestratorAddress
+func NewMsgDelegateKeys(val sdk.ValAddress, orch sdk.AccAddress, eth string) *MsgDelegateKeys {
 	return &MsgDelegateKeys{
 		ValidatorAddress:    val.String(),
-		OrchestratorAddress: oper.String(),
-		EthereumAddress:   eth,
+		OrchestratorAddress: orch.String(),
+		EthereumAddress:     eth,
 	}
 }
 
@@ -31,7 +31,7 @@ func NewMsgSetOrchestratorAddress(val sdk.ValAddress, oper sdk.AccAddress, eth s
 func (msg *MsgDelegateKeys) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgDelegateKeys) Type() string { return "delegate_keys"}
+func (msg *MsgDelegateKeys) Type() string { return "delegate_keys" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgDelegateKeys) ValidateBasic() (err error) {
@@ -60,7 +60,6 @@ func (msg *MsgDelegateKeys) GetSigners() []sdk.AccAddress {
 	}
 	return []sdk.AccAddress{sdk.AccAddress(acc)}
 }
-
 
 // Route should return the name of the module
 func (msg *MsgSubmitEthereumEvent) Route() string { return RouterKey }
@@ -96,7 +95,6 @@ func (msg *MsgSubmitEthereumEvent) GetSigners() []sdk.AccAddress {
 	}
 	return []sdk.AccAddress{acc}
 }
-
 
 // Route should return the name of the module
 func (msg *MsgSubmitEthereumSignature) Route() string { return RouterKey }
@@ -136,10 +134,10 @@ func (msg *MsgSubmitEthereumSignature) GetSigners() []sdk.AccAddress {
 // NewMsgSendToEthereum returns a new MsgSendToEthereum
 func NewMsgSendToEthereum(sender sdk.AccAddress, destAddress string, send sdk.Coin, bridgeFee sdk.Coin) *MsgSendToEthereum {
 	return &MsgSendToEthereum{
-		Sender:    sender.String(),
-		EthereumRecipient:   destAddress,
-		Amount:    send,
-		BridgeFee: bridgeFee,
+		Sender:            sender.String(),
+		EthereumRecipient: destAddress,
+		Amount:            send,
+		BridgeFee:         bridgeFee,
 	}
 }
 
@@ -229,7 +227,7 @@ func (msg MsgRequestBatchTx) GetSigners() []sdk.AccAddress {
 // NewMsgCancelSendToEthereum returns a new MsgCancelSendToEthereum
 func NewMsgCancelSendToEthereum(id uint64, orchestrator sdk.AccAddress) *MsgCancelSendToEthereum {
 	return &MsgCancelSendToEthereum{
-		Id: id,
+		Id:     id,
 		Sender: orchestrator.String(),
 	}
 }

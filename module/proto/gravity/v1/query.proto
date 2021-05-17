@@ -166,8 +166,9 @@ message SignerSetTxEthereumSignaturesRequest {
   // NOTE: if address is passed, return only the signature from that validator
   uint64 nonce = 1;
 
-  // NOTE: this address can be either a validator or an orchestrator address to filter by
-  string address = 2; 
+  // NOTE: this address can be either a validator or an orchestrator address to
+  // filter by
+  string address = 2;
 }
 message SignerSetTxEthereumSignaturesResponse {
   // repeated SignerSetTxSignature confirm = 1;
@@ -236,12 +237,12 @@ message BatchTxFeesResponse {
   ];
 }
 
-message ContractCallTxEthereumSignaturesRequest { 
+message ContractCallTxEthereumSignaturesRequest {
   bytes invalidation_scope = 1;
   uint64 invalidation_nonce = 2;
-    // NOTE: this is an sdk.AccAddress and can represent either the
+  // NOTE: this is an sdk.AccAddress and can represent either the
   // orchestartor address or the cooresponding validator address
-  string address = 3; 
+  string address = 3;
 }
 message ContractCallTxEthereumSignaturesResponse {
   // Note these are returned with the signature empty

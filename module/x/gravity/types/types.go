@@ -148,7 +148,7 @@ func NewSignerSetTx(nonce, height uint64, members EthereumSigners) *SignerSetTx 
 	for _, val := range members {
 		mem = append(mem, val)
 	}
-	return &SignerSetTx{Nonce: nonce, Signers: mem}
+	return &SignerSetTx{Nonce: nonce, Height: height, Signers: mem}
 }
 
 // WithoutEmptyMembers returns a new Valset without member that have 0 power or an empty Ethereum address.

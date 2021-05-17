@@ -6,8 +6,10 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
+	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
@@ -400,7 +402,8 @@ func (m *ContractCallTxResponse) GetLogicCall() *ContractCallTx {
 type SignerSetTxEthereumSignaturesRequest struct {
 	// NOTE: if address is passed, return only the signature from that validator
 	Nonce uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	// NOTE: this address can be either a validator or an orchestrator address to filter by
+	// NOTE: this address can be either a validator or an orchestrator address to
+	// filter by
 	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
 }
 
@@ -1077,7 +1080,7 @@ func (m *BatchTxFeesRequest) XXX_DiscardUnknown() {
 var xxx_messageInfo_BatchTxFeesRequest proto.InternalMessageInfo
 
 type BatchTxFeesResponse struct {
-	Fees []types.Coin `protobuf:"bytes,1,rep,name=fees,proto3" json:"fees"`
+	Fees github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=fees,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"fees"`
 }
 
 func (m *BatchTxFeesResponse) Reset()         { *m = BatchTxFeesResponse{} }
@@ -1113,7 +1116,7 @@ func (m *BatchTxFeesResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_BatchTxFeesResponse proto.InternalMessageInfo
 
-func (m *BatchTxFeesResponse) GetFees() []types.Coin {
+func (m *BatchTxFeesResponse) GetFees() github_com_cosmos_cosmos_sdk_types.Coins {
 	if m != nil {
 		return m.Fees
 	}
@@ -2226,10 +2229,10 @@ type QueryClient interface {
 }
 
 type queryClient struct {
-	cc *grpc.ClientConn
+	cc grpc1.ClientConn
 }
 
-func NewQueryClient(cc *grpc.ClientConn) QueryClient {
+func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
@@ -2528,7 +2531,7 @@ func (*UnimplementedQueryServer) DelegateKeysByOrchestrator(ctx context.Context,
 	return nil, status.Errorf(codes.Unimplemented, "method DelegateKeysByOrchestrator not implemented")
 }
 
-func RegisterQueryServer(s *grpc.Server, srv QueryServer) {
+func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
 }
 
