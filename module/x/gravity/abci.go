@@ -112,7 +112,7 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 			// If no attestation becomes observed, when we get to the next nonce, every attestation in
 			// it will be skipped. The same will happen for every nonce after that.
 			if nonce == uint64(k.GetLastObservedEventNonce(ctx))+1 {
-				k.TryEventVoteRecord(ctx, &att)
+				k.TryEventVoteRecord(ctx, att)
 			}
 		}
 	}

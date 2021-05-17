@@ -200,10 +200,10 @@ func (k Keeper) SetPoolEntry(ctx sdk.Context, val *types.SendToEthereum) {
 	ctx.KVStore(k.storeKey).Set(types.GetSendToEthereumKey(val.Id), k.cdc.MustMarshalBinaryBare(val))
 }
 
-func (k Keeper) GetPoolEntry(ctx sdk.Context, id uint64) (out *types.SendToEthereum) {
-	bz := ctx.KVStore(k.storeKey).Get(types.GetSendToEthereumKey(id))
-	k.cdc.MustUnmarshalBinaryBare(bz, out)
-	return
+func (k Keeper) GetPoolEntry(ctx sdk.Context, id uint64) *types.SendToEthereum {
+	var out types.SendToEthereum
+	k.cdc.MustUnmarshalBinaryBare(ctx.KVStore(k.storeKey).Get(types.GetSendToEthereumKey(id)), &out)
+	return &out
 }
 
 func (k Keeper) DeletePoolEntry(ctx sdk.Context, id uint64) {

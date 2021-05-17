@@ -52,7 +52,7 @@ func TestBatches(t *testing.T) {
 		Nonce: 1,
 		Transactions: []*types.SendToEthereum{
 			types.NewSendToEthereumTx(2, myTokenContractAddr, mySender, myReceiver, 101, 3),
-			types.NewSendToEthereumTx(1, myTokenContractAddr, mySender, myReceiver, 100, 3),
+			types.NewSendToEthereumTx(1, myTokenContractAddr, mySender, myReceiver, 100, 2),
 		},
 		TokenContract: myTokenContractAddr.Hex(),
 		Height:        1234567,
@@ -66,8 +66,8 @@ func TestBatches(t *testing.T) {
 		return false
 	})
 	expUnbatchedTx := []*types.SendToEthereum{
-		types.NewSendToEthereumTx(3, myTokenContractAddr, mySender, myReceiver, 102, 3),
-		types.NewSendToEthereumTx(4, myTokenContractAddr, mySender, myReceiver, 103, 3),
+		types.NewSendToEthereumTx(3, myTokenContractAddr, mySender, myReceiver, 102, 2),
+		types.NewSendToEthereumTx(4, myTokenContractAddr, mySender, myReceiver, 103, 1),
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
 

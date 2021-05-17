@@ -351,67 +351,29 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 // address mapping will mean having to keep two of the same data around just to provide lookups.
 //
 // For the time being this will serve
-func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgDelegateKeys {
+func (k Keeper) GetDelegateKeys(ctx sdk.Context) (out []*types.MsgDelegateKeys) {
 	store := ctx.KVStore(k.storeKey)
-	prfx := []byte{types.ValidatorEthereumAddressKey}
-
-	iter := prefix.NewStore(store, prfx).Iterator(nil, nil)
-	defer iter.Close()
-
-	ethAddresses := make(map[string]string)
-
+	iter := prefix.NewStore(store, []byte{types.ValidatorEthereumAddressKey}).Iterator(nil, nil)
 	for ; iter.Valid(); iter.Next() {
-		// the 'key' contains both the prfx and the value, so we need
-		// to cut off the starting bytes, if you don't do this a valid
-		// cosmos key will be made out of EthereumAddressKey + the startin bytes
-		// of the actual key
-		key := iter.Key()[1:]
-		value := iter.Value()
-		ethAddress := string(value)
-		valAddress := sdk.ValAddress(key)
-		ethAddresses[valAddress.String()] = ethAddress
-	}
-
-	store = ctx.KVStore(k.storeKey)
-	prfx = []byte{types.OrchestratorValidatorAddressKey}
-	iter = store.Iterator(prefixRange(prfx))
-	defer iter.Close()
-
-	orchAddresses := make(map[string]string)
-
-	for ; iter.Valid(); iter.Next() {
-		key := iter.Key()[1:]
-		value := iter.Value()
-		orchAddress := sdk.AccAddress(key).String()
-		valAddress := sdk.ValAddress(value)
-		orchAddresses[valAddress.String()] = orchAddress
-	}
-
-	var result []*types.MsgDelegateKeys
-
-	for valAddr, ethAddr := range ethAddresses {
-		orch, ok := orchAddresses[valAddr]
-		if !ok {
-			// this should never happen unless the store
-			// is somehow inconsistent
-			panic("Can't find address")
-		}
-		result = append(result, &types.MsgDelegateKeys{
-			OrchestratorAddress: orch,
-			ValidatorAddress:    valAddr,
-			EthereumAddress:     ethAddr,
+		out = append(out, &types.MsgDelegateKeys{
+			ValidatorAddress: sdk.ValAddress(iter.Key()).String(),
+			EthereumAddress:  common.BytesToAddress(iter.Value()).Hex(),
 		})
+	}
+	iter.Close()
 
+	for _, msg := range out {
+		msg.OrchestratorAddress = sdk.AccAddress(k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(msg.EthereumAddress))).String()
 	}
 
 	// we iterated over a map, so now we have to sort to ensure the
 	// output here is deterministic, eth address chosen for no particular
 	// reason
-	sort.Slice(result[:], func(i, j int) bool {
-		return result[i].EthereumAddress < result[j].EthereumAddress
+	sort.Slice(out[:], func(i, j int) bool {
+		return out[i].EthereumAddress < out[j].EthereumAddress
 	})
 
-	return result
+	return out
 }
 
 // GetUnbondingvalidators returns UnbondingValidators.
@@ -497,9 +459,12 @@ func (k Keeper) IterateOutgoingTxs(ctx sdk.Context, prefixByte byte, cb func(key
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var any *cdctypes.Any
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), any)
-		otx := types.MustUnpackOutgoingTx(any)
+		var any cdctypes.Any
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &any)
+		var otx types.OutgoingTx
+		if err := k.cdc.UnpackAny(&any, &otx); err != nil {
+			panic(err)
+		}
 		if cb(iter.Key(), otx) {
 			break
 		}

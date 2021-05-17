@@ -57,6 +57,7 @@ func (k Keeper) BuildBatchTx(
 		Timeout:       k.getBatchTimeoutHeight(ctx),
 		Transactions:  selectedTx,
 		TokenContract: contractAddress.Hex(),
+		Height:        uint64(ctx.BlockHeight()),
 	}
 	k.SetOutgoingTx(ctx, batch)
 

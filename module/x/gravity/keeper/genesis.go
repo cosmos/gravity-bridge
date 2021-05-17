@@ -27,7 +27,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		if err := event.Validate(); err != nil {
 			panic("invalid event in genesis")
 		}
-		k.SetEthereumEventVoteRecord(ctx, event.GetNonce(), event.Hash(), &evr)
+		k.SetEthereumEventVoteRecord(ctx, event.GetNonce(), event.Hash(), evr)
 	}
 
 	// reset last observed event nonce
