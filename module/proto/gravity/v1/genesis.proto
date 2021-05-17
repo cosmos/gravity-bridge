@@ -110,8 +110,7 @@ message GenesisState {
   uint64 last_observed_event_nonce = 2;
   repeated google.protobuf.Any outgoing_txs = 3;
   repeated google.protobuf.Any signatures = 4;
-  repeated EthereumEventVoteRecord ethereum_event_vote_records = 9
-      [ (gogoproto.nullable) = false ];
+  repeated EthereumEventVoteRecord ethereum_event_vote_records = 9;
   repeated MsgDelegateKeys delegate_keys = 10;
   repeated ERC20ToDenom erc20_to_denoms = 11;
   repeated SendToEthereum unbatched_send_to_ethereum_txs = 12;

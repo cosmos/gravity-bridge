@@ -78,6 +78,20 @@ func UnpackEvent(any *types.Any) (EthereumEvent, error) {
 	return event, nil
 }
 
+func PackSignature(signature EthereumSignature) (*types.Any, error) {
+	msg, ok := signature.(proto.Message)
+	if !ok {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", signature)
+	}
+
+	anyEvent, err := types.NewAnyWithValue(msg)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
+	}
+
+	return anyEvent, nil
+}
+
 // UnpackSignature unpacks an Any into a Confirm interface. It returns an error if the
 // confirm can't be unpacked.
 func UnpackSignature(any *types.Any) (EthereumSignature, error) {
@@ -91,20 +105,6 @@ func UnpackSignature(any *types.Any) (EthereumSignature, error) {
 	}
 
 	return confirm, nil
-}
-
-func PackSignature(signature EthereumSignature) (*types.Any, error) {
-	msg, ok := signature.(proto.Message)
-	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", signature)
-	}
-
-	anyEvent, err := types.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
-	}
-
-	return anyEvent, nil
 }
 
 func PackOutgoingTx(outgoing OutgoingTx) (*types.Any, error) {

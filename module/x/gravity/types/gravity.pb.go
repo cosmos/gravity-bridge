@@ -10,9 +10,9 @@ import (
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
-	_ "github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/regen-network/cosmos-proto"
 	github_com_tendermint_tendermint_libs_bytes "github.com/tendermint/tendermint/libs/bytes"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -205,9 +205,9 @@ func (m *EthereumSigner) GetEthereumAddress() string {
 // are used to check signatures on Ethereum in order to get significant gas
 // savings.
 type SignerSetTx struct {
-	Nonce   uint64          `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	Height  uint64          `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
-	Signers EthereumSigners `protobuf:"bytes,3,rep,name=signers,proto3,castrepeated=EthereumSigners" json:"signers,omitempty"`
+	Nonce   uint64            `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Height  uint64            `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	Signers []*EthereumSigner `protobuf:"bytes,3,rep,name=signers,proto3" json:"signers,omitempty"`
 }
 
 func (m *SignerSetTx) Reset()         { *m = SignerSetTx{} }
@@ -257,7 +257,7 @@ func (m *SignerSetTx) GetHeight() uint64 {
 	return 0
 }
 
-func (m *SignerSetTx) GetSigners() EthereumSigners {
+func (m *SignerSetTx) GetSigners() []*EthereumSigner {
 	if m != nil {
 		return m.Signers
 	}

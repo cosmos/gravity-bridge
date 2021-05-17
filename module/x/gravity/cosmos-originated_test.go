@@ -82,7 +82,7 @@ func addDenomToERC20Relation(tv *testingVars) {
 	eva, err := types.PackEvent(deployedEvent)
 	require.NoError(tv.t, err)
 
-	msgSumbitEvent := &types.MsgSubmitEthereumEvent{eva, tv.myOrchestratorAddr.String()}
+	msgSumbitEvent := &types.MsgSubmitEthereumEvent{Event: eva, Signer: tv.myOrchestratorAddr.String()}
 
 	_, err = tv.h(tv.ctx, msgSumbitEvent)
 	require.NoError(tv.t, err)

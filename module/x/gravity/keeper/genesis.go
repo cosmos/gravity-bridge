@@ -100,7 +100,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		outgoingTxs              []*cdctypes.Any
 		ethereumSignatures       []*cdctypes.Any
 		attmap                   = k.GetEthereumEventVoteRecordMapping(ctx)
-		ethereumEventVoteRecords []types.EthereumEventVoteRecord
+		ethereumEventVoteRecords []*types.EthereumEventVoteRecord
 		delegates                = k.GetDelegateKeys(ctx)
 		lastobserved             = k.GetLastObservedEventNonce(ctx)
 		erc20ToDenoms            []*types.ERC20ToDenom

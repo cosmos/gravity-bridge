@@ -1,6 +1,8 @@
 package types
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"math"
 	"sort"
@@ -8,6 +10,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // UInt64FromBytes create uint from binary big endian representation
@@ -55,6 +58,17 @@ func (b EthereumSigners) Sort() {
 		}
 		return b[i].Power > b[j].Power
 	})
+}
+
+// Hash takes the sha256sum of a representation of the signer set
+func (b EthereumSigners) Hash() []byte {
+	b.Sort()
+	var out bytes.Buffer
+	for _, s := range b {
+		out.Write(append(common.HexToAddress(s.EthereumAddress).Bytes(), UInt64Bytes(s.Power)...))
+	}
+	hash := sha256.Sum256(out.Bytes())
+	return hash[:]
 }
 
 // PowerDiff returns the difference in power between two bridge validator sets

@@ -147,7 +147,7 @@ func (k Keeper) PickUnbatchedTX(
 func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, nonce uint64) error {
 	otx := k.GetOutgoingTx(ctx, types.MakeBatchTxKey(tokenContract, nonce))
 	if otx == nil {
-		return sdkerrors.Wrapf(types.ErrInvalid, "no batch tx found for token: %s nonce: %s", tokenContract, nonce)
+		return sdkerrors.Wrapf(types.ErrInvalid, "no batch tx found for token: %s nonce: %d", tokenContract, nonce)
 	}
 	batch, _ := otx.(*types.BatchTx)
 	for _, tx := range batch.Transactions {
@@ -207,7 +207,11 @@ func (k Keeper) SetLastSlashedBatchBlock(ctx sdk.Context, blockHeight uint64) {
 
 // GetLastSlashedBatchBlock returns the latest slashed Batch block
 func (k Keeper) GetLastSlashedBatchBlock(ctx sdk.Context) uint64 {
-	return types.UInt64FromBytes(ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedBatchBlockKey}))
+	if bz := ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedBatchBlockKey}); bz == nil {
+		return 0
+	} else {
+		return types.UInt64FromBytes(bz)
+	}
 }
 
 // GetUnSlashedBatches returns all the unslashed batches in state

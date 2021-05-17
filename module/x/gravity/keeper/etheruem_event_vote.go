@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
@@ -30,7 +30,7 @@ func (k Keeper) RecordEventVote(
 
 	// If it does not exist, create a new one.
 	if eventVoteRecord == nil {
-		any, err := codectypes.NewAnyWithValue(event)
+		any, err := types.PackEvent(event)
 		if err != nil {
 			return nil, err
 		}
@@ -57,7 +57,7 @@ func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.Ether
 	// This conditional stops the event vote record from accidentally being applied twice.
 	if !eventVoteRecord.Accepted {
 		var event types.EthereumEvent
-		if err := k.cdc.UnpackAny(eventVoteRecord.Event, event); err != nil {
+		if err := k.cdc.UnpackAny(eventVoteRecord.Event, &event); err != nil {
 			panic("unpacking packed any")
 		}
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
@@ -139,9 +139,10 @@ func (k Keeper) SetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, c
 }
 
 // GetEthereumEventVoteRecord return a vote record given a nonce
-func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, claimHash []byte) (out *types.EthereumEventVoteRecord) {
-	k.cdc.MustUnmarshalBinaryBare(ctx.KVStore(k.storeKey).Get(types.GetEthereumEventVoteRecordKey(eventNonce, claimHash)), out)
-	return
+func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, claimHash []byte) *types.EthereumEventVoteRecord {
+	var out types.EthereumEventVoteRecord
+	k.cdc.MustUnmarshalBinaryBare(ctx.KVStore(k.storeKey).Get(types.GetEthereumEventVoteRecordKey(eventNonce, claimHash)), &out)
+	return &out
 }
 
 // DeleteEthereumEventVoteRecord deletes an attestation given an event nonce and claim
@@ -150,16 +151,19 @@ func (k Keeper) DeleteEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64
 }
 
 // GetEthereumEventVoteRecordMapping returns a mapping of eventnonce -> attestations at that nonce
-func (k Keeper) GetEthereumEventVoteRecordMapping(ctx sdk.Context) (out map[uint64][]types.EthereumEventVoteRecord) {
-	out = make(map[uint64][]types.EthereumEventVoteRecord)
-	k.IterateEthereumEventVoteRecords(ctx, func(_ []byte, eventVoteRecord types.EthereumEventVoteRecord) bool {
-		event, err := types.UnpackEvent(eventVoteRecord.Event)
-		if err != nil {
-			panic("couldn't cast to event")
+func (k Keeper) GetEthereumEventVoteRecordMapping(ctx sdk.Context) (out map[uint64][]*types.EthereumEventVoteRecord) {
+	out = make(map[uint64][]*types.EthereumEventVoteRecord)
+	k.IterateEthereumEventVoteRecords(ctx, func(key []byte, eventVoteRecord *types.EthereumEventVoteRecord) bool {
+		var event types.EthereumEvent
+		if err := k.cdc.UnpackAny(eventVoteRecord.Event, &event); err != nil {
+			panic(err)
 		}
 
+		fmt.Println("HERERERE")
+		fmt.Println(event)
+		fmt.Println(eventVoteRecord)
 		if val, ok := out[event.GetNonce()]; !ok {
-			out[event.GetNonce()] = []types.EthereumEventVoteRecord{eventVoteRecord}
+			out[event.GetNonce()] = []*types.EthereumEventVoteRecord{eventVoteRecord}
 		} else {
 			out[event.GetNonce()] = append(val, eventVoteRecord)
 		}
@@ -169,17 +173,15 @@ func (k Keeper) GetEthereumEventVoteRecordMapping(ctx sdk.Context) (out map[uint
 }
 
 // IterateEthereumEventVoteRecords iterates through all attestations
-func (k Keeper) IterateEthereumEventVoteRecords(ctx sdk.Context, cb func([]byte, types.EthereumEventVoteRecord) bool) {
-	store := ctx.KVStore(k.storeKey)
-	prefix := []byte{types.EthereumEventVoteRecordKey}
-	iter := store.Iterator(prefixRange(prefix))
+func (k Keeper) IterateEthereumEventVoteRecords(ctx sdk.Context, cb func([]byte, *types.EthereumEventVoteRecord) bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.EthereumEventVoteRecordKey})
+	iter := store.Iterator(nil, nil)
 	defer iter.Close()
-
 	for ; iter.Valid(); iter.Next() {
 		att := types.EthereumEventVoteRecord{}
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &att)
 		// cb returns true to stop early
-		if cb(iter.Key(), att) {
+		if cb(iter.Key(), &att) {
 			return
 		}
 	}

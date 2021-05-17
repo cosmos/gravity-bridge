@@ -72,7 +72,11 @@ func (k Keeper) IncrementLatestSignerSetTxNonce(ctx sdk.Context) uint64 {
 
 // GetLatestSignerSetTxNonce returns the latest valset nonce
 func (k Keeper) GetLatestSignerSetTxNonce(ctx sdk.Context) uint64 {
-	return binary.BigEndian.Uint64(ctx.KVStore(k.storeKey).Get([]byte{types.LatestSignerSetTxNonceKey}))
+	if bz := ctx.KVStore(k.storeKey).Get([]byte{types.LatestSignerSetTxNonceKey}); bz == nil {
+		return 0
+	} else {
+		return binary.BigEndian.Uint64(bz)
+	}
 }
 
 // GetLatestSignerSetTx returns the latest validator set in state
@@ -93,7 +97,11 @@ func (k Keeper) SetLastSlashedSignerSetTxNonce(ctx sdk.Context, nonce uint64) {
 
 // GetLastSlashedSignerSetTxNonce returns the latest slashed valset nonce
 func (k Keeper) GetLastSlashedSignerSetTxNonce(ctx sdk.Context) uint64 {
-	return types.UInt64FromBytes(ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedSignerSetTxNonceKey}))
+	if bz := ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedSignerSetTxNonceKey}); bz == nil {
+		return 0
+	} else {
+		return binary.BigEndian.Uint64(bz)
+	}
 }
 
 // GetUnSlashedSignerSetTxs returns all the unslashed validator sets in state
@@ -456,12 +464,11 @@ func prefixRange(prefix []byte) ([]byte, []byte) {
 
 // todo: outgoingTx prefix byte
 // GetOutgoingTx
-func (k Keeper) GetOutgoingTx(ctx sdk.Context, storeIndex []byte) types.OutgoingTx {
-	bz := ctx.KVStore(k.storeKey).Get(types.GetOutgoingTxKey(storeIndex))
-
-	var any *cdctypes.Any
-	k.cdc.MustUnmarshalBinaryBare(bz, any)
-	return types.MustUnpackOutgoingTx(any)
+func (k Keeper) GetOutgoingTx(ctx sdk.Context, storeIndex []byte) (out types.OutgoingTx) {
+	if err := k.cdc.UnmarshalInterface(ctx.KVStore(k.storeKey).Get(types.GetOutgoingTxKey(storeIndex)), &out); err != nil {
+		panic(err)
+	}
+	return out
 }
 
 // SetOutgoingTx
