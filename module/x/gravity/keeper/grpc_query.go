@@ -117,7 +117,7 @@ package keeper
 // 	}
 
 // 	var pendingBatchReq *types.BatchTx
-// 	k.IterateBatchTxes(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
+// 	k.IterateBatchTxs(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
 // 		foundConfirm := k.GetBatchConfirm(sdk.UnwrapSDKContext(c), batch.BatchNonce, batch.TokenContract, addr) != nil
 // 		if !foundConfirm {
 // 			pendingBatchReq = batch
@@ -155,7 +155,7 @@ package keeper
 // 	c context.Context,
 // 	req *types.QueryBatchTxesRequest) (*types.QueryBatchTxesResponse, error) {
 // 	var batches []*types.BatchTx
-// 	k.IterateBatchTxes(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
+// 	k.IterateBatchTxs(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
 // 		batches = append(batches, batch)
 // 		return len(batches) == MaxResults
 // 	})

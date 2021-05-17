@@ -53,7 +53,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	}
 
 	// get next tx id from keeper
-	nextID := k.autoIncrementID(ctx, []byte{types.KeyLastTXPoolID})
+	nextID := k.IncrementLastSendToEthereumIDKey(ctx)
 
 	erc20Fee := types.NewSDKIntERC20Token(fee.Amount, tokenContract)
 
@@ -72,7 +72,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	k.SetPoolEntry(ctx, outgoing)
 
 	// add a second index with the fee
-	k.AppendToUnbatchedTXIndex(ctx, tokenContract, erc20Fee, nextID)
+	k.AppendToUnbatchedTXIndex(ctx, erc20Fee, nextID)
 
 	// todo: add second index for sender so that we can easily query: give pending Tx by sender
 	// todo: what about a second index for receiver?
@@ -160,7 +160,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 }
 
 // AppendToUnbatchedTXIndex add at the end when tx with same fee exists
-func (k Keeper) AppendToUnbatchedTXIndex(ctx sdk.Context, tokenContract common.Address, fee types.ERC20Token, txID uint64) {
+func (k Keeper) AppendToUnbatchedTXIndex(ctx sdk.Context, fee types.ERC20Token, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
 	idxKey := types.GetFeeSecondIndexKey(fee.GravityCoin())
 	var idSet types.IDSet
@@ -172,20 +172,7 @@ func (k Keeper) AppendToUnbatchedTXIndex(ctx sdk.Context, tokenContract common.A
 	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(&idSet))
 }
 
-// PrependToUnbatchedTXIndex add at the top when tx with same fee exists
-func (k Keeper) PrependToUnbatchedTXIndex(ctx sdk.Context, tokenContract common.Address, fee types.ERC20Token, txID uint64) {
-	store := ctx.KVStore(k.storeKey)
-	idxKey := types.GetFeeSecondIndexKey(fee.GravityCoin())
-	var idSet types.IDSet
-	if store.Has(idxKey) {
-		bz := store.Get(idxKey)
-		k.cdc.MustUnmarshalBinaryBare(bz, &idSet)
-	}
-	idSet.Ids = append([]uint64{txID}, idSet.Ids...)
-	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(&idSet))
-}
-
-// removeFromUnbatchedTXIndex removes the tx from the index and makes it implicit no available anymore
+// removeFromUnbatchedTXIndex removes the tx from the index and makes it not available anymore
 func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee types.ERC20Token, txID uint64) error {
 	store := ctx.KVStore(k.storeKey)
 	idxKey := types.GetFeeSecondIndexKey(fee.GravityCoin())
@@ -354,14 +341,15 @@ func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.ERC20Token {
 	return batchFeesMap
 }
 
-func (k Keeper) autoIncrementID(ctx sdk.Context, idKey []byte) uint64 {
+func (k Keeper) IncrementLastSendToEthereumIDKey(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(idKey)
-	var id uint64 = 1
+	bz := store.Get([]byte{types.LastSendToEthereumIDKey})
+	var id uint64 = 0
 	if bz != nil {
 		id = binary.BigEndian.Uint64(bz)
 	}
-	bz = sdk.Uint64ToBigEndian(id + 1)
-	store.Set(idKey, bz)
-	return id
+	newId := id + 1
+	bz = sdk.Uint64ToBigEndian(newId)
+	store.Set([]byte{types.LastSendToEthereumIDKey}, bz)
+	return newId
 }

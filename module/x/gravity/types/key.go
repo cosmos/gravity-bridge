@@ -41,7 +41,7 @@ const (
 	LatestSignerSetTxNonceKey
 	LastSlashedBatchBlockKey
 	LastSlashedValsetNonceKey
-	LastOutgoingBatchIDKey
+	LastOutgoingBatchNonceKey
 
 	// SecondIndexSendToEthereumFeeKey indexes fee amounts by token contract address
 	SecondIndexSendToEthereumFeeKey
@@ -49,10 +49,8 @@ const (
 	// BatchTxBlockKey indexes outgoing tx batches under a block height and token address
 	BatchTxBlockKey
 
-	// KeyLastTXPoolID indexes the lastTxPoolID
-	KeyLastTXPoolID
-
-	// KeyLastOutgoingBatchID indexes the lastBatchID
+	// LastSendToEthereumIDKey indexes the lastTxPoolID
+	LastSendToEthereumIDKey
 
 	// LastEthereumBlockHeightKey indexes the latest Ethereum block height
 	LastEthereumBlockHeightKey
