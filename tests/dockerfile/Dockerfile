@@ -1,15 +1,11 @@
-FROM fedora
+FROM fedora:33
 ENV GOPATH=/go
 ENV PATH=$PATH:/go/bin
-RUN dnf install -y git make gcc gcc-c++ which iproute iputils procps-ng vim-minimal tmux net-tools htop tar jq npm openssl-devel perl
-ADD https://golang.org/dl/go1.15.6.linux-amd64.tar.gz /go/
-RUN cd /go && tar -xvf * && mv /go/**/ /usr/local/
+RUN dnf install -y git make gcc gcc-c++ which iproute iputils procps-ng vim-minimal tmux net-tools htop tar jq npm openssl-devel perl rust cargo golang
 # only required for deployment script
 RUN npm install -g ts-node && npm install -g typescript
 ADD https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-1.10.1-c2d2f4ed.tar.gz /geth/
 RUN cd /geth && tar -xvf * && mv /geth/**/geth /usr/bin/geth
-# rust for the testing suite and the relayers / validator daemons
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 # the actual source code for this repo, this **only** includes checked in files!
 # this is a bit of a pain but it does speed things up a lot
 ADD gravity.tar.gz /
