@@ -41,7 +41,7 @@ const (
 	LatestSignerSetTxNonceKey
 	LastSlashedBatchBlockKey
 	LastSlashedSignerSetTxNonceKey
-	LastOutgoingBatchIDKey
+	LastOutgoingBatchNonceKey
 
 	// SecondIndexSendToEthereumFeeKey indexes fee amounts by token contract address
 	SecondIndexSendToEthereumFeeKey
