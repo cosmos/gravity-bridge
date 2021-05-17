@@ -239,6 +239,7 @@ func (k Keeper) PendingContractCallTxEthereumSignatures(c context.Context, req *
 func (k Keeper) LastSubmittedEthereumEvent(c context.Context, req *types.LastSubmittedEthereumEventRequest) (*types.LastSubmittedEthereumEventResponse, error) {
 	return &types.LastSubmittedEthereumEventResponse{}, nil
 }
+
 func (k Keeper) BatchTxFees(c context.Context, req *types.BatchTxFeesRequest) (*types.BatchTxFeesResponse, error) {
 	return &types.BatchTxFeesResponse{}, nil
 }
@@ -248,15 +249,30 @@ func (k Keeper) ERC20ToDenom(c context.Context, req *types.ERC20ToDenomRequest) 
 func (k Keeper) DenomToERC20(c context.Context, req *types.DenomToERC20Request) (*types.DenomToERC20Response, error) {
 	return &types.DenomToERC20Response{}, nil
 }
+
 func (k Keeper) PendingSendToEthereums(c context.Context, req *types.PendingSendToEthereumsRequest) (*types.PendingSendToEthereumsResponse, error) {
 	return &types.PendingSendToEthereumsResponse{}, nil
 }
+
 func (k Keeper) DelegateKeysByValidator(c context.Context, req *types.DelegateKeysByValidatorAddress) (*types.DelegateKeysByValidatorAddressResponse, error) {
-	return &types.DelegateKeysByValidatorAddressResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	valAddr, err := sdk.ValAddressFromBech32(req.ValidatorAddress)
+	if err != nil {
+		return nil, err
+	}
+	ethAddr := k.GetValidatorEthereumAddress(ctx, valAddr)
+	orchAddr := k.GetEthereumOrchestratorAddress(ctx, ethAddr)
+	res := &types.DelegateKeysByValidatorAddressResponse{
+		EthAddress:          ethAddr.Hex(),
+		OrchestratorAddress: orchAddr.String(),
+	}
+	return res, nil
 }
+
 func (k Keeper) DelegateKeysByEthereumSigner(c context.Context, req *types.DelegateKeysByEthereumSignerRequest) (*types.DelegateKeysByEthereumSignerResponse, error) {
 	return &types.DelegateKeysByEthereumSignerResponse{}, nil
 }
+
 func (k Keeper) DelegateKeysByOrchestrator(c context.Context, req *types.DelegateKeysByOrchestratorAddress) (*types.DelegateKeysByOrchestratorAddressResponse, error) {
 	return &types.DelegateKeysByOrchestratorAddressResponse{}, nil
 }
