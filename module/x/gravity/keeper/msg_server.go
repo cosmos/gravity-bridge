@@ -268,6 +268,46 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 	return nil, nil
 }
 
+// checkOrchestratorValidatorInSet checks that the orchestrator refers to a validator that is
+// currently in the set
+func (k msgServer) checkOrchestratorValidatorInSet(ctx sdk.Context, orchestrator string) error {
+	orchaddr, _ := sdk.AccAddressFromBech32(orchestrator)
+	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
+	if !found {
+		return sdkerrors.Wrap(types.ErrUnknown, "validator")
+	}
+
+	// return an error if the validator isn't in the active set
+	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
+	if val == nil || !val.IsBonded() {
+		return sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
+	}
+
+	return nil
+}
+
+// claimHandlerCommon is an internal function that provides common code for processing claims once they are
+// translated from the message to the Ethereum claim interface
+func (k msgServer) claimHandlerCommon(ctx sdk.Context, msgAny *codectypes.Any, msg types.EthereumClaim) error {
+	// Add the claim to the store
+	_, err := k.Attest(ctx, msg, msgAny)
+	if err != nil {
+		return sdkerrors.Wrap(err, "create attestation")
+	}
+
+	// Emit the handle message event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, string(msg.GetType())),
+			// TODO: maybe return something better here? is this the right string representation?
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.GetEventNonce(), msg.ClaimHash()))),
+		),
+	)
+
+	return nil
+}
+
 // DepositClaim handles MsgSendToCosmosClaim
 // TODO it is possible to submit an old msgDepositClaim (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
@@ -275,38 +315,18 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 func (k msgServer) SendToCosmosClaim(c context.Context, msg *types.MsgSendToCosmosClaim) (*types.MsgSendToCosmosClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	err := k.checkOrchestratorValidatorInSet(ctx, msg.Orchestrator)
+	if err != nil {
+		return nil, err
 	}
-
-	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
-	if val == nil || !val.IsBonded() {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
-	}
-
 	any, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return nil, err
 	}
-
-	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	err = k.claimHandlerCommon(ctx, any, msg)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, err
 	}
-
-	// Emit the handle message event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
-		),
-	)
 
 	return &types.MsgSendToCosmosClaimResponse{}, nil
 }
@@ -318,38 +338,18 @@ func (k msgServer) SendToCosmosClaim(c context.Context, msg *types.MsgSendToCosm
 func (k msgServer) BatchSendToEthClaim(c context.Context, msg *types.MsgBatchSendToEthClaim) (*types.MsgBatchSendToEthClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	err := k.checkOrchestratorValidatorInSet(ctx, msg.Orchestrator)
+	if err != nil {
+		return nil, err
 	}
-
-	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
-	if val == nil || !val.IsBonded() {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
-	}
-
 	any, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return nil, err
 	}
-
-	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	err = k.claimHandlerCommon(ctx, any, msg)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, err
 	}
-
-	// Emit the handle message event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
-		),
-	)
 
 	return &types.MsgBatchSendToEthClaimResponse{}, nil
 }
@@ -358,38 +358,18 @@ func (k msgServer) BatchSendToEthClaim(c context.Context, msg *types.MsgBatchSen
 func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20DeployedClaim) (*types.MsgERC20DeployedClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	err := k.checkOrchestratorValidatorInSet(ctx, msg.Orchestrator)
+	if err != nil {
+		return nil, err
 	}
-
-	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
-	if val == nil || !val.IsBonded() {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
-	}
-
 	any, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return nil, err
 	}
-
-	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	err = k.claimHandlerCommon(ctx, any, msg)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, err
 	}
-
-	// Emit the handle message event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
-		),
-	)
 
 	return &types.MsgERC20DeployedClaimResponse{}, nil
 }
@@ -398,38 +378,18 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogicCallExecutedClaim) (*types.MsgLogicCallExecutedClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	err := k.checkOrchestratorValidatorInSet(ctx, msg.Orchestrator)
+	if err != nil {
+		return nil, err
 	}
-
-	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
-	if val == nil || !val.IsBonded() {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
-	}
-
 	any, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return nil, err
 	}
-
-	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	err = k.claimHandlerCommon(ctx, any, msg)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, err
 	}
-
-	// Emit the handle message event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
-		),
-	)
 
 	return &types.MsgLogicCallExecutedClaimResponse{}, nil
 }
@@ -438,38 +398,18 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgValsetUpdatedClaim) (*types.MsgValsetUpdatedClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	err := k.checkOrchestratorValidatorInSet(ctx, msg.Orchestrator)
+	if err != nil {
+		return nil, err
 	}
-
-	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
-	if val == nil || !val.IsBonded() {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
-	}
-
 	any, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return nil, err
 	}
-
-	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	err = k.claimHandlerCommon(ctx, any, msg)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, err
 	}
-
-	// Emit the handle message event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
-		),
-	)
 
 	return &types.MsgValsetUpdatedClaimResponse{}, nil
 }
