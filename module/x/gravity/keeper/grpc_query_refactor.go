@@ -14,7 +14,7 @@ var _ types.QueryServer = Keeper{}
 func (k Keeper) Params(c context.Context, req *types.ParamsRequest) (*types.ParamsResponse, error) {
 	var params types.Params
 	k.paramSpace.GetParamSet(sdk.UnwrapSDKContext(c), &params)
-	return &types.ParamsResponse{params}, nil
+	return &types.ParamsResponse{Params: params}, nil
 }
 
 func (k Keeper) SignerSetTx(c context.Context, req *types.SignerSetTxRequest) (*types.SignerSetTxResponse, error) {
@@ -34,7 +34,7 @@ func (k Keeper) SignerSetTx(c context.Context, req *types.SignerSetTxRequest) (*
 	// TODO: ensure that latest signer set tx nonce index is set properly
 	// TODO: ensure nonce sequence starts at one
 
-	return &types.SignerSetTxResponse{ss}, nil
+	return &types.SignerSetTxResponse{SignerSet: ss}, nil
 }
 
 func (k Keeper) BatchTx(c context.Context, req *types.BatchTxRequest) (*types.BatchTxResponse, error) {
@@ -56,7 +56,7 @@ func (k Keeper) BatchTx(c context.Context, req *types.BatchTxRequest) (*types.Ba
 
 	// TODO: handle special case nonce = 0 to find latest by contract address
 
-	return &types.BatchTxResponse{batch}, nil
+	return &types.BatchTxResponse{Batch: batch}, nil
 }
 
 func (k Keeper) ContractCallTx(c context.Context, req *types.ContractCallTxRequest) (*types.ContractCallTxResponse, error) {
@@ -73,7 +73,7 @@ func (k Keeper) ContractCallTx(c context.Context, req *types.ContractCallTxReque
 
 	// TODO: figure out how to call latest
 
-	return &types.ContractCallTxResponse{cctx}, nil
+	return &types.ContractCallTxResponse{LogicCall: cctx}, nil
 }
 
 func (k Keeper) SignerSetTxs(c context.Context, req *types.SignerSetTxsRequest) (*types.SignerSetTxsResponse, error) {
@@ -87,7 +87,7 @@ func (k Keeper) SignerSetTxs(c context.Context, req *types.SignerSetTxsRequest) 
 
 		return len(signers) < int(req.Count)
 	})
-	return &types.SignerSetTxsResponse{signers}, nil
+	return &types.SignerSetTxsResponse{SignerSets: signers}, nil
 }
 
 func (k Keeper) BatchTxs(c context.Context, req *types.BatchTxsRequest) (*types.BatchTxsResponse, error) {
@@ -100,7 +100,7 @@ func (k Keeper) BatchTxs(c context.Context, req *types.BatchTxsRequest) (*types.
 		batches = append(batches, batch)
 		return false
 	})
-	return &types.BatchTxsResponse{batches}, nil
+	return &types.BatchTxsResponse{Batches: batches}, nil
 }
 
 func (k Keeper) ContractCallTxs(c context.Context, req *types.ContractCallTxsRequest) (*types.ContractCallTxsResponse, error) {
@@ -113,7 +113,7 @@ func (k Keeper) ContractCallTxs(c context.Context, req *types.ContractCallTxsReq
 		calls = append(calls, call)
 		return false
 	})
-	return &types.ContractCallTxsResponse{calls}, nil
+	return &types.ContractCallTxsResponse{Calls: calls}, nil
 }
 
 func (k Keeper) SignerSetTxEthereumSignatures(c context.Context, req *types.SignerSetTxEthereumSignaturesRequest) (*types.SignerSetTxEthereumSignaturesResponse, error) {
@@ -124,7 +124,7 @@ func (k Keeper) SignerSetTxEthereumSignatures(c context.Context, req *types.Sign
 		if err != nil {
 			return nil, err
 		}
-		return &types.SignerSetTxEthereumSignaturesResponse{[][]byte{k.GetEthereumSignature(ctx, key, val)}}, nil
+		return &types.SignerSetTxEthereumSignaturesResponse{Signature: [][]byte{k.GetEthereumSignature(ctx, key, val)}}, nil
 	}
 
 	var out [][]byte
@@ -132,7 +132,7 @@ func (k Keeper) SignerSetTxEthereumSignatures(c context.Context, req *types.Sign
 		out = append(out, sig)
 		return false
 	})
-	return &types.SignerSetTxEthereumSignaturesResponse{out}, nil
+	return &types.SignerSetTxEthereumSignaturesResponse{Signature: out}, nil
 }
 
 func (k Keeper) BatchTxEthereumSignatures(c context.Context, req *types.BatchTxEthereumSignaturesRequest) (*types.BatchTxEthereumSignaturesResponse, error) {
@@ -143,7 +143,7 @@ func (k Keeper) BatchTxEthereumSignatures(c context.Context, req *types.BatchTxE
 		if err != nil {
 			return nil, err
 		}
-		return &types.BatchTxEthereumSignaturesResponse{[][]byte{k.GetEthereumSignature(ctx, key, val)}}, nil
+		return &types.BatchTxEthereumSignaturesResponse{Signature: [][]byte{k.GetEthereumSignature(ctx, key, val)}}, nil
 	}
 
 	var out [][]byte
@@ -151,7 +151,7 @@ func (k Keeper) BatchTxEthereumSignatures(c context.Context, req *types.BatchTxE
 		out = append(out, sig)
 		return false
 	})
-	return &types.BatchTxEthereumSignaturesResponse{out}, nil
+	return &types.BatchTxEthereumSignaturesResponse{Signature: out}, nil
 }
 
 func (k Keeper) ContractCallTxEthereumSignatures(c context.Context, req *types.ContractCallTxEthereumSignaturesRequest) (*types.ContractCallTxEthereumSignaturesResponse, error) {
@@ -162,7 +162,7 @@ func (k Keeper) ContractCallTxEthereumSignatures(c context.Context, req *types.C
 		if err != nil {
 			return nil, err
 		}
-		return &types.ContractCallTxEthereumSignaturesResponse{[][]byte{k.GetEthereumSignature(ctx, key, val)}}, nil
+		return &types.ContractCallTxEthereumSignaturesResponse{Signature: [][]byte{k.GetEthereumSignature(ctx, key, val)}}, nil
 	}
 
 	var out [][]byte
@@ -170,7 +170,7 @@ func (k Keeper) ContractCallTxEthereumSignatures(c context.Context, req *types.C
 		out = append(out, sig)
 		return false
 	})
-	return &types.ContractCallTxEthereumSignaturesResponse{out}, nil
+	return &types.ContractCallTxEthereumSignaturesResponse{Signature: out}, nil
 }
 
 func (k Keeper) PendingSignerSetTxEthereumSignatures(c context.Context, req *types.PendingSignerSetTxEthereumSignaturesRequest) (*types.PendingSignerSetTxEthereumSignaturesResponse, error) {
