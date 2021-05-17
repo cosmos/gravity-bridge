@@ -216,8 +216,26 @@ func (k Keeper) PendingBatchTxEthereumSignatures(c context.Context, req *types.P
 }
 
 func (k Keeper) PendingContractCallTxEthereumSignatures(c context.Context, req *types.PendingContractCallTxEthereumSignaturesRequest) (*types.PendingContractCallTxEthereumSignaturesResponse, error) {
-	return &types.PendingContractCallTxEthereumSignaturesResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	val, err := k.getSignerValidator(ctx, req.Address)
+	if err != nil {
+		return nil, err
+	}
+	var calls []*types.ContractCallTx
+	k.IterateOutgoingTxs(ctx, types.ContractCallTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
+		sig := k.GetEthereumSignature(ctx, otx.GetStoreIndex(), val)
+		if len(sig) == 0 { // it's pending
+			call, ok := otx.(*types.ContractCallTx)
+			if !ok {
+				// handle error case
+			}
+			calls = append(calls, call)
+		}
+		return false
+	})
+	return &types.PendingContractCallTxEthereumSignaturesResponse{calls}, nil
 }
+
 func (k Keeper) LastSubmittedEthereumEvent(c context.Context, req *types.LastSubmittedEthereumEventRequest) (*types.LastSubmittedEthereumEventResponse, error) {
 	return &types.LastSubmittedEthereumEventResponse{}, nil
 }
