@@ -174,7 +174,25 @@ func (k Keeper) ContractCallTxEthereumSignatures(c context.Context, req *types.C
 }
 
 func (k Keeper) PendingSignerSetTxEthereumSignatures(c context.Context, req *types.PendingSignerSetTxEthereumSignaturesRequest) (*types.PendingSignerSetTxEthereumSignaturesResponse, error) {
-	return &types.PendingSignerSetTxEthereumSignaturesResponse{}, nil
+	// TODO(levi) find the earliest nonce that we, as a validator have not signed
+	ctx := sdk.UnwrapSDKContext(c)
+	val, err := k.getSignerValidator(ctx, req.Address)
+	if err != nil {
+		return nil, err
+	}
+	var signerSets []*types.SignerSetTx
+	k.IterateOutgoingTxs(ctx, types.SignerSetTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
+		sig := k.GetEthereumSignature(ctx, otx.GetStoreIndex(), val)
+		if len(sig) == 0 { // it's pending
+			signerSet, ok := otx.(*types.SignerSetTx)
+			if !ok {
+				// handle error case
+			}
+			signerSets = append(signerSets, signerSet)
+		}
+		return false
+	})
+	return &types.PendingSignerSetTxEthereumSignaturesResponse{signerSets}, nil
 }
 
 func (k Keeper) PendingBatchTxEthereumSignatures(c context.Context, req *types.PendingBatchTxEthereumSignaturesRequest) (*types.PendingBatchTxEthereumSignaturesResponse, error) {
