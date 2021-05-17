@@ -241,7 +241,15 @@ func (k Keeper) LastSubmittedEthereumEvent(c context.Context, req *types.LastSub
 }
 
 func (k Keeper) BatchTxFees(c context.Context, req *types.BatchTxFeesRequest) (*types.BatchTxFeesResponse, error) {
-	return &types.BatchTxFeesResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	res := &types.BatchTxFeesResponse{}
+	batches := k.GetBatchTxes(ctx)
+	for _, batch := range batches {
+		for _, tx := range batch.Transactions {
+			res.Fees = append(res.Fees, tx.Erc20Fee.GravityCoin())
+		}
+	}
+	return res, nil
 }
 
 func (k Keeper) ERC20ToDenom(c context.Context, req *types.ERC20ToDenomRequest) (*types.ERC20ToDenomResponse, error) {
