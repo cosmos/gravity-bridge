@@ -81,7 +81,7 @@ func (k Keeper) SignerSetTxs(c context.Context, req *types.SignerSetTxsRequest) 
 	k.IterateOutgoingTxs(sdk.UnwrapSDKContext(c), types.SignerSetTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
 		signer, ok := otx.(*types.SignerSetTx)
 		if !ok {
-			// handle error case
+			// todo: handle error case
 		}
 		signers = append(signers, signer)
 
@@ -95,7 +95,7 @@ func (k Keeper) BatchTxs(c context.Context, req *types.BatchTxsRequest) (*types.
 	k.IterateOutgoingTxs(sdk.UnwrapSDKContext(c), types.BatchTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
 		batch, ok := otx.(*types.BatchTx)
 		if !ok {
-			// handle error case
+			// todo: handle error case
 		}
 		batches = append(batches, batch)
 		return false
@@ -108,7 +108,7 @@ func (k Keeper) ContractCallTxs(c context.Context, req *types.ContractCallTxsReq
 	k.IterateOutgoingTxs(sdk.UnwrapSDKContext(c), types.ContractCallTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
 		call, ok := otx.(*types.ContractCallTx)
 		if !ok {
-			// handle error case
+			// todo: handle error case
 		}
 		calls = append(calls, call)
 		return false
@@ -185,13 +185,13 @@ func (k Keeper) PendingSignerSetTxEthereumSignatures(c context.Context, req *typ
 		if len(sig) == 0 { // it's pending
 			signerSet, ok := otx.(*types.SignerSetTx)
 			if !ok {
-				// handle error case
+				// todo: handle error case
 			}
 			signerSets = append(signerSets, signerSet)
 		}
 		return false
 	})
-	return &types.PendingSignerSetTxEthereumSignaturesResponse{signerSets}, nil
+	return &types.PendingSignerSetTxEthereumSignaturesResponse{SignerSets: signerSets}, nil
 }
 
 func (k Keeper) PendingBatchTxEthereumSignatures(c context.Context, req *types.PendingBatchTxEthereumSignaturesRequest) (*types.PendingBatchTxEthereumSignaturesResponse, error) {
@@ -206,13 +206,13 @@ func (k Keeper) PendingBatchTxEthereumSignatures(c context.Context, req *types.P
 		if len(sig) == 0 { // it's pending
 			batch, ok := otx.(*types.BatchTx)
 			if !ok {
-				// handle error case
+				// todo: handle error case
 			}
 			batches = append(batches, batch)
 		}
 		return false
 	})
-	return &types.PendingBatchTxEthereumSignaturesResponse{batches}, nil
+	return &types.PendingBatchTxEthereumSignaturesResponse{Batches: batches}, nil
 }
 
 func (k Keeper) PendingContractCallTxEthereumSignatures(c context.Context, req *types.PendingContractCallTxEthereumSignaturesRequest) (*types.PendingContractCallTxEthereumSignaturesResponse, error) {
@@ -227,13 +227,13 @@ func (k Keeper) PendingContractCallTxEthereumSignatures(c context.Context, req *
 		if len(sig) == 0 { // it's pending
 			call, ok := otx.(*types.ContractCallTx)
 			if !ok {
-				// handle error case
+				// todo: handle error case
 			}
 			calls = append(calls, call)
 		}
 		return false
 	})
-	return &types.PendingContractCallTxEthereumSignaturesResponse{calls}, nil
+	return &types.PendingContractCallTxEthereumSignaturesResponse{Calls: calls}, nil
 }
 
 func (k Keeper) LastSubmittedEthereumEvent(c context.Context, req *types.LastSubmittedEthereumEventRequest) (*types.LastSubmittedEthereumEventResponse, error) {
