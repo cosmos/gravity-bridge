@@ -174,7 +174,6 @@ func (k Keeper) ContractCallTxEthereumSignatures(c context.Context, req *types.C
 }
 
 func (k Keeper) PendingSignerSetTxEthereumSignatures(c context.Context, req *types.PendingSignerSetTxEthereumSignaturesRequest) (*types.PendingSignerSetTxEthereumSignaturesResponse, error) {
-	// TODO(levi) find the earliest nonce that we, as a validator have not signed
 	ctx := sdk.UnwrapSDKContext(c)
 	val, err := k.getSignerValidator(ctx, req.Address)
 	if err != nil {
@@ -196,8 +195,26 @@ func (k Keeper) PendingSignerSetTxEthereumSignatures(c context.Context, req *typ
 }
 
 func (k Keeper) PendingBatchTxEthereumSignatures(c context.Context, req *types.PendingBatchTxEthereumSignaturesRequest) (*types.PendingBatchTxEthereumSignaturesResponse, error) {
-	return &types.PendingBatchTxEthereumSignaturesResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	val, err := k.getSignerValidator(ctx, req.Address)
+	if err != nil {
+		return nil, err
+	}
+	var batches []*types.BatchTx
+	k.IterateOutgoingTxs(ctx, types.BatchTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
+		sig := k.GetEthereumSignature(ctx, otx.GetStoreIndex(), val)
+		if len(sig) == 0 { // it's pending
+			batch, ok := otx.(*types.BatchTx)
+			if !ok {
+				// handle error case
+			}
+			batches = append(batches, batch)
+		}
+		return false
+	})
+	return &types.PendingBatchTxEthereumSignaturesResponse{batches}, nil
 }
+
 func (k Keeper) PendingContractCallTxEthereumSignatures(c context.Context, req *types.PendingContractCallTxEthereumSignaturesRequest) (*types.PendingContractCallTxEthereumSignaturesResponse, error) {
 	return &types.PendingContractCallTxEthereumSignaturesResponse{}, nil
 }
