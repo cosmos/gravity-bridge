@@ -19,7 +19,7 @@ type AttestationHandler struct {
 func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
 	// deposit in this context means a deposit into the Ethereum side of the bridge
-	case *types.MsgDepositClaim:
+	case *types.MsgSendToCosmosClaim:
 		// Check if coin is Cosmos-originated asset and get denom
 		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
 
@@ -53,7 +53,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 			}
 		}
 	// withdraw in this context means a withdraw from the Ethereum side of the bridge
-	case *types.MsgWithdrawClaim:
+	case *types.MsgBatchSendToEthClaim:
 		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
 		return nil
 	case *types.MsgERC20DeployedClaim:

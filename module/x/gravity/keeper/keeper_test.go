@@ -88,7 +88,7 @@ func TestAttestationIterator(t *testing.T) {
 		Observed: true,
 		Votes:    []string{},
 	}
-	dep1 := &types.MsgDepositClaim{
+	dep1 := &types.MsgSendToCosmosClaim{
 		EventNonce:     1,
 		TokenContract:  TokenContractAddrs[0],
 		Amount:         sdk.NewInt(100),
@@ -100,7 +100,7 @@ func TestAttestationIterator(t *testing.T) {
 		Observed: true,
 		Votes:    []string{},
 	}
-	dep2 := &types.MsgDepositClaim{
+	dep2 := &types.MsgSendToCosmosClaim{
 		EventNonce:     2,
 		TokenContract:  TokenContractAddrs[0],
 		Amount:         sdk.NewInt(100),

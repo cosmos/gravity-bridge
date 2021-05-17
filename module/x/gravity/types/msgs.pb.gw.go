@@ -214,73 +214,109 @@ func local_request_Msg_ConfirmLogicCall_0(ctx context.Context, marshaler runtime
 }
 
 var (
-	filter_Msg_DepositClaim_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_Msg_SendToCosmosClaim_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_Msg_DepositClaim_0(ctx context.Context, marshaler runtime.Marshaler, client MsgClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq MsgDepositClaim
+func request_Msg_SendToCosmosClaim_0(ctx context.Context, marshaler runtime.Marshaler, client MsgClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq MsgSendToCosmosClaim
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_DepositClaim_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_SendToCosmosClaim_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.DepositClaim(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.SendToCosmosClaim(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Msg_DepositClaim_0(ctx context.Context, marshaler runtime.Marshaler, server MsgServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq MsgDepositClaim
+func local_request_Msg_SendToCosmosClaim_0(ctx context.Context, marshaler runtime.Marshaler, server MsgServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq MsgSendToCosmosClaim
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_DepositClaim_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_SendToCosmosClaim_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.DepositClaim(ctx, &protoReq)
+	msg, err := server.SendToCosmosClaim(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_Msg_WithdrawClaim_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_Msg_BatchSendToEthClaim_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_Msg_WithdrawClaim_0(ctx context.Context, marshaler runtime.Marshaler, client MsgClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq MsgWithdrawClaim
+func request_Msg_BatchSendToEthClaim_0(ctx context.Context, marshaler runtime.Marshaler, client MsgClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq MsgBatchSendToEthClaim
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_WithdrawClaim_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_BatchSendToEthClaim_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.WithdrawClaim(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.BatchSendToEthClaim(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Msg_WithdrawClaim_0(ctx context.Context, marshaler runtime.Marshaler, server MsgServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq MsgWithdrawClaim
+func local_request_Msg_BatchSendToEthClaim_0(ctx context.Context, marshaler runtime.Marshaler, server MsgServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq MsgBatchSendToEthClaim
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_WithdrawClaim_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_BatchSendToEthClaim_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.WithdrawClaim(ctx, &protoReq)
+	msg, err := server.BatchSendToEthClaim(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+var (
+	filter_Msg_ValsetUpdateClaim_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_Msg_ValsetUpdateClaim_0(ctx context.Context, marshaler runtime.Marshaler, client MsgClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq MsgValsetUpdatedClaim
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_ValsetUpdateClaim_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ValsetUpdateClaim(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_Msg_ValsetUpdateClaim_0(ctx context.Context, marshaler runtime.Marshaler, server MsgServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq MsgValsetUpdatedClaim
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_ValsetUpdateClaim_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ValsetUpdateClaim(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -429,6 +465,42 @@ func local_request_Msg_CancelSendToEth_0(ctx context.Context, marshaler runtime.
 
 }
 
+var (
+	filter_Msg_SubmitBadSignatureEvidence_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_Msg_SubmitBadSignatureEvidence_0(ctx context.Context, marshaler runtime.Marshaler, client MsgClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq MsgSubmitBadSignatureEvidence
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_SubmitBadSignatureEvidence_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.SubmitBadSignatureEvidence(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_Msg_SubmitBadSignatureEvidence_0(ctx context.Context, marshaler runtime.Marshaler, server MsgServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq MsgSubmitBadSignatureEvidence
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_SubmitBadSignatureEvidence_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.SubmitBadSignatureEvidence(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 // RegisterMsgHandlerServer registers the http handlers for service Msg to "mux".
 // UnaryRPC     :call MsgServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -550,7 +622,7 @@ func RegisterMsgHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 
 	})
 
-	mux.Handle("POST", pattern_Msg_DepositClaim_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Msg_SendToCosmosClaim_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -561,7 +633,7 @@ func RegisterMsgHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Msg_DepositClaim_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Msg_SendToCosmosClaim_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -569,11 +641,11 @@ func RegisterMsgHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 			return
 		}
 
-		forward_Msg_DepositClaim_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Msg_SendToCosmosClaim_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Msg_WithdrawClaim_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Msg_BatchSendToEthClaim_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -584,7 +656,7 @@ func RegisterMsgHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Msg_WithdrawClaim_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Msg_BatchSendToEthClaim_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -592,7 +664,30 @@ func RegisterMsgHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 			return
 		}
 
-		forward_Msg_WithdrawClaim_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Msg_BatchSendToEthClaim_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_Msg_ValsetUpdateClaim_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Msg_ValsetUpdateClaim_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Msg_ValsetUpdateClaim_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -685,6 +780,29 @@ func RegisterMsgHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 		}
 
 		forward_Msg_CancelSendToEth_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_Msg_SubmitBadSignatureEvidence_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Msg_SubmitBadSignatureEvidence_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Msg_SubmitBadSignatureEvidence_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -829,7 +947,7 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 
 	})
 
-	mux.Handle("POST", pattern_Msg_DepositClaim_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Msg_SendToCosmosClaim_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -838,18 +956,18 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Msg_DepositClaim_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Msg_SendToCosmosClaim_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Msg_DepositClaim_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Msg_SendToCosmosClaim_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Msg_WithdrawClaim_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Msg_BatchSendToEthClaim_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -858,14 +976,34 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Msg_WithdrawClaim_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Msg_BatchSendToEthClaim_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Msg_WithdrawClaim_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Msg_BatchSendToEthClaim_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_Msg_ValsetUpdateClaim_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Msg_ValsetUpdateClaim_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Msg_ValsetUpdateClaim_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -949,6 +1087,26 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 
 	})
 
+	mux.Handle("POST", pattern_Msg_SubmitBadSignatureEvidence_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Msg_SubmitBadSignatureEvidence_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Msg_SubmitBadSignatureEvidence_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	return nil
 }
 
@@ -963,9 +1121,11 @@ var (
 
 	pattern_Msg_ConfirmLogicCall_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "confim_logic"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Msg_DepositClaim_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "deposit_claim"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_SendToCosmosClaim_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "send_to_cosmos_claim"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Msg_WithdrawClaim_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "withdraw_claim"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_BatchSendToEthClaim_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "batch_send_to_eth_claim"}, "", runtime.AssumeColonVerbOpt(true)))
+
+	pattern_Msg_ValsetUpdateClaim_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "valset_updated_claim"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Msg_ERC20DeployedClaim_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "erc20_deployed_claim"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -974,6 +1134,8 @@ var (
 	pattern_Msg_SetOrchestratorAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "set_orchestrator_address"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Msg_CancelSendToEth_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "cancel_send_to_eth"}, "", runtime.AssumeColonVerbOpt(true)))
+
+	pattern_Msg_SubmitBadSignatureEvidence_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "submit_bad_signature_evidence"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
@@ -987,9 +1149,11 @@ var (
 
 	forward_Msg_ConfirmLogicCall_0 = runtime.ForwardResponseMessage
 
-	forward_Msg_DepositClaim_0 = runtime.ForwardResponseMessage
+	forward_Msg_SendToCosmosClaim_0 = runtime.ForwardResponseMessage
 
-	forward_Msg_WithdrawClaim_0 = runtime.ForwardResponseMessage
+	forward_Msg_BatchSendToEthClaim_0 = runtime.ForwardResponseMessage
+
+	forward_Msg_ValsetUpdateClaim_0 = runtime.ForwardResponseMessage
 
 	forward_Msg_ERC20DeployedClaim_0 = runtime.ForwardResponseMessage
 
@@ -998,4 +1162,6 @@ var (
 	forward_Msg_SetOrchestratorAddress_0 = runtime.ForwardResponseMessage
 
 	forward_Msg_CancelSendToEth_0 = runtime.ForwardResponseMessage
+
+	forward_Msg_SubmitBadSignatureEvidence_0 = runtime.ForwardResponseMessage
 )

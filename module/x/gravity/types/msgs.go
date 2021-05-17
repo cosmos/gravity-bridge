@@ -19,8 +19,8 @@ var (
 	_ sdk.Msg = &MsgERC20DeployedClaim{}
 	_ sdk.Msg = &MsgConfirmLogicCall{}
 	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
-	_ sdk.Msg = &MsgDepositClaim{}
-	_ sdk.Msg = &MsgWithdrawClaim{}
+	_ sdk.Msg = &MsgSendToCosmosClaim{}
+	_ sdk.Msg = &MsgBatchSendToEthClaim{}
 	_ sdk.Msg = &MsgValsetUpdatedClaim{}
 	_ sdk.Msg = &MsgSubmitBadSignatureEvidence{}
 )
@@ -311,19 +311,19 @@ type EthereumClaim interface {
 }
 
 var (
-	_ EthereumClaim = &MsgDepositClaim{}
-	_ EthereumClaim = &MsgWithdrawClaim{}
+	_ EthereumClaim = &MsgSendToCosmosClaim{}
+	_ EthereumClaim = &MsgBatchSendToEthClaim{}
 	_ EthereumClaim = &MsgERC20DeployedClaim{}
 	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
 )
 
 // GetType returns the type of the claim
-func (msg *MsgDepositClaim) GetType() ClaimType {
-	return CLAIM_TYPE_DEPOSIT
+func (msg *MsgSendToCosmosClaim) GetType() ClaimType {
+	return CLAIM_TYPE_SEND_TO_COSMOS
 }
 
 // ValidateBasic performs stateless checks
-func (msg *MsgDepositClaim) ValidateBasic() error {
+func (msg *MsgSendToCosmosClaim) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.CosmosReceiver); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosReceiver)
 	}
@@ -343,14 +343,14 @@ func (msg *MsgDepositClaim) ValidateBasic() error {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgDepositClaim) GetSignBytes() []byte {
+func (msg MsgSendToCosmosClaim) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgDepositClaim) GetClaimer() sdk.AccAddress {
+func (msg MsgSendToCosmosClaim) GetClaimer() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
-		panic("MsgDepositClaim failed ValidateBasic! Should have been handled earlier")
+		panic("MsgSendToCosmosClaim failed ValidateBasic! Should have been handled earlier")
 	}
 
 	val, err := sdk.AccAddressFromBech32(msg.Orchestrator)
@@ -362,7 +362,7 @@ func (msg MsgDepositClaim) GetClaimer() sdk.AccAddress {
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgDepositClaim) GetSigners() []sdk.AccAddress {
+func (msg MsgSendToCosmosClaim) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
@@ -372,13 +372,13 @@ func (msg MsgDepositClaim) GetSigners() []sdk.AccAddress {
 }
 
 // Type should return the action
-func (msg MsgDepositClaim) Type() string { return "deposit_claim" }
+func (msg MsgSendToCosmosClaim) Type() string { return "send_to_cosmos_claim" }
 
 // Route should return the name of the module
-func (msg MsgDepositClaim) Route() string { return RouterKey }
+func (msg MsgSendToCosmosClaim) Route() string { return RouterKey }
 
 const (
-	TypeMsgWithdrawClaim = "withdraw_claim"
+	TypeMsgSendToCosmosClaim = "send_to_cosmos_claim"
 )
 
 // Hash implements BridgeDeposit.Hash
@@ -386,18 +386,18 @@ const (
 // could engineer a hash collision and execute a version of the claim with any unhashed data changed to benefit them.
 // note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
 // structure for who has made what claim and is verified by the msg ante-handler for signatures
-func (msg *MsgDepositClaim) ClaimHash() []byte {
+func (msg *MsgSendToCosmosClaim) ClaimHash() []byte {
 	path := fmt.Sprintf("%d/%d/%s/%s/%s/%s", msg.EventNonce, msg.BlockHeight, msg.TokenContract, msg.Amount.String(), string(msg.EthereumSender), msg.CosmosReceiver)
 	return tmhash.Sum([]byte(path))
 }
 
 // GetType returns the claim type
-func (msg *MsgWithdrawClaim) GetType() ClaimType {
-	return CLAIM_TYPE_WITHDRAW
+func (msg *MsgBatchSendToEthClaim) GetType() ClaimType {
+	return CLAIM_TYPE_BATCH_SEND_TO_ETH
 }
 
 // ValidateBasic performs stateless checks
-func (e *MsgWithdrawClaim) ValidateBasic() error {
+func (e *MsgBatchSendToEthClaim) ValidateBasic() error {
 	if e.EventNonce == 0 {
 		return fmt.Errorf("event_nonce == 0")
 	}
@@ -414,27 +414,27 @@ func (e *MsgWithdrawClaim) ValidateBasic() error {
 }
 
 // Hash implements WithdrawBatch.Hash
-func (msg *MsgWithdrawClaim) ClaimHash() []byte {
+func (msg *MsgBatchSendToEthClaim) ClaimHash() []byte {
 	path := fmt.Sprintf("%s/%d/%d/%s", msg.TokenContract, msg.BatchNonce, msg.EventNonce, msg.TokenContract)
 	return tmhash.Sum([]byte(path))
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgWithdrawClaim) GetSignBytes() []byte {
+func (msg MsgBatchSendToEthClaim) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgWithdrawClaim) GetClaimer() sdk.AccAddress {
+func (msg MsgBatchSendToEthClaim) GetClaimer() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
-		panic("MsgWithdrawClaim failed ValidateBasic! Should have been handled earlier")
+		panic("MsgBatchSendToEthClaim failed ValidateBasic! Should have been handled earlier")
 	}
 	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	return val
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgWithdrawClaim) GetSigners() []sdk.AccAddress {
+func (msg MsgBatchSendToEthClaim) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
@@ -444,13 +444,13 @@ func (msg MsgWithdrawClaim) GetSigners() []sdk.AccAddress {
 }
 
 // Route should return the name of the module
-func (msg MsgWithdrawClaim) Route() string { return RouterKey }
+func (msg MsgBatchSendToEthClaim) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgWithdrawClaim) Type() string { return "withdraw_claim" }
+func (msg MsgBatchSendToEthClaim) Type() string { return "batch_send_to_eth_claim" }
 
 const (
-	TypeMsgDepositClaim = "deposit_claim"
+	TypeMsgBatchSendToEthClaim = "batch_send_to_eth_claim"
 )
 
 // EthereumClaim implementation for MsgERC20DeployedClaim

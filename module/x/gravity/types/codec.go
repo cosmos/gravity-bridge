@@ -22,8 +22,8 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgRequestBatch{},
 		&MsgConfirmBatch{},
 		&MsgConfirmLogicCall{},
-		&MsgDepositClaim{},
-		&MsgWithdrawClaim{},
+		&MsgSendToCosmosClaim{},
+		&MsgBatchSendToEthClaim{},
 		&MsgERC20DeployedClaim{},
 		&MsgSetOrchestratorAddress{},
 		&MsgLogicCallExecutedClaim{},
@@ -35,8 +35,8 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterInterface(
 		"gravity.v1beta1.EthereumClaim",
 		(*EthereumClaim)(nil),
-		&MsgDepositClaim{},
-		&MsgWithdrawClaim{},
+		&MsgSendToCosmosClaim{},
+		&MsgBatchSendToEthClaim{},
 		&MsgERC20DeployedClaim{},
 		&MsgLogicCallExecutedClaim{},
 		&MsgValsetUpdatedClaim{},
@@ -55,8 +55,8 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgConfirmBatch{}, "gravity/MsgConfirmBatch", nil)
 	cdc.RegisterConcrete(&MsgConfirmLogicCall{}, "gravity/MsgConfirmLogicCall", nil)
 	cdc.RegisterConcrete(&Valset{}, "gravity/Valset", nil)
-	cdc.RegisterConcrete(&MsgDepositClaim{}, "gravity/MsgDepositClaim", nil)
-	cdc.RegisterConcrete(&MsgWithdrawClaim{}, "gravity/MsgWithdrawClaim", nil)
+	cdc.RegisterConcrete(&MsgSendToCosmosClaim{}, "gravity/MsgSendToCosmosClaim", nil)
+	cdc.RegisterConcrete(&MsgBatchSendToEthClaim{}, "gravity/MsgBatchSendToEthClaim", nil)
 	cdc.RegisterConcrete(&MsgERC20DeployedClaim{}, "gravity/MsgERC20DeployedClaim", nil)
 	cdc.RegisterConcrete(&MsgLogicCallExecutedClaim{}, "gravity/MsgLogicCallExecutedClaim", nil)
 	cdc.RegisterConcrete(&MsgValsetUpdatedClaim{}, "gravity/MsgValsetUpdatedClaim", nil)

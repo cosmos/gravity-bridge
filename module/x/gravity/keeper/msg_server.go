@@ -268,11 +268,11 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 	return nil, nil
 }
 
-// DepositClaim handles MsgDepositClaim
+// DepositClaim handles MsgSendToCosmosClaim
 // TODO it is possible to submit an old msgDepositClaim (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
 // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
-func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (*types.MsgDepositClaimResponse, error) {
+func (k msgServer) SendToCosmosClaim(c context.Context, msg *types.MsgSendToCosmosClaim) (*types.MsgSendToCosmosClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
@@ -308,14 +308,14 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 		),
 	)
 
-	return &types.MsgDepositClaimResponse{}, nil
+	return &types.MsgSendToCosmosClaimResponse{}, nil
 }
 
-// WithdrawClaim handles MsgWithdrawClaim
+// WithdrawClaim handles MsgBatchSendToEthClaim
 // TODO it is possible to submit an old msgWithdrawClaim (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
 // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
-func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim) (*types.MsgWithdrawClaimResponse, error) {
+func (k msgServer) BatchSendToEthClaim(c context.Context, msg *types.MsgBatchSendToEthClaim) (*types.MsgBatchSendToEthClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
@@ -351,7 +351,7 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 		),
 	)
 
-	return &types.MsgWithdrawClaimResponse{}, nil
+	return &types.MsgBatchSendToEthClaimResponse{}, nil
 }
 
 // ERC20Deployed handles MsgERC20Deployed

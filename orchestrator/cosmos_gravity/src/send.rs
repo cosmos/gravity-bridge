@@ -12,17 +12,17 @@ use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::service_client::ServiceClient as TxServiceClient;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastMode;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastTxRequest;
+use gravity_proto::gravity::MsgBatchSendToEthClaim;
 use gravity_proto::gravity::MsgConfirmBatch;
 use gravity_proto::gravity::MsgConfirmLogicCall;
-use gravity_proto::gravity::MsgDepositClaim;
 use gravity_proto::gravity::MsgErc20DeployedClaim;
 use gravity_proto::gravity::MsgLogicCallExecutedClaim;
 use gravity_proto::gravity::MsgRequestBatch;
+use gravity_proto::gravity::MsgSendToCosmosClaim;
 use gravity_proto::gravity::MsgSendToEth;
 use gravity_proto::gravity::MsgSetOrchestratorAddress;
 use gravity_proto::gravity::MsgValsetConfirm;
 use gravity_proto::gravity::MsgValsetUpdatedClaim;
-use gravity_proto::gravity::MsgWithdrawClaim;
 use gravity_utils::message_signatures::{
     encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
 };
@@ -291,7 +291,7 @@ pub async fn send_ethereum_claims(
     // We index the events by event nonce in an unordered hashmap and then play them back in order into a vec
     let mut unordered_msgs = HashMap::new();
     for deposit in deposits {
-        let claim = MsgDepositClaim {
+        let claim = MsgSendToCosmosClaim {
             event_nonce: deposit.event_nonce,
             block_height: downcast_uint256(deposit.block_height).unwrap(),
             token_contract: deposit.erc20.to_string(),
@@ -300,18 +300,18 @@ pub async fn send_ethereum_claims(
             ethereum_sender: deposit.sender.to_string(),
             orchestrator: our_address.to_string(),
         };
-        let msg = Msg::new("/gravity.v1.MsgDepositClaim", claim);
+        let msg = Msg::new("/gravity.v1.MsgSendToCosmosClaim", claim);
         unordered_msgs.insert(deposit.event_nonce, msg);
     }
     for withdraw in withdraws {
-        let claim = MsgWithdrawClaim {
+        let claim = MsgBatchSendToEthClaim {
             event_nonce: withdraw.event_nonce,
             block_height: downcast_uint256(withdraw.block_height).unwrap(),
             token_contract: withdraw.erc20.to_string(),
             batch_nonce: withdraw.batch_nonce,
             orchestrator: our_address.to_string(),
         };
-        let msg = Msg::new("/gravity.v1.MsgWithdrawClaim", claim);
+        let msg = Msg::new("/gravity.v1.MsgBatchSendToEthClaim", claim);
         unordered_msgs.insert(withdraw.event_nonce, msg);
     }
     for deploy in erc20_deploys {

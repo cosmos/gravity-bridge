@@ -13,8 +13,8 @@ enum ClaimType {
   option (gogoproto.goproto_enum_prefix) = false;
 
   CLAIM_TYPE_UNSPECIFIED         = 0;
-  CLAIM_TYPE_DEPOSIT             = 1;
-  CLAIM_TYPE_WITHDRAW            = 2;
+  CLAIM_TYPE_SEND_TO_COSMOS      = 1;
+  CLAIM_TYPE_BATCH_SEND_TO_ETH   = 2;
   CLAIM_TYPE_ERC20_DEPLOYED      = 3;
   CLAIM_TYPE_LOGIC_CALL_EXECUTED = 4;
   CLAIM_TYPE_VALSET_UPDATED      = 5;
