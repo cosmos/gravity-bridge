@@ -243,11 +243,28 @@ func (k Keeper) LastSubmittedEthereumEvent(c context.Context, req *types.LastSub
 func (k Keeper) BatchTxFees(c context.Context, req *types.BatchTxFeesRequest) (*types.BatchTxFeesResponse, error) {
 	return &types.BatchTxFeesResponse{}, nil
 }
+
 func (k Keeper) ERC20ToDenom(c context.Context, req *types.ERC20ToDenomRequest) (*types.ERC20ToDenomResponse, error) {
-	return &types.ERC20ToDenomResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	cosmosOriginated, denom := k.ERC20ToDenomLookup(ctx, req.Erc20)
+	res := &types.ERC20ToDenomResponse{
+		Denom:            denom,
+		CosmosOriginated: cosmosOriginated,
+	}
+	return res, nil
 }
+
 func (k Keeper) DenomToERC20(c context.Context, req *types.DenomToERC20Request) (*types.DenomToERC20Response, error) {
-	return &types.DenomToERC20Response{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	cosmosOriginated, erc20, err := k.DenomToERC20Lookup(ctx, req.Denom)
+	if err != nil {
+		return nil, err
+	}
+	res := &types.DenomToERC20Response{
+		Erc20:            erc20.Hex(),
+		CosmosOriginated: cosmosOriginated,
+	}
+	return res, nil
 }
 
 func (k Keeper) PendingSendToEthereums(c context.Context, req *types.PendingSendToEthereumsRequest) (*types.PendingSendToEthereumsResponse, error) {
