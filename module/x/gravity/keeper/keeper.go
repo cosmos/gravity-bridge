@@ -446,17 +446,12 @@ func prefixRange(prefix []byte) ([]byte, []byte) {
 
 // todo: outgoingTx prefix byte
 // GetOutgoingTx
-func (k Keeper) GetOutgoingTx(ctx sdk.Context, storeIndex []byte) (out types.OutgoingTx) {
+func (k Keeper) GetOutgoingTx(ctx sdk.Context, storeIndex []byte) types.OutgoingTx {
 	bz := ctx.KVStore(k.storeKey).Get(types.GetOutgoingTxKey(storeIndex))
 
 	var any *cdctypes.Any
 	k.cdc.MustUnmarshalBinaryBare(bz, any)
-
-	out, err := types.UnpackOutgoingTx(any)
-	if err != nil {
-		panic(err)
-	}
-	return
+	return types.MustUnpackOutgoingTx(any)
 }
 
 // SetOutgoingTx
@@ -487,7 +482,7 @@ func (k Keeper) IterateOutgoingTxs(ctx sdk.Context, prefixByte byte, cb func(key
 	for ; iter.Valid(); iter.Next() {
 		var any *cdctypes.Any
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), any)
-		otx, _ := types.UnpackOutgoingTx(any)
+		otx := types.MustUnpackOutgoingTx(any)
 		if cb(iter.Key(), otx) {
 			break
 		}

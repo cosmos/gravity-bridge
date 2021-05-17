@@ -133,3 +133,11 @@ func UnpackOutgoingTx(any *types.Any) (OutgoingTx, error) {
 
 	return confirm, nil
 }
+
+func MustUnpackOutgoingTx(any *types.Any) OutgoingTx {
+	out, err := UnpackOutgoingTx(any)
+	if err != nil {
+		panic(err)
+	}
+	return out
+}
