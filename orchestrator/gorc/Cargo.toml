@@ -8,6 +8,16 @@ edition = "2018"
 gumdrop = "0.7"
 serde = { version = "1", features = ["serde_derive"] }
 thiserror = "1"
+regex = "1.5.4"
+
+ethereum_gravity = {path = "../ethereum_gravity"}
+cosmos_gravity = {path = "../cosmos_gravity"}
+gravity_utils = {path = "../gravity_utils"}
+gravity_proto = {path = "../gravity_proto/"}
+deep_space = "2.1"
+actix-rt = "2.2"
+
+
 
 [dependencies.abscissa_core]
 version = "0.6.0-pre.1"
