@@ -89,10 +89,16 @@ type NodeStatus = {
   validator_info: JSON,
 };
 
+// sets the gas price for all contract deployments
+const overrides = {
+  gasPrice: 100000000000
+}
+
 async function deploy() {
   var startTime = new Date();
   const provider = await new ethers.providers.JsonRpcProvider(args["eth-node"]);
   let wallet = new ethers.Wallet(args["eth-privkey"], provider);
+
 
   if (args["test-mode"] == "True" || args["test-mode"] == "true") {
     var success = false;
@@ -143,21 +149,22 @@ async function deploy() {
       exit(1)
     }
 
+
     const { abi, bytecode } = getContractArtifacts(erc20_a_path);
     const erc20Factory = new ethers.ContractFactory(abi, bytecode, wallet);
-    const testERC20 = (await erc20Factory.deploy()) as TestERC20A;
+    const testERC20 = (await erc20Factory.deploy(overrides)) as TestERC20A;
     await testERC20.deployed();
     const erc20TestAddress = testERC20.address;
     console.log("ERC20 deployed at Address - ", erc20TestAddress);
     const { abi: abi1, bytecode: bytecode1 } = getContractArtifacts(erc20_b_path);
     const erc20Factory1 = new ethers.ContractFactory(abi1, bytecode1, wallet);
-    const testERC201 = (await erc20Factory1.deploy()) as TestERC20B;
+    const testERC201 = (await erc20Factory1.deploy(overrides)) as TestERC20B;
     await testERC201.deployed();
     const erc20TestAddress1 = testERC201.address;
     console.log("ERC20 deployed at Address - ", erc20TestAddress1);
     const { abi: abi2, bytecode: bytecode2 } = getContractArtifacts(erc20_c_path);
     const erc20Factory2 = new ethers.ContractFactory(abi2, bytecode2, wallet);
-    const testERC202 = (await erc20Factory2.deploy()) as TestERC20C;
+    const testERC202 = (await erc20Factory2.deploy(overrides)) as TestERC20C;
     await testERC202.deployed();
     const erc20TestAddress2 = testERC202.address;
     console.log("ERC20 deployed at Address - ", erc20TestAddress2);
@@ -215,7 +222,8 @@ async function deploy() {
     gravityId,
     vote_power,
     eth_addresses,
-    powers
+    powers,
+    overrides
   )) as Gravity;
 
   await gravity.deployed();
