@@ -30,9 +30,10 @@
     "@typescript-eslint/eslint-plugin": "^3.10.1",
     "@typescript-eslint/parser": "^3.10.1",
     "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "axios": "0.21.1",
     "chai": "^4.2.0",
     "command-line-args": "^5.1.1",
-    "commitizen": "^4.2.1",
+    "commitizen": "^4.2.4",
     "cz-conventional-changelog": "^3.3.0",
     "dotenv": "^8.2.0",
     "eslint": "^7.11.0",
@@ -55,8 +56,7 @@
     "ts-generator": "^0.1.1",
     "ts-node": "^8.10.2",
     "typechain": "^4.0.1",
-    "typescript": "^3.9.7",
-    "axios": "0.21.1"
+    "typescript": "^3.9.7"
   },
   "dependencies": {
     "pkg": "^4.4.9"
