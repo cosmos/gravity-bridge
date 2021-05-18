@@ -70,7 +70,7 @@ fi
 done
 
 
-$BIN collect-gentxs $STARTING_VALIDATOR_HOME test
+$BIN collect-gentxs $STARTING_VALIDATOR_HOME
 GENTXS=$(ls /validator1/config/gentx | wc -l)
 cp /validator1/config/genesis.json /genesis.json
 echo "Collected $GENTXS gentx"
