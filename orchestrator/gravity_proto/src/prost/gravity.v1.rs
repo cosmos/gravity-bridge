@@ -64,9 +64,9 @@ pub struct SendToEthereumTx {
     #[prost(string, tag="3")]
     pub ethereum_recipient: ::prost::alloc::string::String,
     #[prost(message, optional, tag="4")]
-    pub erc20_token: ::core::option::Option<super::super::cosmos::base::v1beta1::Coin>,
+    pub erc20_token: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
     #[prost(message, optional, tag="5")]
-    pub erc20_fee: ::core::option::Option<super::super::cosmos::base::v1beta1::Coin>,
+    pub erc20_fee: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
 }
 /// ContractCallTx represents an individual arbitratry logic call transaction from
 /// Cosmos to Ethereum.
@@ -83,9 +83,9 @@ pub struct ContractCallTx {
     #[prost(uint64, tag="5")]
     pub timeout: u64,
     #[prost(message, repeated, tag="6")]
-    pub tokens: ::prost::alloc::vec::Vec<super::super::cosmos::base::v1beta1::Coin>,
+    pub tokens: ::prost::alloc::vec::Vec<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
     #[prost(message, repeated, tag="7")]
-    pub fees: ::prost::alloc::vec::Vec<super::super::cosmos::base::v1beta1::Coin>,
+    pub fees: ::prost::alloc::vec::Vec<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
 }
 /// MsgSendToEthereum submits a SendToEthereum attempt to bridge an asset over to Ethereum.
 /// The SendToEthereum will be stored and then included in a batch and then
@@ -97,9 +97,9 @@ pub struct MsgSendToEthereum {
     #[prost(string, tag="2")]
     pub eth_recipient: ::prost::alloc::string::String,
     #[prost(message, optional, tag="3")]
-    pub amount: ::core::option::Option<super::super::cosmos::base::v1beta1::Coin>,
+    pub amount: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
     #[prost(message, optional, tag="4")]
-    pub bridge_fee: ::core::option::Option<super::super::cosmos::base::v1beta1::Coin>,
+    pub bridge_fee: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
 }
 /// MsgSendToEthereumResponse returns the SendToEthereum transaction ID which will be included
 /// in the batch tx.
@@ -513,7 +513,7 @@ pub struct BatchTxFeesRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchTxFeesResponse {
     #[prost(message, repeated, tag="1")]
-    pub fees: ::prost::alloc::vec::Vec<super::super::cosmos::base::v1beta1::Coin>,
+    pub fees: ::prost::alloc::vec::Vec<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ContractCallTxEthereumSignaturesRequest {
