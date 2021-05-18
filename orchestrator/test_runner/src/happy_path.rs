@@ -1,6 +1,7 @@
 use crate::get_chain_id;
 use crate::get_fee;
 use crate::utils::*;
+use crate::ADDRESS_PREFIX;
 use crate::CHAIN_BINARY;
 use crate::MINER_ADDRESS;
 use crate::MINER_PRIVATE_KEY;
@@ -196,7 +197,9 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
     let validator_to_change = rng.gen_range(0..keys.len());
     let delegate_address = &keys[validator_to_change]
         .validator_key
-        .to_address("cosmosvaloper")
+        // this is not guaranteed to be correct, the chain may set the valoper prefix in a
+        // different way, but I haven't yet seen one that does not match this pattern
+        .to_address(&format!("{}valoper", *ADDRESS_PREFIX))
         .unwrap()
         .to_string();
     let amount = &format!("{}stake", STARTING_STAKE_PER_VALIDATOR / 4);
