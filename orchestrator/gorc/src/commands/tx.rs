@@ -1,5 +1,9 @@
 //! `tx` subcommand
 
+mod cosmos;
+
+mod eth;
+
 use abscissa_core::{Command, Options, Runnable};
 
 /// `tx` subcommand
@@ -10,18 +14,12 @@ use abscissa_core::{Command, Options, Runnable};
 ///
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
-pub struct TxCmd {
-    // Example `--foobar` (with short `-f` argument)
-    // #[options(short = "f", help = "foobar path"]
-    // foobar: Option<PathBuf>
+pub enum TxCmd {
+    Cosmos(cosmos::Cosmos),
+    Eth(eth::Eth),
 
-    // Example `--baz` argument with no short version
-    // #[options(no_short, help = "baz path")]
-    // baz: Option<PathBuf>
 
-    // "free" arguments don't have an associated flag
-    // #[options(free)]
-    // free_args: Vec<String>,
+
 }
 
 impl Runnable for TxCmd {
