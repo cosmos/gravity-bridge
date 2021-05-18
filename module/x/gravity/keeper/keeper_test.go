@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -204,42 +203,40 @@ func TestLastSlashedValsetNonce(t *testing.T) {
 	k := input.GravityKeeper
 	ctx := input.Context
 
-	// vs := k.NewSignerSetTx(ctx)
-
 	i := 1
 	for ; i < 10; i++ {
-		k.NewSignerSetTx(ctx)
-		// k.SetOutgoingTx(ctx, vs)
+		ctx = ctx.WithBlockHeight(int64(i))
+		vs := k.NewSignerSetTx(ctx)
+		k.SetOutgoingTx(ctx, vs)
 	}
 
 	latestValsetNonce := k.GetLatestSignerSetTxNonce(ctx)
-	assert.Equal(t, latestValsetNonce, uint64(i-1))
+	assert.Equal(t, uint64(i-1), latestValsetNonce)
 
 	//  lastSlashedValsetNonce should be zero initially.
 	lastSlashedValsetNonce := k.GetLastSlashedSignerSetTxNonce(ctx)
-	assert.Equal(t, lastSlashedValsetNonce, uint64(0))
+	assert.Equal(t, uint64(0), lastSlashedValsetNonce)
 	unslashedValsets := k.GetUnSlashedSignerSetTxs(ctx, uint64(12))
-	assert.Equal(t, len(unslashedValsets), 9)
+	assert.Equal(t, 9, len(unslashedValsets))
 
 	// check if last Slashed Valset nonce is set properly or not
 	k.SetLastSlashedSignerSetTxNonce(ctx, uint64(3))
 	lastSlashedValsetNonce = k.GetLastSlashedSignerSetTxNonce(ctx)
-	assert.Equal(t, lastSlashedValsetNonce, uint64(3))
+	assert.Equal(t, uint64(3), lastSlashedValsetNonce)
 
 	// when maxHeight < lastSlashedValsetNonce, len(unslashedValsets) should be zero
 	unslashedValsets = k.GetUnSlashedSignerSetTxs(ctx, uint64(2))
-	assert.Equal(t, len(unslashedValsets), 0)
+	assert.Equal(t, 0, len(unslashedValsets))
 
 	// when maxHeight == lastSlashedValsetNonce, len(unslashedValsets) should be zero
 	unslashedValsets = k.GetUnSlashedSignerSetTxs(ctx, uint64(3))
-	assert.Equal(t, len(unslashedValsets), 0)
+	assert.Equal(t, 0, len(unslashedValsets))
 
 	// when maxHeight > lastSlashedValsetNonce && maxHeight <= latestValsetNonce
 	unslashedValsets = k.GetUnSlashedSignerSetTxs(ctx, uint64(6))
-	assert.Equal(t, len(unslashedValsets), 2)
+	assert.Equal(t, 2, len(unslashedValsets))
 
 	// when maxHeight > latestValsetNonce
 	unslashedValsets = k.GetUnSlashedSignerSetTxs(ctx, uint64(15))
-	assert.Equal(t, len(unslashedValsets), 6)
-	fmt.Println("unslashedValsetsRange", unslashedValsets)
+	assert.Equal(t, 6, len(unslashedValsets))
 }

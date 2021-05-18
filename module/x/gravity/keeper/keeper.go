@@ -106,10 +106,10 @@ func (k Keeper) GetLastSlashedSignerSetTxNonce(ctx sdk.Context) uint64 {
 
 // GetUnSlashedSignerSetTxs returns all the unslashed validator sets in state
 func (k Keeper) GetUnSlashedSignerSetTxs(ctx sdk.Context, maxHeight uint64) (out []*types.SignerSetTx) {
-	lastSlashedSignerSetTx := k.GetLastSlashedSignerSetTxNonce(ctx)
+	lastSlashedSignerSetTxNonce := k.GetLastSlashedSignerSetTxNonce(ctx)
 	k.IterateOutgoingTxs(ctx, types.SignerSetTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
 		sstx, _ := otx.(*types.SignerSetTx)
-		if sstx.Nonce > lastSlashedSignerSetTx {
+		if (sstx.Nonce > lastSlashedSignerSetTxNonce) && (sstx.Height < maxHeight) {
 			out = append(out, sstx)
 		}
 		return false

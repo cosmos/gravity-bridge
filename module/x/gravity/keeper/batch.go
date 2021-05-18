@@ -32,13 +32,10 @@ func (k Keeper) BuildBatchTx(
 	}
 
 	if lastBatch := k.GetLastOutgoingBatchByTokenType(ctx, contractAddress); lastBatch != nil {
-		currentFees := k.GetBatchFeesByTokenType(ctx, contractAddress)
-		if currentFees == nil {
-			return nil, sdkerrors.Wrap(types.ErrInvalid, "error getting fees from tx pool")
-		}
+		currentFees := k.GetBatchFeesByTokenType(ctx, contractAddress, maxElements)
 
 		lastFees := lastBatch.GetFees()
-		if lastFees.GT(currentFees.Amount) {
+		if lastFees.GT(currentFees) {
 			return nil, sdkerrors.Wrap(types.ErrInvalid, "new batch would not be more profitable")
 		}
 	}
@@ -138,6 +135,22 @@ func (k Keeper) PickUnbatchedTX(
 		return err != nil || len(selectedTx) == maxElements
 	})
 	return selectedTx, err
+}
+
+// GetBatchFeesByTokenType gets the fees the next batch of a given token type would
+// have if created. This info is both presented to relayers for the purpose of determining
+// when to request batches and also used by the batch creation process to decide not to create
+// a new batch
+func (k Keeper) GetBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr common.Address, maxElements int) sdk.Int {
+	feeAmount := sdk.ZeroInt()
+	i := 0
+	k.IterateOutgoingPoolByFee(ctx, tokenContractAddr, func(txID uint64, tx *types.SendToEthereum) bool {
+		feeAmount = feeAmount.Add(tx.Erc20Fee.Amount)
+		i++
+		return i == maxElements
+	})
+
+	return feeAmount
 }
 
 // CancelBatchTx releases all TX in the batch and deletes the batch

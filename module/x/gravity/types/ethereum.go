@@ -111,12 +111,12 @@ func GravityDenomToERC20(denom string) (string, error) {
 	}
 }
 
-func NewSendToEthereumTx(id uint64, tokenContract common.Address, sender sdk.AccAddress, recipent common.Address, amount, feeAmount uint64) *SendToEthereum {
+func NewSendToEthereumTx(id uint64, tokenContract common.Address, sender sdk.AccAddress, recipient common.Address, amount, feeAmount uint64) *SendToEthereum {
 	return &SendToEthereum{
 		Id:                id,
 		Erc20Fee:          NewERC20Token(feeAmount, tokenContract.Hex()),
 		Sender:            sender.String(),
-		EthereumRecipient: recipent.Hex(),
+		EthereumRecipient: recipient.Hex(),
 		Erc20Token:        NewERC20Token(amount, tokenContract.Hex()),
 	}
 }

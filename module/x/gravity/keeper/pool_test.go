@@ -107,7 +107,7 @@ func TestTotalBatchFeeInPool(t *testing.T) {
 		tokenFeeMap should be
 		map[0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5:8 0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0:500]
 		**/
-	assert.Equal(t, batchFees[0].Amount.BigInt(), big.NewInt(int64(8)))
-	assert.Equal(t, batchFees[1].Amount.BigInt(), big.NewInt(int64(500)))
+	assert.Equal(t, big.NewInt(int64(8)), batchFees[0].Amount.BigInt())
+	assert.Equal(t, big.NewInt(int64(500)), batchFees[1].Amount.BigInt())
 
 }

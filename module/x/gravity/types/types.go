@@ -94,11 +94,11 @@ func (b EthereumSigners) PowerDiff(c EthereumSigners) float64 {
 
 	// subtract c powers from powers in the map, initializing
 	// uninitialized keys with negative numbers
-	for _, bv := range c {
-		if val, ok := powers[bv.EthereumAddress]; ok {
-			powers[bv.EthereumAddress] = val - int64(bv.Power)
+	for _, es := range c {
+		if val, ok := powers[es.EthereumAddress]; ok {
+			powers[es.EthereumAddress] = val - int64(es.Power)
 		} else {
-			powers[bv.EthereumAddress] = -int64(bv.Power)
+			powers[es.EthereumAddress] = -int64(es.Power)
 		}
 	}
 
