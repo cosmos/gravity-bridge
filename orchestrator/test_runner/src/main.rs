@@ -39,6 +39,8 @@ const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
 const TOTAL_TIMEOUT: Duration = Duration::from_secs(300);
 
 lazy_static! {
+    static ref ADDRESS_PREFIX: String =
+        env::var("ADDRESS_PREFIX").unwrap_or_else(|_| CosmosAddress::DEFAULT_PREFIX.to_owned());
     static ref COSMOS_NODE_GRPC: String =
         env::var("COSMOS_NODE_GRPC").unwrap_or_else(|_| "http://localhost:9090".to_owned());
     static ref COSMOS_NODE_ABCI: String =
@@ -106,7 +108,7 @@ pub async fn main() {
     let contact = Contact::new(
         COSMOS_NODE_GRPC.as_str(),
         OPERATION_TIMEOUT,
-        CosmosAddress::DEFAULT_PREFIX,
+        ADDRESS_PREFIX.as_str(),
     )
     .unwrap();
 
