@@ -1,6 +1,7 @@
 package gravity
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -44,7 +45,7 @@ func initializeTestingVars(t *testing.T) *testingVars {
 	tv.myOrchestratorAddr = make([]byte, sdk.AddrLen)
 	tv.myValAddr = sdk.ValAddress(tv.myOrchestratorAddr) // revisit when proper mapping is impl in keeper
 
-	tv.erc20 = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
+	tv.erc20 = common.HexToAddress("0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e").Hex()
 	tv.denom = "uatom"
 
 	tv.input = keeper.CreateTestEnv(t)
@@ -102,7 +103,7 @@ func addDenomToERC20Relation(tv *testingVars) {
 	assert.True(tv.t, isCosmosOriginated)
 
 	assert.Equal(tv.t, tv.denom, gotDenom)
-	assert.Equal(tv.t, tv.erc20, gotERC20)
+	assert.Equal(tv.t, tv.erc20, gotERC20.Hex())
 }
 
 func lockCoinsInModule(tv *testingVars) {

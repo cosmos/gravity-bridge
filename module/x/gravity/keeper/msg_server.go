@@ -111,7 +111,6 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 // SubmitEthereumEvent handles MsgSubmitEthereumEvent
 func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEthereumEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-
 	event, err := types.UnpackEvent(msg.Event)
 	if err != nil {
 		return nil, err

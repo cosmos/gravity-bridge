@@ -20,14 +20,14 @@ func (k Keeper) GetCosmosOriginatedDenom(ctx sdk.Context, tokenContract string) 
 	return "", false
 }
 
-func (k Keeper) GetCosmosOriginatedERC20(ctx sdk.Context, denom string) (string, bool) {
+func (k Keeper) GetCosmosOriginatedERC20(ctx sdk.Context, denom string) (common.Address, bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetDenomToERC20Key(denom))
 
 	if bz != nil {
-		return string(bz), true
+		return common.BytesToAddress(bz), true
 	}
-	return "", false
+	return common.BytesToAddress([]byte{}), false
 }
 
 func (k Keeper) setCosmosOriginatedDenomToERC20(ctx sdk.Context, denom string, tokenContract string) {
@@ -53,7 +53,7 @@ func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, common.
 				fmt.Errorf("denom not a gravity voucher coin: %s, and also not in cosmos-originated ERC20 index", err)
 		}
 		// This is a cosmos-originated asset
-		return true, common.HexToAddress(tc2), nil
+		return true, tc2, nil
 	}
 
 	// This is an ethereum-originated asset
@@ -73,7 +73,7 @@ func (k Keeper) ERC20ToDenomLookup(ctx sdk.Context, tokenContract string) (bool,
 
 	// If it is not in there, it is not a cosmos originated token, turn the ERC20 into a gravity denom
 
-	return false, types.NewERC20Token(0, tokenContract).Contract
+	return false, types.NewERC20Token(0, tokenContract).GravityCoin().Denom
 }
 
 // IterateERC20ToDenom iterates over erc20 to denom relations

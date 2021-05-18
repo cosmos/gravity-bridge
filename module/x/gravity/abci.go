@@ -13,7 +13,7 @@ import (
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// Question: what here can be epoched?
 	slashing(ctx, k)
-	attestationTally(ctx, k)
+	eventVoteRecordTally(ctx, k)
 	cleanupTimedOutBatchTxs(ctx, k)
 	cleanupTimedOutContractCallTxs(ctx, k)
 	createSignerSetTxs(ctx, k)
@@ -27,14 +27,14 @@ func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	//      This will make sure the unbonding validator has to provide an ethereum signature to a new signer set tx
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
 	// 3. If power change between validators of CurrentValset and latest valset request is > 5%
-	latestValset := k.GetLatestSignerSetTx(ctx)
+	latesetSignerSetTx := k.GetLatestSignerSetTx(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
-	if latestValset == nil {
+	if latesetSignerSetTx == nil {
 		k.SetOutgoingTx(ctx, k.NewSignerSetTx(ctx))
 		return
 	}
-	powerDiff := types.EthereumSigners(k.NewSignerSetTx(ctx).Signers).PowerDiff(latestValset.Signers)
-	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (powerDiff > 0.05) {
+	powerDiff := types.EthereumSigners(latesetSignerSetTx.Signers).PowerDiff(latesetSignerSetTx.Signers)
+	if (latesetSignerSetTx == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (powerDiff > 0.05) {
 		k.SetOutgoingTx(ctx, k.NewSignerSetTx(ctx))
 	}
 }
@@ -77,7 +77,7 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 // Iterate over all attestations currently being voted on in order of nonce and
 // "Observe" those who have passed the threshold. Break the loop once we see
 // an attestation that has not passed the threshold
-func attestationTally(ctx sdk.Context, k keeper.Keeper) {
+func eventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 	attmap := k.GetEthereumEventVoteRecordMapping(ctx)
 	// We make a slice with all the event nonces that are in the attestation mapping
 	keys := make([]uint64, 0, len(attmap))

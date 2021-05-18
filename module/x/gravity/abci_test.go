@@ -44,7 +44,7 @@ func TestSignerSetTxCreationUponUnbonding(t *testing.T) {
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 	EndBlocker(input.Context, gravity)
 
-	assert.Equal(t, 2, gravity.GetLatestSignerSetTxNonce(ctx))
+	assert.EqualValues(t, 2, gravity.GetLatestSignerSetTxNonce(ctx))
 }
 
 func TestSignerSetTxSlashing_SignerSetTxCreated_Before_ValidatorBonded(t *testing.T) {
@@ -81,7 +81,6 @@ func TestSignerSetTxSlashing_SignerSetTxCreated_After_ValidatorBonded(t *testing
 
 	for i, val := range keeper.ValAddrs {
 		if i == 0 {
-			// don't sign with first validator
 			continue
 		}
 		pk.SetEthereumSignature(ctx, &types.SignerSetTxSignature{signerSet.Nonce, keeper.AccAddrs[i].String(), []byte("dummysig")}, val)
@@ -218,7 +217,6 @@ func TestSignerSetTxEmission(t *testing.T) {
 
 	// Store a validator set with a power change as the most recent validator set
 	sstx := gravity.NewSignerSetTx(ctx)
-	// TODO: decrement height
 	delta := float64(types.EthereumSigners(sstx.Signers).TotalPower()) * 0.05
 	sstx.Signers[0].Power = uint64(float64(sstx.Signers[0].Power) - delta/2)
 	sstx.Signers[1].Power = uint64(float64(sstx.Signers[1].Power) + delta/2)
@@ -227,13 +225,14 @@ func TestSignerSetTxEmission(t *testing.T) {
 	// EndBlocker should set a new validator set
 	EndBlocker(ctx, gravity)
 	require.NotNil(t, gravity.GetOutgoingTx(ctx, types.MakeSignerSetTxKey(2)))
-	require.True(t, len(gravity.GetSignerSetTxs(ctx)) == 2)
+	require.EqualValues(t, 2, len(gravity.GetSignerSetTxs(ctx)))
 }
 
 func TestSignerSetTxSetting(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
-	input.GravityKeeper.NewSignerSetTx(ctx)
-	require.True(t, len(input.GravityKeeper.GetSignerSetTxs(ctx)) == 1)
+	gk := input.GravityKeeper
+	gk.SetOutgoingTx(ctx, gk.NewSignerSetTx(ctx))
+	require.EqualValues(t, 1, len(gk.GetSignerSetTxs(ctx)))
 }
 
 /// Test batch timeout

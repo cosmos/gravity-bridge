@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
@@ -205,40 +204,27 @@ func (k Keeper) SetLastSlashedBatchBlockHeight(ctx sdk.Context, blockHeight uint
 
 // GetLastSlashedBatchBlockHeight returns the latest slashed Batch block
 func (k Keeper) GetLastSlashedBatchBlockHeight(ctx sdk.Context) uint64 {
-	return types.UInt64FromBytes(ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedBatchBlockKey}))
+	if bz := ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedBatchBlockKey}); bz == nil {
+		return 0
+	} else {
+		return types.UInt64FromBytes(bz)
+	}
 }
 
 // GetUnSlashedBatches returns all the unslashed batches in state
 func (k Keeper) GetUnSlashedBatches(ctx sdk.Context, maxHeight uint64) (out []*types.BatchTx) {
 	lastSlashedBatchBlockHeight := k.GetLastSlashedBatchBlockHeight(ctx)
-	k.IterateBatchBySlashedBatchBlock(ctx,
-		lastSlashedBatchBlockHeight,
-		maxHeight,
-		func(_ []byte, batch *types.BatchTx) bool {
-			out = append(out, batch)
-			return false
-		})
-	return
-}
 
-// IterateBatchBySlashedBatchBlock iterates through all Batch by last slashed Batch block in ASC order
-func (k Keeper) IterateBatchBySlashedBatchBlock(
-	ctx sdk.Context,
-	lastSlashedBatchBlock uint64,
-	maxHeight uint64,
-	cb func([]byte, *types.BatchTx) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.BatchTxBlockKey})
-	iter := prefixStore.Iterator(types.UInt64Bytes(lastSlashedBatchBlock), types.UInt64Bytes(maxHeight))
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var Batch types.BatchTx
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &Batch)
-		// cb returns true to stop early
-		if cb(iter.Key(), &Batch) {
-			break
+	k.IterateOutgoingTxs(ctx, types.BatchTxPrefixByte, func(_ []byte, outgoing types.OutgoingTx) bool {
+		batchTx := outgoing.(*types.BatchTx)
+		if (batchTx.Height < maxHeight) && (batchTx.Height > lastSlashedBatchBlockHeight) {
+			out = append(out, batchTx)
 		}
-	}
+
+		return false
+	})
+
+	return
 }
 
 func (k Keeper) IncrementLastOutgoingBatchNonce(ctx sdk.Context) uint64 {

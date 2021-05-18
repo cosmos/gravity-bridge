@@ -164,7 +164,9 @@ func TestDelegateKeys(t *testing.T) {
 
 func TestStoreEventVoteRecord(t *testing.T) {
 	input := CreateTestEnv(t)
-	event := &types.SendToCosmosEvent{
+	gk := input.GravityKeeper
+	ctx := input.Context
+	stce := &types.SendToCosmosEvent{
 		EventNonce:     1,
 		TokenContract:  EthAddrs[0].Hex(),
 		EthereumSender: EthAddrs[0].Hex(),
@@ -172,11 +174,11 @@ func TestStoreEventVoteRecord(t *testing.T) {
 		EthereumHeight: 10,
 		Amount:         sdk.NewInt(1000000),
 	}
-	eva, err := types.PackEvent(event)
+	stcea, err := types.PackEvent(stce)
 	require.NoError(t, err)
 
 	evr := &types.EthereumEventVoteRecord{
-		Event: eva,
+		Event: stcea,
 		Votes: []string{
 			ValAddrs[0].String(),
 			ValAddrs[1].String(),
@@ -185,16 +187,58 @@ func TestStoreEventVoteRecord(t *testing.T) {
 		Accepted: false,
 	}
 
-	input.GravityKeeper.SetEthereumEventVoteRecord(input.Context, event.GetEventNonce(), event.Hash(), evr)
+	cctxe := &types.ContractCallExecutedEvent{
+		EventNonce:        2,
+		InvalidationId:    []byte{0x1, 0x2},
+		InvalidationNonce: 1,
+		EthereumHeight:    11,
+	}
 
-	stored := input.GravityKeeper.GetEthereumEventVoteRecord(input.Context, event.GetEventNonce(), event.Hash())
+	cctxea, err := types.PackEvent(cctxe)
+	require.NoError(t, err)
+
+	evr2 := &types.EthereumEventVoteRecord{
+		Event: cctxea,
+		Votes: []string{
+			ValAddrs[2].String(),
+			ValAddrs[3].String(),
+			ValAddrs[4].String(),
+		},
+	}
+
+	gk.SetEthereumEventVoteRecord(ctx, stce.GetEventNonce(), stce.Hash(), evr)
+	gk.SetEthereumEventVoteRecord(ctx, cctxe.GetEventNonce(), cctxe.Hash(), evr2)
+
+	stored := gk.GetEthereumEventVoteRecord(ctx, stce.GetEventNonce(), stce.Hash())
 	require.NotNil(t, stored)
 
-	var storedEvent types.EthereumEvent
-	require.NoError(t, input.GravityKeeper.cdc.UnpackAny(stored.Event, &storedEvent))
+	stored1 := gk.GetEthereumEventVoteRecord(ctx, cctxe.GetEventNonce(), cctxe.Hash())
+	require.NotNil(t, stored1)
+
+	// var storedEvent, storedEvent1 types.EthereumEvent
+	storedEvent, err := types.UnpackEvent(stored.Event)
+	require.NoError(t, err)
+	storedEvent1, err := types.UnpackEvent(stored1.Event)
+	require.NoError(t, err)
 
 	require.EqualValues(t, storedEvent.GetNonce(), 1)
-	require.EqualValues(t, storedEvent.Hash(), event.Hash())
+	require.EqualValues(t, storedEvent.Hash(), stce.Hash())
+
+	require.EqualValues(t, storedEvent1.GetNonce(), 2)
+	require.EqualValues(t, storedEvent1.Hash(), cctxe.Hash())
+
+	mapping := gk.GetEthereumEventVoteRecordMapping(ctx)
+	require.EqualValues(t, 3, len(mapping[1][0].Votes))
+	require.EqualValues(t, 3, len(mapping[2][0].Votes))
+
+	eve1, err := types.UnpackEvent(mapping[1][0].Event)
+	require.NoError(t, err)
+	eve2, err := types.UnpackEvent(mapping[2][0].Event)
+	require.NoError(t, err)
+	require.EqualValues(t, 1, eve1.GetNonce())
+	require.EqualValues(t, 2, eve2.GetNonce())
+	require.EqualValues(t, stce.Hash(), eve1.Hash())
+	require.EqualValues(t, cctxe.Hash(), eve2.Hash())
 }
 
 // TODO: uncomment

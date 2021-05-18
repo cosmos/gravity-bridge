@@ -3,19 +3,22 @@ package types
 import (
 	"fmt"
 
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (
 	_ sdk.Msg = &MsgDelegateKeys{}
-
 	_ sdk.Msg = &MsgSendToEthereum{}
 	_ sdk.Msg = &MsgCancelSendToEthereum{}
-
 	_ sdk.Msg = &MsgRequestBatchTx{}
 	_ sdk.Msg = &MsgSubmitEthereumEvent{}
 	_ sdk.Msg = &MsgSubmitEthereumSignature{}
+
+	_ cdctypes.UnpackInterfacesMessage = &MsgSubmitEthereumEvent{}
+	_ cdctypes.UnpackInterfacesMessage = &MsgSubmitEthereumSignature{}
+	_ cdctypes.UnpackInterfacesMessage = &EthereumEventVoteRecord{}
 )
 
 // NewMsgDelegateKeys returns a new msgSetOrchestratorAddress
@@ -96,6 +99,11 @@ func (msg *MsgSubmitEthereumEvent) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
+func (msg *MsgSubmitEthereumEvent) UnpackInterfaces(unpacker cdctypes.AnyUnpacker) error {
+	var event EthereumEvent
+	return unpacker.UnpackAny(msg.Event, &event)
+}
+
 // Route should return the name of the module
 func (msg *MsgSubmitEthereumSignature) Route() string { return RouterKey }
 
@@ -129,6 +137,11 @@ func (msg *MsgSubmitEthereumSignature) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{acc}
+}
+
+func (msg *MsgSubmitEthereumSignature) UnpackInterfaces(unpacker cdctypes.AnyUnpacker) error {
+	var sig EthereumSignature
+	return unpacker.UnpackAny(msg.Signature, &sig)
 }
 
 // NewMsgSendToEthereum returns a new MsgSendToEthereum

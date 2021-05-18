@@ -506,7 +506,12 @@ func NewStakingKeeperWeightedMock(t ...MockStakingValidatorData) *StakingKeeperM
 	}
 
 	for i, a := range t {
+		pk, err := codectypes.NewAnyWithValue(ed25519.GenPrivKey().PubKey())
+		if err != nil {
+			panic(err)
+		}
 		r.BondedValidators[i] = stakingtypes.Validator{
+			ConsensusPubkey: pk,
 			OperatorAddress: a.Operator.String(),
 			Status:          stakingtypes.Bonded,
 		}

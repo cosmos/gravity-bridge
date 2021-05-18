@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -67,6 +68,27 @@ var (
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
 )
+
+func (gs *GenesisState) UnpackInterfaces(unpacker cdctypes.AnyUnpacker) error {
+	for _, otx := range gs.OutgoingTxs {
+		var outgoing OutgoingTx
+		if err := unpacker.UnpackAny(otx, &outgoing); err != nil {
+			return err
+		}
+	}
+	for _, sig := range gs.Signatures {
+		var signature EthereumSignature
+		if err := unpacker.UnpackAny(sig, &signature); err != nil {
+			return err
+		}
+	}
+	for _, evr := range gs.EthereumEventVoteRecords {
+		if err := evr.UnpackInterfaces(unpacker); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func EventVoteRecordPowerThreshold(totalPower sdk.Int) sdk.Int {
 	return sdk.NewInt(66).Mul(totalPower).Quo(sdk.NewInt(100))

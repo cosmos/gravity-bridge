@@ -60,6 +60,7 @@ func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.Ether
 		if err := k.cdc.UnpackAny(eventVoteRecord.Event, &event); err != nil {
 			panic("unpacking packed any")
 		}
+
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
 		// TODO: The different integer types and math here needs a careful review
 		requiredPower := types.EventVoteRecordPowerThreshold(k.StakingKeeper.GetLastTotalPower(ctx))
@@ -86,7 +87,17 @@ func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.Ether
 				k.SetEthereumEventVoteRecord(ctx, event.GetNonce(), event.Hash(), eventVoteRecord)
 
 				k.processEthereumEvent(ctx, event)
-				k.emitObservedEvent(ctx, eventVoteRecord, event)
+				ctx.EventManager().EmitEvent(sdk.NewEvent(
+					types.EventTypeObservation,
+					sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+					sdk.NewAttribute(types.AttributeKeyEthereumEventType, fmt.Sprintf("%T", event)),
+					sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
+					sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
+					sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID,
+						string(types.GetEthereumEventVoteRecordKey(event.GetNonce(), event.Hash()))),
+					sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(event.GetNonce())),
+				))
+
 				break
 			}
 		}
@@ -115,24 +126,6 @@ func (k Keeper) processEthereumEvent(ctx sdk.Context, event types.EthereumEvent)
 	}
 }
 
-// emitObservedEvent emits an event with information about an attestation that has been applied to
-// consensus state.
-func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.EthereumEventVoteRecord, event types.EthereumEvent) {
-	observationEvent := sdk.NewEvent(
-		types.EventTypeObservation,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyEthereumEventType, fmt.Sprintf("%T", event)),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		// todo: serialize with hex/ base64 ?
-		sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID,
-			string(types.GetEthereumEventVoteRecordKey(event.GetNonce(), event.Hash()))),
-		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(event.GetNonce())),
-		// TODO: do we want to emit more information?
-	)
-	ctx.EventManager().EmitEvent(observationEvent)
-}
-
 // SetEthereumEventVoteRecord sets the attestation in the store
 func (k Keeper) SetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, claimHash []byte, eventVoteRecord *types.EthereumEventVoteRecord) {
 	ctx.KVStore(k.storeKey).Set(types.GetEthereumEventVoteRecordKey(eventNonce, claimHash), k.cdc.MustMarshalBinaryBare(eventVoteRecord))
@@ -140,9 +133,13 @@ func (k Keeper) SetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, c
 
 // GetEthereumEventVoteRecord return a vote record given a nonce
 func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, claimHash []byte) *types.EthereumEventVoteRecord {
-	var out types.EthereumEventVoteRecord
-	k.cdc.MustUnmarshalBinaryBare(ctx.KVStore(k.storeKey).Get(types.GetEthereumEventVoteRecordKey(eventNonce, claimHash)), &out)
-	return &out
+	if bz := ctx.KVStore(k.storeKey).Get(types.GetEthereumEventVoteRecordKey(eventNonce, claimHash)); bz == nil {
+		return nil
+	} else {
+		var out types.EthereumEventVoteRecord
+		k.cdc.MustUnmarshalBinaryBare(bz, &out)
+		return &out
+	}
 }
 
 // DeleteEthereumEventVoteRecord deletes an attestation given an event nonce and claim
@@ -154,14 +151,10 @@ func (k Keeper) DeleteEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64
 func (k Keeper) GetEthereumEventVoteRecordMapping(ctx sdk.Context) (out map[uint64][]*types.EthereumEventVoteRecord) {
 	out = make(map[uint64][]*types.EthereumEventVoteRecord)
 	k.IterateEthereumEventVoteRecords(ctx, func(key []byte, eventVoteRecord *types.EthereumEventVoteRecord) bool {
-		var event types.EthereumEvent
-		if err := k.cdc.UnpackAny(eventVoteRecord.Event, &event); err != nil {
+		event, err := types.UnpackEvent(eventVoteRecord.Event)
+		if err != nil {
 			panic(err)
 		}
-
-		fmt.Println("HERERERE")
-		fmt.Println(event)
-		fmt.Println(eventVoteRecord)
 		if val, ok := out[event.GetNonce()]; !ok {
 			out[event.GetNonce()] = []*types.EthereumEventVoteRecord{eventVoteRecord}
 		} else {
@@ -178,10 +171,10 @@ func (k Keeper) IterateEthereumEventVoteRecords(ctx sdk.Context, cb func([]byte,
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		att := types.EthereumEventVoteRecord{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &att)
+		att := &types.EthereumEventVoteRecord{}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), att)
 		// cb returns true to stop early
-		if cb(iter.Key(), &att) {
+		if cb(iter.Key(), att) {
 			return
 		}
 	}

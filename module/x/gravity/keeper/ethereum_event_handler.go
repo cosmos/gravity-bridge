@@ -21,24 +21,16 @@ func (a EthereumEventProcessor) Handle(ctx sdk.Context, eve types.EthereumEvent)
 	switch event := eve.(type) {
 	case *types.SendToCosmosEvent:
 		// Check if coin is Cosmos-originated asset and get denom
-		if isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, event.TokenContract); isCosmosOriginated {
-			// If it is cosmos originated, unlock the coins
-			addr, _ := sdk.AccAddressFromBech32(event.CosmosReceiver)
-			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, sdk.Coins{sdk.NewCoin(denom, event.Amount)}); err != nil {
-				return sdkerrors.Wrap(err, "transfer vouchers")
-			}
-		} else {
+		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, event.TokenContract)
+		addr, _ := sdk.AccAddressFromBech32(event.CosmosReceiver)
+		coins := sdk.Coins{sdk.NewCoin(denom, event.Amount)}
+		if !isCosmosOriginated {
 			// If it is not cosmos originated, mint the coins (aka vouchers)
-			coins := sdk.Coins{sdk.NewCoin(denom, event.Amount)}
 			if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
 				return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)
 			}
-
-			addr, _ := sdk.AccAddressFromBech32(event.CosmosReceiver)
-			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
-				return sdkerrors.Wrap(err, "transfer vouchers")
-			}
 		}
+		return a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins)
 	case *types.BatchExecutedEvent:
 		return a.keeper.BatchTxExecuted(ctx, common.HexToAddress(event.TokenContract), event.GetNonce())
 	case *types.ERC20DeployedEvent:
@@ -46,7 +38,7 @@ func (a EthereumEventProcessor) Handle(ctx sdk.Context, eve types.EthereumEvent)
 		if existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, event.CosmosDenom); exists {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
-				fmt.Sprintf("ERC20 %s already exists for denom %s", existingERC20, event.CosmosDenom))
+				fmt.Sprintf("ERC20 %s already exists for denom %s", existingERC20.Hex(), event.CosmosDenom))
 		}
 
 		// Check if denom exists
@@ -100,7 +92,7 @@ func (a EthereumEventProcessor) Handle(ctx sdk.Context, eve types.EthereumEvent)
 		a.keeper.setCosmosOriginatedDenomToERC20(ctx, event.CosmosDenom, event.TokenContract)
 
 	case *types.ContractCallExecutedEvent:
-		// todo: issue event hook for consumer modules
+		// TODO: issue event hook for consumer modules
 	case *types.SignerSetTxExecutedEvent:
 		// TODO here we should check the contents of the validator set against
 		// the store, if they differ we should take some action to indicate to the

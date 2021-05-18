@@ -89,16 +89,18 @@ func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 	)
 	input := keeper.CreateTestEnv(t)
 	ctx := input.Context
-	input.GravityKeeper.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
-	input.GravityKeeper.SetOrchestratorValidatorAddress(ctx, myValAddr, myOrchestratorAddr)
-	h := NewHandler(input.GravityKeeper)
+	gk := input.GravityKeeper
+	bk := input.BankKeeper
+	gk.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
+	gk.SetOrchestratorValidatorAddress(ctx, myValAddr, myOrchestratorAddr)
+	h := NewHandler(gk)
 
 	myErc20 := types.ERC20Token{
 		Amount:   amountA,
 		Contract: tokenETHAddr,
 	}
 
-	sendToCosmosEvent := types.SendToCosmosEvent{
+	sendToCosmosEvent := &types.SendToCosmosEvent{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -106,37 +108,37 @@ func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 		CosmosReceiver: myCosmosAddr.String(),
 	}
 
-	eva, err := types.PackEvent(&sendToCosmosEvent)
+	eva, err := types.PackEvent(sendToCosmosEvent)
 	require.NoError(t, err)
 
 	msgSubmitEvent := &types.MsgSubmitEthereumEvent{eva, myOrchestratorAddr.String()}
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
 	_, err = h(ctx, msgSubmitEvent)
-	EndBlocker(ctx, input.GravityKeeper)
+	EndBlocker(ctx, gk)
 	require.NoError(t, err)
 
 	// and attestation persisted
-	a := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, sendToCosmosEvent.Hash())
+	a := gk.GetEthereumEventVoteRecord(ctx, myNonce, sendToCosmosEvent.Hash())
 	require.NotNil(t, a)
 	// and vouchers added to the account
 
-	balance := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	balance := bk.GetAllBalances(ctx, myCosmosAddr)
 	require.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to reject duplicate deposit
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
 	_, err = h(ctx, msgSubmitEvent)
-	EndBlocker(ctx, input.GravityKeeper)
+	EndBlocker(ctx, gk)
 	// then
 	require.Error(t, err)
-	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	balance = bk.GetAllBalances(ctx, myCosmosAddr)
 	require.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to reject skipped nonce
 
-	sendToCosmosEvent = types.SendToCosmosEvent{
+	sendToCosmosEvent = &types.SendToCosmosEvent{
 		EventNonce:     uint64(3),
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -144,7 +146,7 @@ func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 		CosmosReceiver: myCosmosAddr.String(),
 	}
 
-	eva, err = types.PackEvent(&sendToCosmosEvent)
+	eva, err = types.PackEvent(sendToCosmosEvent)
 	require.NoError(t, err)
 
 	msgSubmitEvent = &types.MsgSubmitEthereumEvent{eva, myOrchestratorAddr.String()}
@@ -154,13 +156,13 @@ func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 	_, err = h(ctx, msgSubmitEvent)
 	require.Error(t, err)
 
-	EndBlocker(ctx, input.GravityKeeper)
+	EndBlocker(ctx, gk)
 	// then
-	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	balance = bk.GetAllBalances(ctx, myCosmosAddr)
 	require.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to finally accept consecutive nonce
-	sendToCosmosEvent = types.SendToCosmosEvent{
+	sendToCosmosEvent = &types.SendToCosmosEvent{
 		EventNonce:     uint64(2),
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -168,18 +170,18 @@ func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 		CosmosReceiver: myCosmosAddr.String(),
 	}
 
-	eva, err = types.PackEvent(&sendToCosmosEvent)
+	eva, err = types.PackEvent(sendToCosmosEvent)
 	require.NoError(t, err)
 
 	msgSubmitEvent = &types.MsgSubmitEthereumEvent{eva, myOrchestratorAddr.String()}
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
 	_, err = h(ctx, msgSubmitEvent)
-	EndBlocker(ctx, input.GravityKeeper)
+	EndBlocker(ctx, gk)
 
 	// then
 	require.NoError(t, err)
-	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	balance = bk.GetAllBalances(ctx, myCosmosAddr)
 	require.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountB)}, balance)
 }
 
@@ -305,9 +307,9 @@ func TestMsgSetDelegateAddresses(t *testing.T) {
 	_, err := h(ctx, msg)
 	require.NoError(t, err)
 
-	require.Equal(t, k.GetValidatorEthereumAddress(ctx, valAddress), ethAddress)
-	require.Equal(t, k.GetOrchestratorValidatorAddress(ctx, cosmosAddress), valAddress)
-	require.Equal(t, k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(ethAddress)), cosmosAddress)
+	require.Equal(t, ethAddress, k.GetValidatorEthereumAddress(ctx, valAddress).Hex())
+	require.Equal(t, valAddress, k.GetOrchestratorValidatorAddress(ctx, cosmosAddress))
+	require.Equal(t, cosmosAddress, k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(ethAddress)))
 
 	_, err = k.DelegateKeysByOrchestrator(wctx, &types.DelegateKeysByOrchestratorAddress{OrchestratorAddress: cosmosAddress.String()})
 	require.NoError(t, err)
@@ -315,7 +317,7 @@ func TestMsgSetDelegateAddresses(t *testing.T) {
 	_, err = k.DelegateKeysByEthereumSigner(wctx, &types.DelegateKeysByEthereumSignerRequest{EthereumSigner: ethAddress})
 	require.NoError(t, err)
 
-	_, err = k.DelegateKeysByValidator(wctx, &types.DelegateKeysByValidatorAddress{ValidatorAddress: string(valAddress)})
+	_, err = k.DelegateKeysByValidator(wctx, &types.DelegateKeysByValidatorAddress{ValidatorAddress: valAddress.String()})
 	require.NoError(t, err)
 
 	// delegate new orch and eth addrs for same validator
@@ -324,9 +326,9 @@ func TestMsgSetDelegateAddresses(t *testing.T) {
 	_, err = h(ctx, msg)
 	require.NoError(t, err)
 
-	require.Equal(t, k.GetValidatorEthereumAddress(ctx, valAddress), ethAddress2)
-	require.Equal(t, k.GetOrchestratorValidatorAddress(ctx, cosmosAddress2), valAddress)
-	require.Equal(t, k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(ethAddress2)), valAddress)
+	require.Equal(t, ethAddress2, k.GetValidatorEthereumAddress(ctx, valAddress).Hex())
+	require.Equal(t, valAddress, k.GetOrchestratorValidatorAddress(ctx, cosmosAddress2))
+	require.Equal(t, cosmosAddress2, k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(ethAddress2)))
 
 	_, err = k.DelegateKeysByOrchestrator(wctx, &types.DelegateKeysByOrchestratorAddress{OrchestratorAddress: cosmosAddress2.String()})
 	require.NoError(t, err)
@@ -334,6 +336,6 @@ func TestMsgSetDelegateAddresses(t *testing.T) {
 	_, err = k.DelegateKeysByEthereumSigner(wctx, &types.DelegateKeysByEthereumSignerRequest{EthereumSigner: ethAddress2})
 	require.NoError(t, err)
 
-	_, err = k.DelegateKeysByValidator(wctx, &types.DelegateKeysByValidatorAddress{ValidatorAddress: string(valAddress)})
+	_, err = k.DelegateKeysByValidator(wctx, &types.DelegateKeysByValidatorAddress{ValidatorAddress: valAddress.String()})
 	require.NoError(t, err)
 }
