@@ -1,6 +1,7 @@
 use crate::get_chain_id;
 use crate::get_fee;
 use crate::utils::*;
+use crate::CHAIN_BINARY;
 use crate::MINER_ADDRESS;
 use crate::MINER_PRIVATE_KEY;
 use crate::STARTING_STAKE_PER_VALIDATOR;
@@ -18,7 +19,7 @@ use ethereum_gravity::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::SendToCosmosEvent;
 use rand::Rng;
-use std::{env, process::Command, time::Duration};
+use std::{process::Command, time::Duration};
 use std::{process::ExitStatus, time::Instant};
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
@@ -108,18 +109,6 @@ pub async fn happy_path_test(
     .await;
 }
 
-/// for downstream test cases the binary name needs to be different, so we detect
-/// if a runtime env var is set and if so use that as the chain binary name for
-/// our re-delegation. This is actually not the best way to handle this problem
-/// ideally we would send the tx staking delegate command ourselves and never need
-/// to know what the binary name is
-pub fn chain_binary() -> Option<String> {
-    match env::var("CHAIN_BINARY") {
-        Ok(s) => Some(s),
-        _ => None,
-    }
-}
-
 /// This deals with the horrible error behavior of the Cosmos sdk command
 /// line, mainly that when the tx seq changes while creating the message
 /// it doesn't produce a failed output status or even print to stderror
@@ -141,11 +130,7 @@ pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
         "--yes",
         "--from=validator1",
     ];
-    let mut cmd = if let Some(bin) = chain_binary() {
-        Command::new(bin)
-    } else {
-        Command::new("gravity")
-    };
+    let mut cmd = Command::new(CHAIN_BINARY.clone());
 
     let cmd = cmd.args(&args);
     let mut output = cmd
