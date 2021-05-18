@@ -165,7 +165,7 @@ func TestDelegateKeys(t *testing.T) {
 
 func TestStoreEventVoteRecord(t *testing.T) {
 	input := CreateTestEnv(t)
-	event := &types.SendToCosmosEvent{
+	stce := &types.SendToCosmosEvent{
 		EventNonce:     1,
 		TokenContract:  EthAddrs[0].Hex(),
 		EthereumSender: EthAddrs[0].Hex(),
@@ -173,17 +173,21 @@ func TestStoreEventVoteRecord(t *testing.T) {
 		EthereumHeight: 10,
 		Amount:         sdk.NewInt(1000000),
 	}
-	eva, err := types.PackEvent(event)
+	stcea, err := types.PackEvent(stce)
 	require.NoError(t, err)
 
 	evr := &types.EthereumEventVoteRecord{
-		Event: eva,
+		Event: stcea,
 		Votes: []string{
 			ValAddrs[0].String(),
 			ValAddrs[1].String(),
 			ValAddrs[2].String(),
 		},
 		Accepted: false,
+	}
+
+	cctxe := &types.ContractCallExecutedEvent{
+		EventNonce: 2,
 	}
 
 	input.GravityKeeper.SetEthereumEventVoteRecord(input.Context, event.GetEventNonce(), event.Hash(), evr)
@@ -196,6 +200,7 @@ func TestStoreEventVoteRecord(t *testing.T) {
 
 	require.EqualValues(t, storedEvent.GetNonce(), 1)
 	require.EqualValues(t, storedEvent.Hash(), event.Hash())
+
 }
 
 // TODO: uncomment

@@ -60,6 +60,7 @@ func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.Ether
 		if err := k.cdc.UnpackAny(eventVoteRecord.Event, &event); err != nil {
 			panic("unpacking packed any")
 		}
+
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
 		// TODO: The different integer types and math here needs a careful review
 		requiredPower := types.EventVoteRecordPowerThreshold(k.StakingKeeper.GetLastTotalPower(ctx))
@@ -86,7 +87,17 @@ func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.Ether
 				k.SetEthereumEventVoteRecord(ctx, event.GetNonce(), event.Hash(), eventVoteRecord)
 
 				k.processEthereumEvent(ctx, event)
-				k.emitObservedEvent(ctx, eventVoteRecord, event)
+				ctx.EventManager().EmitEvent(sdk.NewEvent(
+					types.EventTypeObservation,
+					sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+					sdk.NewAttribute(types.AttributeKeyEthereumEventType, fmt.Sprintf("%T", event)),
+					sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
+					sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
+					sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID,
+						string(types.GetEthereumEventVoteRecordKey(event.GetNonce(), event.Hash()))),
+					sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(event.GetNonce())),
+				))
+
 				break
 			}
 		}
@@ -113,24 +124,6 @@ func (k Keeper) processEthereumEvent(ctx sdk.Context, event types.EthereumEvent)
 	} else {
 		commit() // persist transient storage
 	}
-}
-
-// emitObservedEvent emits an event with information about an attestation that has been applied to
-// consensus state.
-func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.EthereumEventVoteRecord, event types.EthereumEvent) {
-	observationEvent := sdk.NewEvent(
-		types.EventTypeObservation,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyEthereumEventType, fmt.Sprintf("%T", event)),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		// todo: serialize with hex/ base64 ?
-		sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID,
-			string(types.GetEthereumEventVoteRecordKey(event.GetNonce(), event.Hash()))),
-		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(event.GetNonce())),
-		// TODO: do we want to emit more information?
-	)
-	ctx.EventManager().EmitEvent(observationEvent)
 }
 
 // SetEthereumEventVoteRecord sets the attestation in the store
@@ -160,6 +153,7 @@ func (k Keeper) GetEthereumEventVoteRecordMapping(ctx sdk.Context) (out map[uint
 		}
 
 		fmt.Println("HERERERE")
+		fmt.Println(eventVoteRecord.Event)
 		fmt.Println(event)
 		fmt.Println(eventVoteRecord)
 		if val, ok := out[event.GetNonce()]; !ok {
@@ -180,6 +174,7 @@ func (k Keeper) IterateEthereumEventVoteRecords(ctx sdk.Context, cb func([]byte,
 	for ; iter.Valid(); iter.Next() {
 		att := types.EthereumEventVoteRecord{}
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &att)
+		fmt.Println("herere", att.Event)
 		// cb returns true to stop early
 		if cb(iter.Key(), &att) {
 			return

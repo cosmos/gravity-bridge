@@ -165,12 +165,13 @@ func (k Keeper) HasEthereumSignature(ctx sdk.Context, storeIndex []byte, validat
 }
 
 // GetEthereumSignatures returns all etherum signatures for a given outgoing tx by store index
-func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) (signatures map[string]hexutil.Bytes) {
+func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[string]hexutil.Bytes {
+	var signatures = make(map[string]hexutil.Bytes)
 	k.IterateEthereumSignatures(ctx, storeIndex, func(val sdk.ValAddress, h hexutil.Bytes) bool {
 		signatures[val.String()] = h
 		return false
 	})
-	return
+	return signatures
 }
 
 // IterateEthereumSignatures iterates through all valset confirms by nonce in ASC order
@@ -272,7 +273,7 @@ func (k Keeper) GetSignerSetTxs(ctx sdk.Context) (out []*types.SignerSetTx) {
 	k.IterateOutgoingTxs(ctx, types.SignerSetTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
 		sstx, _ := otx.(*types.SignerSetTx)
 		out = append(out, sstx)
-		return true
+		return false
 	})
 	return
 }
@@ -439,7 +440,6 @@ func (k Keeper) SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx) {
 	if err != nil {
 		panic(err)
 	}
-
 	ctx.KVStore(k.storeKey).Set(types.GetOutgoingTxKey(outgoing.GetStoreIndex()), k.cdc.MustMarshalBinaryBare(any))
 }
 
