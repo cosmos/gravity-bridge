@@ -1,49 +1,10 @@
+use clarity::Address as EthAddress;
 use clarity::Uint256;
-use clarity::{abi::encode_tokens, Address as EthAddress};
 use clarity::{abi::Token, constants::ZERO_ADDRESS};
-use deep_space::address::Address as CosmosAddress;
-use gravity_utils::error::GravityError;
 use gravity_utils::types::*;
-use sha3::{Digest, Keccak256};
 use std::u128::MAX as U128MAX;
 use std::u64::MAX as U64MAX;
 use web30::{client::Web3, jsonrpc::error::Web3Error};
-
-pub fn get_correct_sig_for_address(
-    address: CosmosAddress,
-    confirms: &[ValsetConfirmResponse],
-) -> (Uint256, Uint256, Uint256) {
-    for sig in confirms {
-        if sig.orchestrator == address {
-            return (
-                sig.eth_signature.v.clone(),
-                sig.eth_signature.r.clone(),
-                sig.eth_signature.s.clone(),
-            );
-        }
-    }
-    panic!("Could not find that address!");
-}
-
-pub fn get_checkpoint_abi_encode(
-    valset: &Valset,
-    gravity_id: &str,
-) -> Result<Vec<u8>, GravityError> {
-    let (eth_addresses, powers) = valset.filter_empty_addresses();
-    Ok(encode_tokens(&[
-        Token::FixedString(gravity_id.to_string()),
-        Token::FixedString("checkpoint".to_string()),
-        valset.nonce.into(),
-        eth_addresses.into(),
-        powers.into(),
-    ]))
-}
-
-pub fn get_checkpoint_hash(valset: &Valset, gravity_id: &str) -> Result<Vec<u8>, GravityError> {
-    let locally_computed_abi_encode = get_checkpoint_abi_encode(&valset, &gravity_id);
-    let locally_computed_digest = Keccak256::digest(&locally_computed_abi_encode?);
-    Ok(locally_computed_digest.to_vec())
-}
 
 pub fn downcast_uint256(input: Uint256) -> Option<u64> {
     if input >= U64MAX.into() {
