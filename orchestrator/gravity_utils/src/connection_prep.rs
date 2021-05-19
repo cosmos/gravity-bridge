@@ -252,7 +252,7 @@ pub async fn check_delegate_addresses(
             let o = o.into_inner();
             let req_delegate_orchestrator_address: CosmosAddress =
                 e.orchestrator_address.parse().unwrap();
-            let req_delegate_eth_address: EthAddress = o.eth_address.parse().unwrap();
+            let req_delegate_eth_address: EthAddress = o.ethereum_signer.parse().unwrap();
             if req_delegate_eth_address != delegate_eth_address
                 && req_delegate_orchestrator_address != delegate_orchestrator_address
             {

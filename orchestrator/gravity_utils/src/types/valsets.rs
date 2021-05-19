@@ -53,28 +53,26 @@ struct SignatureStatus {
 /// the response we get when querying for a valset confirmation
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ValsetConfirmResponse {
-    pub orchestrator: CosmosAddress,
-    pub eth_address: EthAddress,
+    pub eth_signer: EthAddress,
     pub nonce: u64,
     pub eth_signature: EthSignature,
 }
 
 impl ValsetConfirmResponse {
     pub fn from_proto(
-        input: gravity_proto::gravity::MsgValsetConfirm,
+        input: gravity_proto::gravity::UpdateSignerSetTxSignature,
     ) -> Result<Self, GravityError> {
         Ok(ValsetConfirmResponse {
-            orchestrator: input.orchestrator.parse()?,
-            eth_address: input.eth_address.parse()?,
+            eth_signer: input.eth_signer.parse()?,
             nonce: input.nonce,
-            eth_signature: input.signature.parse()?,
+            eth_signature: EthSignature::from_bytes(&input.signature)?,
         })
     }
 }
 
 impl Confirm for ValsetConfirmResponse {
     fn get_eth_address(&self) -> EthAddress {
-        self.eth_address
+        self.eth_signer
     }
     fn get_signature(&self) -> EthSignature {
         self.eth_signature.clone()
@@ -325,20 +323,20 @@ impl Valset {
     }
 }
 
-impl From<gravity_proto::gravity::Valset> for Valset {
-    fn from(input: gravity_proto::gravity::Valset) -> Self {
+impl From<gravity_proto::gravity::UpdateSignerSetTxResponse> for Valset {
+    fn from(input: gravity_proto::gravity::UpdateSignerSetTxResponse) -> Self {
         Valset {
-            nonce: input.nonce,
-            members: input.members.iter().map(|i| i.into()).collect(),
+            nonce:input.signer_set.unwrap().nonce,
+            members: input.signer_set.unwrap().signers.iter().map(|i| i.into()).collect(),
         }
     }
 }
 
-impl From<&gravity_proto::gravity::Valset> for Valset {
-    fn from(input: &gravity_proto::gravity::Valset) -> Self {
+impl From<&gravity_proto::gravity::UpdateSignerSetTxResponse> for Valset {
+    fn from(input: &gravity_proto::gravity::UpdateSignerSetTxResponse) -> Self {
         Valset {
-            nonce: input.nonce,
-            members: input.members.iter().map(|i| i.into()).collect(),
+            nonce:input.signer_set.unwrap().nonce,
+            members: input.signer_set.unwrap().signers.iter().map(|i| i.into()).collect(),
         }
     }
 }
@@ -394,27 +392,27 @@ impl fmt::Display for ValsetMember {
     }
 }
 
-impl From<gravity_proto::gravity::BridgeValidator> for ValsetMember {
-    fn from(input: gravity_proto::gravity::BridgeValidator) -> Self {
+impl From<gravity_proto::gravity::EthereumSigner> for ValsetMember {
+    fn from(input: gravity_proto::gravity::EthereumSigner) -> Self {
         let eth_address = match input.ethereum_address.parse() {
             Ok(e) => Some(e),
             Err(_) => None,
         };
         ValsetMember {
-            power: input.power,
+            power: input.power as u64,
             eth_address,
         }
     }
 }
 
-impl From<&gravity_proto::gravity::BridgeValidator> for ValsetMember {
-    fn from(input: &gravity_proto::gravity::BridgeValidator) -> Self {
+impl From<&gravity_proto::gravity::EthereumSigner> for ValsetMember {
+    fn from(input: &gravity_proto::gravity::EthereumSigner) -> Self {
         let eth_address = match input.ethereum_address.parse() {
             Ok(e) => Some(e),
             Err(_) => None,
         };
         ValsetMember {
-            power: input.power,
+            power: input.power as u64,
             eth_address,
         }
     }

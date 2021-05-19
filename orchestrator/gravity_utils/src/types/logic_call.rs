@@ -12,26 +12,26 @@ pub struct LogicCall {
     pub logic_contract_address: EthAddress,
     pub payload: Vec<u8>,
     pub timeout: u64,
-    pub invalidation_id: Vec<u8>,
+    pub invalidation_scope: Vec<u8>,
     pub invalidation_nonce: u64,
 }
 
 impl LogicCall {
     pub fn from_proto(
-        input: gravity_proto::gravity::OutgoingLogicCall,
+        input: gravity_proto::gravity::ContractCallTx,
     ) -> Result<Self, GravityError> {
         let mut transfers: Vec<Erc20Token> = Vec::new();
         let mut fees: Vec<Erc20Token> = Vec::new();
-        for transfer in input.transfers {
+        for transfer in input.tokens {
             transfers.push(Erc20Token {
                 amount: transfer.amount.parse()?,
-                token_contract_address: transfer.contract.parse()?,
+                token_contract_address: "Figure out how to get this from the denom".parse()?,
             })
         }
         for fee in input.fees {
             fees.push(Erc20Token {
                 amount: fee.amount.parse()?,
-                token_contract_address: fee.contract.parse()?,
+                token_contract_address: "Figure out how to get this from the denom".parse()?,
             })
         }
         if transfers.is_empty() || fees.is_empty() {
@@ -43,10 +43,10 @@ impl LogicCall {
         Ok(LogicCall {
             transfers,
             fees,
-            logic_contract_address: input.logic_contract_address.parse()?,
+            logic_contract_address: input.contract_call_address.parse()?,
             payload: input.payload,
             timeout: input.timeout,
-            invalidation_id: input.invalidation_id,
+            invalidation_scope: input.invalidation_scope,
             invalidation_nonce: input.invalidation_nonce,
         })
     }
@@ -58,20 +58,18 @@ pub struct LogicCallConfirmResponse {
     pub invalidation_id: Vec<u8>,
     pub invalidation_nonce: u64,
     pub ethereum_signer: EthAddress,
-    pub orchestrator: CosmosAddress,
     pub eth_signature: EthSignature,
 }
 
 impl LogicCallConfirmResponse {
     pub fn from_proto(
-        input: gravity_proto::gravity::MsgConfirmLogicCall,
+        input: gravity_proto::gravity::ContractCallTxSignature,
     ) -> Result<Self, GravityError> {
         Ok(LogicCallConfirmResponse {
-            invalidation_id: hex_str_to_bytes(&input.invalidation_id).unwrap(),
+            invalidation_id: input.invalidation_id.clone(),
             invalidation_nonce: input.invalidation_nonce,
-            orchestrator: input.orchestrator.parse()?,
             ethereum_signer: input.eth_signer.parse()?,
-            eth_signature: input.signature.parse()?,
+            eth_signature: EthSignature::from_bytes(&input.signature)?,
         })
     }
 }
