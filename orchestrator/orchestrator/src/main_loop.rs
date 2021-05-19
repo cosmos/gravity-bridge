@@ -93,6 +93,7 @@ pub async fn eth_oracle_main_loop(
     let mut last_checked_block: Uint256 = get_last_checked_block(
         grpc_client.clone(),
         our_cosmos_address,
+        contact.get_prefix(),
         gravity_contract_address,
         &long_timeout_web30,
     )
@@ -233,7 +234,13 @@ pub async fn eth_signer_main_loop(
         }
 
         // sign the last unsigned valsets
-        match get_oldest_unsigned_valsets(&mut grpc_client, our_cosmos_address).await {
+        match get_oldest_unsigned_valsets(
+            &mut grpc_client,
+            our_cosmos_address,
+            contact.get_prefix(),
+        )
+        .await
+        {
             Ok(valsets) => {
                 if valsets.is_empty() {
                     trace!("No validator sets to sign, node is caught up!")
@@ -262,7 +269,13 @@ pub async fn eth_signer_main_loop(
         }
 
         // sign the last unsigned batch, TODO check if we already have signed this
-        match get_oldest_unsigned_transaction_batch(&mut grpc_client, our_cosmos_address).await {
+        match get_oldest_unsigned_transaction_batch(
+            &mut grpc_client,
+            our_cosmos_address,
+            contact.get_prefix(),
+        )
+        .await
+        {
             Ok(Some(last_unsigned_batch)) => {
                 info!(
                     "Sending batch confirm for {}:{} with {} in fees",
@@ -288,7 +301,13 @@ pub async fn eth_signer_main_loop(
             ),
         }
 
-        match get_oldest_unsigned_logic_call(&mut grpc_client, our_cosmos_address).await {
+        match get_oldest_unsigned_logic_call(
+            &mut grpc_client,
+            our_cosmos_address,
+            contact.get_prefix(),
+        )
+        .await
+        {
             Ok(Some(last_unsigned_call)) => {
                 info!(
                     "Sending Logic call confirm for {}:{}",

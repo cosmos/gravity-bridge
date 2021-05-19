@@ -55,10 +55,11 @@ pub async fn get_current_valset(
 pub async fn get_oldest_unsigned_valsets(
     client: &mut GravityQueryClient<Channel>,
     address: Address,
+    prefix: String,
 ) -> Result<Vec<Valset>, GravityError> {
     let request = client
         .last_pending_valset_request_by_addr(QueryLastPendingValsetRequestByAddrRequest {
-            address: address.to_string(),
+            address: address.to_bech32(prefix).unwrap(),
         })
         .await?;
     let valsets = request.into_inner().valsets;
@@ -98,10 +99,11 @@ pub async fn get_all_valset_confirms(
 pub async fn get_oldest_unsigned_transaction_batch(
     client: &mut GravityQueryClient<Channel>,
     address: Address,
+    prefix: String,
 ) -> Result<Option<TransactionBatch>, GravityError> {
     let request = client
         .last_pending_batch_request_by_addr(QueryLastPendingBatchRequestByAddrRequest {
-            address: address.to_string(),
+            address: address.to_bech32(prefix).unwrap(),
         })
         .await?;
     let batch = request.into_inner().batch;
@@ -152,10 +154,11 @@ pub async fn get_transaction_batch_signatures(
 pub async fn get_last_event_nonce(
     client: &mut GravityQueryClient<Channel>,
     address: Address,
+    prefix: String,
 ) -> Result<u64, GravityError> {
     let request = client
         .last_event_nonce_by_addr(QueryLastEventNonceByAddrRequest {
-            address: address.to_string(),
+            address: address.to_bech32(prefix).unwrap(),
         })
         .await?;
     Ok(request.into_inner().event_nonce)
@@ -198,10 +201,11 @@ pub async fn get_logic_call_signatures(
 pub async fn get_oldest_unsigned_logic_call(
     client: &mut GravityQueryClient<Channel>,
     address: Address,
+    prefix: String,
 ) -> Result<Option<LogicCall>, GravityError> {
     let request = client
         .last_pending_logic_call_by_addr(QueryLastPendingLogicCallByAddrRequest {
-            address: address.to_string(),
+            address: address.to_bech32(prefix).unwrap(),
         })
         .await?;
     let call = request.into_inner().call;

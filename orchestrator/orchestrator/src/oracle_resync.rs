@@ -19,6 +19,7 @@ use gravity_utils::types::event_signatures::*;
 pub async fn get_last_checked_block(
     grpc_client: GravityQueryClient<Channel>,
     our_cosmos_address: CosmosAddress,
+    prefix: String,
     gravity_contract_address: Address,
     web3: &Web3,
 ) -> Uint256 {
@@ -27,7 +28,7 @@ pub async fn get_last_checked_block(
 
     let latest_block = get_block_number_with_retry(web3).await;
     let mut last_event_nonce: Uint256 =
-        get_last_event_nonce_with_retry(&mut grpc_client, our_cosmos_address)
+        get_last_event_nonce_with_retry(&mut grpc_client, our_cosmos_address, prefix)
             .await
             .into();
 

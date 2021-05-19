@@ -107,7 +107,8 @@ pub async fn check_for_events(
         // block, so we also need this routine so make sure we don't send in the first event in this hypothetical
         // multi event block again. In theory we only send all events for every block and that will pass of fail
         // atomicly but lets not take that risk.
-        let last_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
+        let last_event_nonce =
+            get_last_event_nonce(grpc_client, our_cosmos_address, contact.get_prefix()).await?;
         let valsets = ValsetUpdatedEvent::filter_by_event_nonce(last_event_nonce, &valsets);
         let deposits = SendToCosmosEvent::filter_by_event_nonce(last_event_nonce, &deposits);
         let withdraws =
@@ -167,7 +168,8 @@ pub async fn check_for_events(
                 fee,
             )
             .await?;
-            let new_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
+            let new_event_nonce =
+                get_last_event_nonce(grpc_client, our_cosmos_address, contact.get_prefix()).await?;
             // since we can't actually trust that the above txresponse is correct we have to check here
             // we may be able to trust the tx response post grpc
             if new_event_nonce == last_event_nonce {

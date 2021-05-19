@@ -352,7 +352,7 @@ async fn test_batch(
     let requester_address = requester_cosmos_private_key
         .to_address(&contact.get_prefix())
         .unwrap();
-    get_oldest_unsigned_transaction_batch(grpc_client, requester_address)
+    get_oldest_unsigned_transaction_batch(grpc_client, requester_address, contact.get_prefix())
         .await
         .expect("Failed to get batch to sign");
 
