@@ -47,8 +47,8 @@ pub struct BatchTx {
     pub nonce: u64,
     #[prost(uint64, tag="2")]
     pub timeout: u64,
-    #[prost(bytes="vec", repeated, tag="3")]
-    pub transactions: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+    #[prost(message, repeated, tag="3")]
+    pub transactions: ::prost::alloc::vec::Vec<SendToEthereumTx>,
     #[prost(string, tag="4")]
     pub token_contract: ::prost::alloc::string::String,
     #[prost(uint64, tag="5")]
