@@ -3,24 +3,24 @@
 use abscissa_core::{Command, Options, Runnable};
 
 #[derive(Command, Debug, Options, Runnable)]
-pub enum Cosmos {
+pub enum CosmosKeysCmd {
     #[options(help = "add [name]")]
-    Add(AddCosmosKey),
+    Add(AddCosmosKeyCmd),
 
     #[options(help = "import [name] [mnemnoic]")]
-    Import(ImportCosmosKey),
+    Import(ImportCosmosKeyCmd),
 
     #[options(help = "delete [name]")]
-    Delete(DeleteCosmosKey),
+    Delete(DeleteCosmosKeyCmd),
 
     #[options(help = "update [name] [new-name]")]
-    Update(UpdateCosmosKey),
+    Update(UpdateCosmosKeyCmd),
 
     #[options(help = "list")]
-    List(ListCosmosKey),
+    List(ListCosmosKeyCmd),
 
     #[options(help = "show [name]")]
-    Show(ShowCosmosKey)
+    Show(ShowCosmosKeyCmd)
 }
 
 

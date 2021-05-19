@@ -3,24 +3,24 @@
 use abscissa_core::{Command, Options, Runnable};
 
 #[derive(Command, Debug, Options, Runnable)]
-pub enum Eth {
+pub enum EthKeysCmd {
     #[options(help = "add [name]")]
-    Add(AddEthKey),
+    Add(AddEthKeyCmd),
 
     #[options(help = "import [name] [privkey]")]
-    Import(ImportEthKey),
+    Import(ImportEthKeyCmd),
 
     #[options(help = "delete [name]")]
-    Delete(DeleteEthKey),
+    Delete(DeleteEthKeyCmd),
 
     #[options(help = "update [name] [new-name]")]
-    Update(UpdateEthKey),
+    Update(UpdateEthKeyCmd),
 
     #[options(help = "list")]
-    List(ListEthKey),
+    List(ListEthKeyCmd),
 
     #[options(help = "show [name]")]
-    Show(ShowEthKey)
+    Show(ShowEthKeyCmd)
 }
 
 impl Runnable for Eth{
