@@ -82,7 +82,7 @@ struct Args {
     flag_erc20_name: String,
     flag_erc20_symbol: String,
     flag_erc20_decimals: u8,
-    flag_cosmos_prefix: String,
+    flag_address_prefix: String,
     cmd_eth_to_cosmos: bool,
     cmd_cosmos_to_eth: bool,
     cmd_deploy_erc20_representation: bool,
@@ -91,8 +91,8 @@ struct Args {
 lazy_static! {
     pub static ref USAGE: String = format!(
     "Usage:
-        {} cosmos-to-eth --cosmos-phrase=<key> --cosmos-grpc=<url> --cosmos-prefix=<prefix> --cosmos-denom=<denom> --amount=<amount> --eth-destination=<dest> [--no-batch] [--times=<number>]
-        {} eth-to-cosmos --ethereum-key=<key> --ethereum-rpc=<url> --cosmos-prefix=<prefix> --contract-address=<addr> --erc20-address=<addr> --amount=<amount> --cosmos-destination=<dest> [--times=<number>]
+        {} cosmos-to-eth --cosmos-phrase=<key> --cosmos-grpc=<url> --address-prefix=<prefix> --cosmos-denom=<denom> --amount=<amount> --eth-destination=<dest> [--no-batch] [--times=<number>]
+        {} eth-to-cosmos --ethereum-key=<key> --ethereum-rpc=<url> --address-prefix=<prefix> --contract-address=<addr> --erc20-address=<addr> --amount=<amount> --cosmos-destination=<dest> [--times=<number>]
         {} deploy-erc20-representation --cosmos-grpc=<url> --cosmos-prefix=<prefix> --cosmos-denom=<denom> --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr> --erc20-name=<name> --erc20-symbol=<symbol> --erc20-decimals=<decimals>
         Options:
             -h --help                   Show this screen.
@@ -100,7 +100,7 @@ lazy_static! {
             --ethereum-key=<ekey>       The Ethereum private key of the sender
             --cosmos-legacy-rpc=<curl>  The Cosmos Legacy RPC url, this will need to be manually enabled
             --cosmos-grpc=<curl>        The Cosmos gRPC url
-            --cosmos-prefix=<prefix>    The Bech32 Prefix used for the Cosmos chain's addresses
+            --address-prefix=<prefix>    The Bech32 Prefix used for the Cosmos chain's addresses
             --ethereum-rpc=<eurl>       The Ethereum RPC url, should be a self hosted node
             --contract-address=<addr>   The Ethereum contract address for Gravity, this is temporary
             --erc20-address=<addr>      An erc20 address on Ethereum to send funds from
@@ -156,11 +156,11 @@ async fn main() {
         };
         let cosmos_key = CosmosPrivateKey::from_phrase(&args.flag_cosmos_phrase, "")
             .expect("Failed to parse cosmos key phrase, does it have a password?");
-        let cosmos_address = cosmos_key.to_address(&args.flag_cosmos_prefix).unwrap();
+        let cosmos_address = cosmos_key.to_address(&args.flag_address_prefix).unwrap();
 
         println!("Sending from Cosmos address {}", cosmos_address);
         let connections = create_rpc_connections(
-            args.flag_cosmos_prefix,
+            args.flag_address_prefix,
             Some(args.flag_cosmos_grpc),
             None,
             TIMEOUT,
@@ -273,7 +273,7 @@ async fn main() {
             .parse()
             .expect("Invalid contract address!");
         let connections = create_rpc_connections(
-            args.flag_cosmos_prefix,
+            args.flag_address_prefix,
             None,
             Some(args.flag_ethereum_rpc),
             TIMEOUT,
@@ -344,7 +344,7 @@ async fn main() {
             .parse()
             .expect("Invalid contract address!");
         let connections = create_rpc_connections(
-            args.flag_cosmos_prefix,
+            args.flag_address_prefix,
             Some(args.flag_cosmos_grpc),
             Some(args.flag_ethereum_rpc),
             TIMEOUT,
