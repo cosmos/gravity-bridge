@@ -27,6 +27,7 @@ use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_
 use std::time::Instant;
 use std::{process::exit, time::Duration, u128};
 use tokio::time::sleep as delay_for;
+use web30::types::SendTxOption;
 
 const TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -381,7 +382,7 @@ async fn main() {
             &web3,
             Some(TIMEOUT),
             ethereum_key,
-            vec![],
+            vec![SendTxOption::GasPriceMultiplier(1.5)],
         )
         .await
         .unwrap();

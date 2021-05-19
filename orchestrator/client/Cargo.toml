@@ -1,6 +1,6 @@
 [package]
 name = "client"
-version = "0.4.1"
+version = "0.4.2"
 authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
 
@@ -18,7 +18,7 @@ serde = "1.0"
 actix-rt = "2.2"
 lazy_static = "1"
 url = "2"
-web30 = "0.13"
+web30 = "0.14"
 env_logger = "0.8"
 openssl-probe = "0.1"
 tokio = "1.4"

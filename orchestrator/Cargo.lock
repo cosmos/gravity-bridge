@@ -750,7 +750,7 @@ dependencies = [
 
 [[package]]
 name = "client"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "actix-rt 2.2.0",
  "clarity",
@@ -767,7 +767,7 @@ dependencies = [
  "serde_derive",
  "tokio 1.5.0",
  "url",
- "web30 0.13.0",
+ "web30",
 ]
 
 [[package]]
@@ -845,7 +845,7 @@ dependencies = [
  "sha3",
  "tokio 1.5.0",
  "tonic",
- "web30 0.14.0",
+ "web30",
 ]
 
 [[package]]
@@ -1058,7 +1058,7 @@ dependencies = [
  "log",
  "num256",
  "sha3",
- "web30 0.14.0",
+ "web30",
 ]
 
 [[package]]
@@ -1299,7 +1299,7 @@ dependencies = [
  "tokio 1.5.0",
  "tonic",
  "url",
- "web30 0.14.0",
+ "web30",
 ]
 
 [[package]]
@@ -1992,7 +1992,7 @@ dependencies = [
  "serde_json",
  "tokio 1.5.0",
  "tonic",
- "web30 0.14.0",
+ "web30",
 ]
 
 [[package]]
@@ -2415,7 +2415,7 @@ dependencies = [
  "relayer",
  "serde",
  "serde_derive",
- "web30 0.14.0",
+ "web30",
 ]
 
 [[package]]
@@ -2440,7 +2440,7 @@ dependencies = [
  "serde_derive",
  "tokio 1.5.0",
  "tonic",
- "web30 0.14.0",
+ "web30",
 ]
 
 [[package]]
@@ -2889,7 +2889,7 @@ dependencies = [
  "tokio 1.5.0",
  "tonic",
  "url",
- "web30 0.14.0",
+ "web30",
 ]
 
 [[package]]
@@ -3414,25 +3414,6 @@ name = "wasm-bindgen-shared"
 version = "0.2.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9a543ae66aa233d14bb765ed9af4a33e81b8b58d1584cf1b47ff8cd0b9e4489"
-
-[[package]]
-name = "web30"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94daace2850ef252e8a6f74e1bf46b55915a4b6840ca9293b4b802871188f0c6"
-dependencies = [
- "actix",
- "awc 3.0.0-beta.5",
- "clarity",
- "futures",
- "log",
- "num 0.4.0",
- "num256",
- "serde",
- "serde_derive",
- "serde_json",
- "tokio 1.5.0",
-]
 
 [[package]]
 name = "web30"
