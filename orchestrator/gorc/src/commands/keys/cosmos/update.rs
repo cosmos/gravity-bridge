@@ -10,7 +10,7 @@ pub struct UpdateCosmosKeyCmd {
     pub new_name: String,
 }
 
-/// The `gork cosmos update [name] [new-name]` subcommand: show keys
+/// The `gork keys cosmos update [name] [new-name]` subcommand: show keys
 impl Runnable for UpdateCosmosKeyCmd {
     fn run(&self) {
         /// todo(shella): glue with signatory crate to update keys

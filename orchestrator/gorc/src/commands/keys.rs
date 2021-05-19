@@ -15,8 +15,8 @@ use abscissa_core::{Command, Options, Runnable};
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub enum KeysCmd {
-    Cosmos(cosmos::Cosmos),
-    Eth(eth::Eth),
+    CosmosKeysCmd(cosmos::Cosmos),
+    EthKeysCmd(eth::Eth),
 }
 
 impl Runnable for KeysCmd {

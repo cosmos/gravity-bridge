@@ -45,7 +45,7 @@ pub enum GorcCmd {
     #[options(help = "start the application")]
     Start(StartCmd),
 
-    #[options(help = "start the application")]
+    #[options(help = "key management commands")]
     Keys(KeysCmd),
 
     #[options(help = "get usage information")]

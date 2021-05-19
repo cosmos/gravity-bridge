@@ -10,7 +10,7 @@ pub struct ImportCosmosKeyCmd {
     pub mnemnoic: String,
 }
 
-/// The `gork cosmos import [name] [mnemnoic]` subcommand: import key
+/// The `gork keys cosmos import [name] [mnemnoic]` subcommand: import key
 impl Runnable for ImportCosmosKeyCmd {
     fn run(&self) {
         /// todo(shella): glue with signatory crate to import key

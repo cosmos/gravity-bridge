@@ -7,7 +7,7 @@ pub struct AddCosmosKeyCmd {
     pub name: String,
 }
 
-/// The `gork cosmos add [name] ` subcommand: add private key
+/// The `gork keys cosmos add [name] ` subcommand: add private key
 impl Runnable for AddCosmosKeyCmd {
     fn run(&self) {
         /// todo(shella): glue with signatory crate to save private key to fs

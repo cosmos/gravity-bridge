@@ -7,7 +7,7 @@ pub struct ShowCosmosKeyCmd {
     pub name: String,
 }
 
-/// The `gork cosmos show [name]` subcommand: show keys
+/// The `gork keys cosmos show [name]` subcommand: show keys
 impl Runnable for ShowCosmosKeyCmd {
     fn run(&self) {
         /// todo(shella): glue with signatory crate to list keys
