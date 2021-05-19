@@ -155,7 +155,7 @@ fn test_batch_signature() {
         nonce: 1u64,
         transactions: vec![BatchTransaction {
             id: 1u64,
-            destination: "0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39"
+            ethereum_recipient: "0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39"
                 .parse()
                 .unwrap(),
             sender: sender_addr,
@@ -207,7 +207,7 @@ fn test_specific_batch_signature() {
         nonce: 15u64,
         transactions: vec![BatchTransaction {
             id: 1301u64,
-            destination: "0x64D110e00064F2b428476cD64295d8E35836ffd6"
+            ethereum_recipient: "0x64D110e00064F2b428476cD64295d8E35836ffd6"
                 .parse()
                 .unwrap(),
             sender: sender_addr,
@@ -260,7 +260,7 @@ pub fn encode_logic_call_confirm(gravity_id: String, call: LogicCall) -> Vec<u8>
         call.logic_contract_address.into(),          // Address of a logic contract
         Token::UnboundedBytes(call.payload),         // Encoded arguments to logic contract
         call.timeout.into(),                         // Timeout on batch
-        Token::Bytes(call.invalidation_id),          // ID of logic batch
+        Token::Bytes(call.invalidation_scope),          // Scope of logic batch
         call.invalidation_nonce.into(),              // Nonce of logic batch. See 2-d nonce scheme.
     ])
 }
@@ -300,7 +300,7 @@ fn test_logic_call_signature() {
         )
         .unwrap(),
         timeout: 4766922941000,
-        invalidation_id: hex_str_to_bytes(
+        invalidation_scope: hex_str_to_bytes(
             "0x696e76616c69646174696f6e4964000000000000000000000000000000000000",
         )
         .unwrap(),

@@ -326,7 +326,7 @@ impl Valset {
 impl From<gravity_proto::gravity::UpdateSignerSetTxResponse> for Valset {
     fn from(input: gravity_proto::gravity::UpdateSignerSetTxResponse) -> Self {
         Valset {
-            nonce:input.signer_set.unwrap().nonce,
+            nonce:input.signer_set.clone().unwrap().nonce,
             members: input.signer_set.unwrap().signers.iter().map(|i| i.into()).collect(),
         }
     }
@@ -335,8 +335,8 @@ impl From<gravity_proto::gravity::UpdateSignerSetTxResponse> for Valset {
 impl From<&gravity_proto::gravity::UpdateSignerSetTxResponse> for Valset {
     fn from(input: &gravity_proto::gravity::UpdateSignerSetTxResponse) -> Self {
         Valset {
-            nonce:input.signer_set.unwrap().nonce,
-            members: input.signer_set.unwrap().signers.iter().map(|i| i.into()).collect(),
+            nonce:input.signer_set.clone().unwrap().nonce,
+            members: input.signer_set.clone().unwrap().signers.iter().map(|i| i.into()).collect(),
         }
     }
 }
