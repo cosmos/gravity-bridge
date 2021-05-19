@@ -26,7 +26,7 @@ actix-web = {version = "3", features=["openssl"]}
 actix-rt = "2.2"
 lazy_static = "1"
 url = "2"
-web30 = "0.13"
+web30 = "0.14"
 num256 = "0.3"
 log = "0.4"
 env_logger = "0.8"

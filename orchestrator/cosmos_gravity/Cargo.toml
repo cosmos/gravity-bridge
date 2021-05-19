@@ -18,7 +18,7 @@ num256 = "0.3"
 log = "0.4"
 sha3 = "0.9"
 tokio = "1.4"
-web30 = "0.13"
+web30 = "0.14"
 tonic = "0.4"
 
 [dev-dependencies]

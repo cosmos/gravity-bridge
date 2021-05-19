@@ -5,7 +5,10 @@ use gravity_utils::error::GravityError;
 use gravity_utils::message_signatures::encode_tx_batch_confirm_hashed;
 use gravity_utils::types::*;
 use std::{cmp::min, time::Duration};
-use web30::{client::Web3, types::TransactionRequest};
+use web30::{
+    client::Web3,
+    types::{SendTxOption, TransactionRequest},
+};
 
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided transaction batch
@@ -59,7 +62,7 @@ pub async fn send_eth_transaction_batch(
             0u32.into(),
             eth_address,
             our_eth_key,
-            vec![],
+            vec![SendTxOption::GasPriceMultiplier(1.10f32)],
         )
         .await?;
     info!("Sent batch update with txid {:#066x}", tx);

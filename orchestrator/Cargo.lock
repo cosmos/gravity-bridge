@@ -127,15 +127,15 @@ dependencies = [
 
 [[package]]
 name = "actix-http"
-version = "3.0.0-beta.5"
+version = "3.0.0-beta.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb9c5d7ceb490d6565156ae1d4d467db17da1759425c65a2e36ac5e182e014e2"
+checksum = "59d51c2ba06062e698a5d212d860e9fb2afc931c285ede687aaae896c8150347"
 dependencies = [
  "actix-codec 0.4.0-beta.1",
  "actix-rt 2.2.0",
- "actix-service 2.0.0-beta.5",
+ "actix-service 2.0.0",
  "actix-tls 3.0.0-beta.5",
- "actix-utils 3.0.0-beta.4",
+ "actix-utils 3.0.0",
  "ahash",
  "base64",
  "bitflags",
@@ -156,14 +156,13 @@ dependencies = [
  "log",
  "mime",
  "once_cell",
+ "paste",
  "percent-encoding",
  "pin-project 1.0.6",
  "pin-project-lite 0.2.6",
  "rand 0.8.3",
  "regex",
  "serde",
- "serde_json",
- "serde_urlencoded",
  "sha-1",
  "smallvec",
  "time 0.2.26",
@@ -261,11 +260,12 @@ dependencies = [
 
 [[package]]
 name = "actix-service"
-version = "2.0.0-beta.5"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf82340ad9f4e4caf43737fd3bbc999778a268015cdc54675f60af6240bd2b05"
+checksum = "77f5f9d66a8730d0fae62c26f3424f5751e5518086628a40b7ab6fca4a705034"
 dependencies = [
  "futures-core",
+ "paste",
  "pin-project-lite 0.2.6",
 ]
 
@@ -320,8 +320,8 @@ checksum = "65b7bb60840962ef0332f7ea01a57d73a24d2cb663708511ff800250bbfef569"
 dependencies = [
  "actix-codec 0.4.0-beta.1",
  "actix-rt 2.2.0",
- "actix-service 2.0.0-beta.5",
- "actix-utils 3.0.0-beta.4",
+ "actix-service 2.0.0",
+ "actix-utils 3.0.0",
  "derive_more",
  "futures-core",
  "http",
@@ -353,9 +353,9 @@ dependencies = [
 
 [[package]]
 name = "actix-utils"
-version = "3.0.0-beta.4"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7e96334417549752384b169ca5d52bcea9e5081dbb2d3933599ac8b770f642a"
+checksum = "e491cbaac2e7fc788dfff99ff48ef317e23b3cf63dbaf7aaab6418f40f92aa94"
 dependencies = [
  "local-waker",
  "pin-project-lite 0.2.6",
@@ -555,14 +555,14 @@ dependencies = [
 
 [[package]]
 name = "awc"
-version = "3.0.0-beta.4"
+version = "3.0.0-beta.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "737c2a61028f4079f954a585b7580b52406e3c679f11f2a2aa0d7f6547d9a58a"
+checksum = "d8bea03ceedb5bc5d1696f0d800dfcb81cf3d1991eed1c84ae00306eb74b2d70"
 dependencies = [
  "actix-codec 0.4.0-beta.1",
- "actix-http 3.0.0-beta.5",
+ "actix-http 3.0.0-beta.6",
  "actix-rt 2.2.0",
- "actix-service 2.0.0-beta.5",
+ "actix-service 2.0.0",
  "base64",
  "bytes 1.0.1",
  "derive_more",
@@ -767,7 +767,7 @@ dependencies = [
  "serde_derive",
  "tokio 1.5.0",
  "url",
- "web30",
+ "web30 0.13.0",
 ]
 
 [[package]]
@@ -845,7 +845,7 @@ dependencies = [
  "sha3",
  "tokio 1.5.0",
  "tonic",
- "web30",
+ "web30 0.14.0",
 ]
 
 [[package]]
@@ -1058,7 +1058,7 @@ dependencies = [
  "log",
  "num256",
  "sha3",
- "web30",
+ "web30 0.14.0",
 ]
 
 [[package]]
@@ -1299,7 +1299,7 @@ dependencies = [
  "tokio 1.5.0",
  "tonic",
  "url",
- "web30",
+ "web30 0.14.0",
 ]
 
 [[package]]
@@ -1992,7 +1992,7 @@ dependencies = [
  "serde_json",
  "tokio 1.5.0",
  "tonic",
- "web30",
+ "web30 0.14.0",
 ]
 
 [[package]]
@@ -2030,6 +2030,12 @@ dependencies = [
  "rand_core 0.6.2",
  "subtle",
 ]
+
+[[package]]
+name = "paste"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "acbf547ad0c65e31259204bd90935776d1c693cec2f4ff7abb7a1bbbd40dfe58"
 
 [[package]]
 name = "pbkdf2"
@@ -2409,7 +2415,7 @@ dependencies = [
  "relayer",
  "serde",
  "serde_derive",
- "web30",
+ "web30 0.14.0",
 ]
 
 [[package]]
@@ -2434,7 +2440,7 @@ dependencies = [
  "serde_derive",
  "tokio 1.5.0",
  "tonic",
- "web30",
+ "web30 0.14.0",
 ]
 
 [[package]]
@@ -2883,7 +2889,7 @@ dependencies = [
  "tokio 1.5.0",
  "tonic",
  "url",
- "web30",
+ "web30 0.14.0",
 ]
 
 [[package]]
@@ -3416,7 +3422,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94daace2850ef252e8a6f74e1bf46b55915a4b6840ca9293b4b802871188f0c6"
 dependencies = [
  "actix",
- "awc 3.0.0-beta.4",
+ "awc 3.0.0-beta.5",
+ "clarity",
+ "futures",
+ "log",
+ "num 0.4.0",
+ "num256",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "tokio 1.5.0",
+]
+
+[[package]]
+name = "web30"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d771de6834b84f5fde0e5a7fe0f0d60a220654f4bd5c2f62b1a6708a63493842"
+dependencies = [
+ "actix",
+ "awc 3.0.0-beta.5",
  "clarity",
  "futures",
  "log",

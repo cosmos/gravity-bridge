@@ -74,6 +74,8 @@ pub async fn send_to_cosmos(
         options.push(SendTxOption::Nonce(nonce + 1u8.into()));
     }
 
+    options.push(SendTxOption::GasPriceMultiplier(1.10f32));
+
     // This code deals with some specifics of Ethereum byte encoding, Ethereum is BigEndian
     // so small values like addresses that don't take up the full length of the byte vector
     // are pushed up to the top. This duplicates the way Ethereum encodes it's own addresses

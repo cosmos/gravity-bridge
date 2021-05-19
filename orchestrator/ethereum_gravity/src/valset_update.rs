@@ -4,6 +4,7 @@ use clarity::{Address as EthAddress, Uint256};
 use gravity_utils::types::*;
 use gravity_utils::{error::GravityError, message_signatures::encode_valset_confirm_hashed};
 use std::{cmp::min, time::Duration};
+use web30::types::SendTxOption;
 use web30::{client::Web3, types::TransactionRequest};
 
 /// this function generates an appropriate Ethereum transaction
@@ -45,7 +46,7 @@ pub async fn send_eth_valset_update(
             0u32.into(),
             eth_address,
             our_eth_key,
-            vec![],
+            vec![SendTxOption::GasPriceMultiplier(1.10f32)],
         )
         .await?;
     info!("Sent valset update with txid {:#066x}", tx);
