@@ -296,7 +296,7 @@ pub async fn send_ethereum_claims(
             block_height: downcast_uint256(deposit.block_height).unwrap(),
             token_contract: deposit.erc20.to_string(),
             amount: deposit.amount.to_string(),
-            cosmos_receiver: deposit.destination.to_string(),
+            cosmos_receiver: deposit.destination.to_bech32(contact.get_prefix()).unwrap(),
             ethereum_sender: deposit.sender.to_string(),
             orchestrator: our_address.to_string(),
         };
