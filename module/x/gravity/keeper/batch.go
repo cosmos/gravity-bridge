@@ -23,7 +23,7 @@ const OutgoingTxBatchSize = 100
 func (k Keeper) BuildOutgoingTXBatch(
 	ctx sdk.Context,
 	contractAddress string,
-	maxElements int) (*types.OutgoingTxBatch, error) {
+	maxElements uint) (*types.OutgoingTxBatch, error) {
 	if maxElements == 0 {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "max elements value")
 	}
@@ -35,7 +35,7 @@ func (k Keeper) BuildOutgoingTXBatch(
 	if lastBatch != nil {
 		// this traverses the current tx pool for this token type and determines what
 		// fees a hypothetical batch would have if created
-		currentFees := k.GetBatchFeesByTokenType(ctx, contractAddress)
+		currentFees := k.GetBatchFeesByTokenType(ctx, contractAddress, maxElements)
 		if currentFees == nil {
 			return nil, sdkerrors.Wrap(types.ErrInvalid, "error getting fees from tx pool")
 		}
@@ -158,19 +158,17 @@ func (k Keeper) DeleteBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
 func (k Keeper) pickUnbatchedTX(
 	ctx sdk.Context,
 	contractAddress string,
-	maxElements int) ([]*types.OutgoingTransferTx, error) {
+	maxElements uint) ([]*types.OutgoingTransferTx, error) {
 	var selectedTx []*types.OutgoingTransferTx
 	var err error
 	k.IterateOutgoingPoolByFee(ctx, contractAddress, func(txID uint64, tx *types.OutgoingTransferTx) bool {
 		if tx != nil && tx.Erc20Fee != nil {
 			selectedTx = append(selectedTx, tx)
 			err = k.removeFromUnbatchedTXIndex(ctx, *tx.Erc20Fee, txID)
-			return err != nil || len(selectedTx) == maxElements
+			return err != nil || uint(len(selectedTx)) == maxElements
 		} else {
 			panic("tx and fee should never be nil!")
 		}
-
-		return true
 	})
 	return selectedTx, err
 }

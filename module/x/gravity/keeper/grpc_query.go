@@ -104,7 +104,7 @@ func (k Keeper) LastPendingValsetRequestByAddr(
 func (k Keeper) BatchFees(
 	c context.Context,
 	req *types.QueryBatchFeeRequest) (*types.QueryBatchFeeResponse, error) {
-	return &types.QueryBatchFeeResponse{BatchFees: k.GetAllBatchFees(sdk.UnwrapSDKContext(c))}, nil
+	return &types.QueryBatchFeeResponse{BatchFees: k.GetAllBatchFees(sdk.UnwrapSDKContext(c), OutgoingTxBatchSize)}, nil
 }
 
 // LastPendingBatchRequestByAddr queries the LastPendingBatchRequestByAddr of the gravity module

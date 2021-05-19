@@ -290,21 +290,17 @@ func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb fu
 // have if created. This info is both presented to relayers for the purpose of determining
 // when to request batches and also used by the batch creation process to decide not to create
 // a new batch
-func (k Keeper) GetBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr string) *types.BatchFees {
-	batchFeesMap := k.createBatchFees(ctx)
+func (k Keeper) GetBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr string, maxElements uint) *types.BatchFees {
+	batchFeesMap := k.createBatchFees(ctx, maxElements)
 	return batchFeesMap[tokenContractAddr]
 }
 
 // GetAllBatchFees creates a fee entry for every batch type currently in the store
 // this can be used by relayers to determine what batch types are desireable to request
-func (k Keeper) GetAllBatchFees(ctx sdk.Context) (batchFees []*types.BatchFees) {
-	batchFeesMap := k.createBatchFees(ctx)
+func (k Keeper) GetAllBatchFees(ctx sdk.Context, maxElements uint) (batchFees []*types.BatchFees) {
+	batchFeesMap := k.createBatchFees(ctx, maxElements)
 	// create array of batchFees
 	for _, batchFee := range batchFeesMap {
-		// newBatchFee := types.BatchFees{
-		// 	Token:         batchFee.Token,
-		// 	TopOneHundred: batchFee.TopOneHundred,
-		// }
 		batchFees = append(batchFees, batchFee)
 	}
 
@@ -318,7 +314,7 @@ func (k Keeper) GetAllBatchFees(ctx sdk.Context) (batchFees []*types.BatchFees) 
 }
 
 // CreateBatchFees iterates over the outgoing pool and creates batch token fee map
-func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.BatchFees {
+func (k Keeper) createBatchFees(ctx sdk.Context, maxElements uint) map[string]*types.BatchFees {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
