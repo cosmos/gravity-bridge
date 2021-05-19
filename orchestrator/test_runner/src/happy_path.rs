@@ -5,6 +5,7 @@ use crate::ADDRESS_PREFIX;
 use crate::CHAIN_BINARY;
 use crate::MINER_ADDRESS;
 use crate::MINER_PRIVATE_KEY;
+use crate::STAKING_TOKEN;
 use crate::STARTING_STAKE_PER_VALIDATOR;
 use crate::TOTAL_TIMEOUT;
 use clarity::PrivateKey as EthPrivateKey;
@@ -202,7 +203,11 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
         .to_address(&format!("{}valoper", *ADDRESS_PREFIX))
         .unwrap()
         .to_string();
-    let amount = &format!("{}stake", STARTING_STAKE_PER_VALIDATOR / 4);
+    let amount = &format!(
+        "{}{}",
+        STARTING_STAKE_PER_VALIDATOR / 4,
+        STAKING_TOKEN.as_str()
+    );
     info!(
         "Delegating {} to {} in order to generate a validator set update",
         amount, delegate_address

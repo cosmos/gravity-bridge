@@ -49,6 +49,8 @@ lazy_static! {
         env::var("CHAIN_BINARY").unwrap_or_else(|_| "gravity".to_owned());
     static ref ADDRESS_PREFIX: String =
         env::var("ADDRESS_PREFIX").unwrap_or_else(|_| CosmosAddress::DEFAULT_PREFIX.to_owned());
+    static ref STAKING_TOKEN: String =
+        env::var("STAKING_TOKEN").unwrap_or_else(|_| "stake".to_owned());
     static ref COSMOS_NODE_GRPC: String =
         env::var("COSMOS_NODE_GRPC").unwrap_or_else(|_| "http://localhost:9090".to_owned());
     static ref COSMOS_NODE_ABCI: String =
