@@ -130,7 +130,7 @@ pub async fn relay_valsets(
                 // there are two possible encoding problems that could cause the very rare sig failure bug,
                 // one of them is that the hash is incorrect, that's not probable considering that
                 // both Geth and Clarity agree on it. but this lets us check
-                error!(
+                debug!(
                     "New valset hash {} new valset data {:?} old valset data {:?}",
                     bytes_to_hex_str(&hash),
                     latest_cosmos_valset,
@@ -144,7 +144,7 @@ pub async fn relay_valsets(
                     gravity_id,
                 )
                 .unwrap();
-                error!("New valset payload {}", bytes_to_hex_str(&payload));
+                debug!("New valset payload {}", bytes_to_hex_str(&payload));
             }
             return;
         }
