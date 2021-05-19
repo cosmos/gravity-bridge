@@ -12,16 +12,14 @@ use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::service_client::ServiceClient as TxServiceClient;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastMode;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastTxRequest;
-use gravity_proto::gravity::MsgConfirmBatch;
-use gravity_proto::gravity::MsgConfirmLogicCall;
-use gravity_proto::gravity::MsgDepositClaim;
-use gravity_proto::gravity::MsgErc20DeployedClaim;
-use gravity_proto::gravity::MsgLogicCallExecutedClaim;
-use gravity_proto::gravity::MsgRequestBatch;
-use gravity_proto::gravity::MsgSendToEth;
-use gravity_proto::gravity::MsgSetOrchestratorAddress;
-use gravity_proto::gravity::MsgValsetConfirm;
-use gravity_proto::gravity::MsgWithdrawClaim;
+use gravity_proto::gravity::MsgSubmitEthereumEvent;
+use gravity_proto::gravity::{SendToCosmosEvent,ContractCallExecutedEvent,Erc20DeployedEvent, BatchExecutedEvent};
+use gravity_proto::gravity::MsgSubmitEthereumSignature;
+use gravity_proto::gravity::{ContractCallTxSignature,BatchTxSignature};
+use gravity_proto::gravity::MsgRequestBatchTx;
+use gravity_proto::gravity::MsgSendToEthereum;
+use gravity_proto::gravity::MsgDelegateKeys;
+
 use gravity_utils::message_signatures::{
     encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
 };
@@ -52,9 +50,9 @@ pub async fn update_gravity_delegate_addresses(
         .unwrap();
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
 
-    let msg_set_orch_address = MsgSetOrchestratorAddress {
-        validator: our_valoper_address.to_string(),
-        orchestrator: delegate_cosmos_address.to_string(),
+    let msg_set_orch_address = MsgDelegateKeys {
+        validator_address: our_valoper_address.to_string(),
+        orchestrator_address: delegate_cosmos_address.to_string(),
         eth_address: delegate_eth_address.to_string(),
     };
 
@@ -121,12 +119,7 @@ pub async fn send_valset_confirms(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = MsgValsetConfirm {
-            orchestrator: our_address.to_string(),
-            eth_address: our_eth_address.to_string(),
-            nonce: valset.nonce,
-            signature: bytes_to_hex_str(&eth_signature.to_bytes()),
-        };
+        let confirm = todo!();
         let msg = Msg::new("/gravity.v1.MsgValsetConfirm", confirm);
         messages.push(msg);
     }
@@ -179,12 +172,11 @@ pub async fn send_batch_confirm(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = MsgConfirmBatch {
+        let confirm = BatchTxSignature {
             token_contract: batch.token_contract.to_string(),
-            orchestrator: our_address.to_string(),
-            eth_signer: our_eth_address.to_string(),
             nonce: batch.nonce,
-            signature: bytes_to_hex_str(&eth_signature.to_bytes()),
+            eth_signer: our_eth_address.to_string(),
+            signature: bytes_to_hex_str(&eth_signature.to_bytes()).as_bytes().to_vec(),
         };
         let msg = Msg::new("/gravity.v1.MsgConfirmBatch", confirm);
         messages.push(msg);
@@ -238,11 +230,10 @@ pub async fn send_logic_call_confirm(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = MsgConfirmLogicCall {
-            orchestrator: our_address.to_string(),
+        let confirm = ContractCallTxSignature {
             eth_signer: our_eth_address.to_string(),
-            signature: bytes_to_hex_str(&eth_signature.to_bytes()),
-            invalidation_id: bytes_to_hex_str(&call.invalidation_scope),
+            signature: bytes_to_hex_str(&eth_signature.to_bytes()).as_bytes().to_vec(),
+            invalidation_id: bytes_to_hex_str(&call.invalidation_scope).as_bytes().to_vec(),
             invalidation_nonce: call.invalidation_nonce,
         };
         let msg = Msg::new("/gravity.v1.MsgConfirmLogicCall", confirm);
@@ -288,53 +279,48 @@ pub async fn send_ethereum_claims(
     // We index the events by event nonce in an unordered hashmap and then play them back in order into a vec
     let mut unordered_msgs = HashMap::new();
     for deposit in deposits {
-        let claim = MsgDepositClaim {
-            event_nonce: downcast_uint256(deposit.event_nonce.clone()).unwrap(),
-            block_height: downcast_uint256(deposit.block_height).unwrap(),
-            token_contract: deposit.erc20.to_string(),
+        let claim = SendToCosmosEvent {
+            event_nonce: deposit.event_nonce,
+            ethereum_height: deposit.ethereum_height,
+            token_contract: deposit.token_contract.to_string(),
             amount: deposit.amount.to_string(),
-            cosmos_receiver: deposit.destination.to_string(),
-            ethereum_sender: deposit.sender.to_string(),
-            orchestrator: our_address.to_string(),
+            cosmos_receiver: deposit.cosmos_receiver.to_string(),
+            ethereum_sender: deposit.ethereum_sender.to_string(),
         };
         let msg = Msg::new("/gravity.v1.MsgDepositClaim", claim);
         unordered_msgs.insert(deposit.event_nonce.clone(), msg);
     }
     for withdraw in withdraws {
-        let claim = MsgWithdrawClaim {
+        let claim = BatchExecutedEvent {
             event_nonce: downcast_uint256(withdraw.event_nonce.clone()).unwrap(),
-            block_height: downcast_uint256(withdraw.block_height).unwrap(),
+            ethereum_height: downcast_uint256(withdraw.block_height).unwrap(),
             token_contract: withdraw.erc20.to_string(),
-            batch_nonce: downcast_uint256(withdraw.batch_nonce).unwrap(),
-            orchestrator: our_address.to_string(),
         };
         let msg = Msg::new("/gravity.v1.MsgWithdrawClaim", claim);
-        unordered_msgs.insert(withdraw.event_nonce.clone(), msg);
+        unordered_msgs.insert(downcast_uint256(withdraw.event_nonce.clone()).unwrap(), msg);
     }
     for deploy in erc20_deploys {
-        let claim = MsgErc20DeployedClaim {
-            event_nonce: downcast_uint256(deploy.event_nonce.clone()).unwrap(),
-            block_height: downcast_uint256(deploy.block_height).unwrap(),
+        let claim = Erc20DeployedEvent {
+            event_nonce: deploy.event_nonce,
+            ethereum_height: deploy.ethereum_height,
             cosmos_denom: deploy.cosmos_denom,
-            token_contract: deploy.erc20_address.to_string(),
-            name: deploy.name,
-            symbol: deploy.symbol,
-            decimals: deploy.decimals as u64,
-            orchestrator: our_address.to_string(),
+            token_contract: deploy.token_contract.to_string(),
+            erc20_name: deploy.erc20_name,
+            erc20_symbol: deploy.erc20_symbol,
+            erc20_decimals: deploy.erc20_decimals as u64,
         };
         let msg = Msg::new("/gravity.v1.MsgERC20DeployedClaim", claim);
         unordered_msgs.insert(deploy.event_nonce.clone(), msg);
     }
     for call in logic_calls {
-        let claim = MsgLogicCallExecutedClaim {
+        let claim = ContractCallExecutedEvent {
             event_nonce: downcast_uint256(call.event_nonce.clone()).unwrap(),
-            block_height: downcast_uint256(call.block_height).unwrap(),
+            ethereum_height: downcast_uint256(call.block_height).unwrap(),
             invalidation_id: call.invalidation_id,
             invalidation_nonce: downcast_uint256(call.invalidation_nonce).unwrap(),
-            orchestrator: our_address.to_string(),
         };
         let msg = Msg::new("/gravity.v1.MsgLogicCallExecutedClaim", claim);
-        unordered_msgs.insert(call.event_nonce.clone(), msg);
+        unordered_msgs.insert(downcast_uint256(call.event_nonce.clone()).unwrap(), msg);
     }
     let mut keys = Vec::new();
     for (key, _) in unordered_msgs.iter() {
@@ -410,9 +396,9 @@ pub async fn send_to_eth(
         )));
     }
 
-    let msg_send_to_eth = MsgSendToEth {
+    let msg_send_to_eth = MsgSendToEthereum {
         sender: our_address.to_string(),
-        eth_dest: destination.to_string(),
+        eth_recipient: destination.to_string(),
         amount: Some(amount.into()),
         bridge_fee: Some(fee.clone().into()),
     };
@@ -453,8 +439,8 @@ pub async fn send_request_batch(
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
 
-    let msg_request_batch = MsgRequestBatch {
-        sender: our_address.to_string(),
+    let msg_request_batch = MsgRequestBatchTx {
+        signer: our_address.to_string(),
         denom,
     };
 
