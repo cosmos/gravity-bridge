@@ -57,6 +57,9 @@ async fn main() {
     // do TLS stuff.
     openssl_probe::init_ssl_cert_env_vars();
 
+    let mut generated_cosmos = None;
+    let mut generated_eth = false;
+
     let args: Args = Docopt::new(USAGE.as_str())
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
@@ -87,25 +90,16 @@ async fn main() {
     } else {
         let new_phrase = Mnemonic::generate(24).unwrap();
         let key = CosmosPrivateKey::from_phrase(new_phrase.as_str(), "").unwrap();
-        println!(
-            "No Cosmos key provided, your generated key is\n {} -> {}",
-            new_phrase.as_str(),
-            key.to_address(&contact.get_prefix()).unwrap()
-        );
+        generated_cosmos = Some(new_phrase);
         key
     };
     let ethereum_key = if let Some(key) = args.flag_ethereum_key {
         key.parse().expect("Invalid Ethereum Private key!")
     } else {
+        generated_eth = true;
         let mut rng = thread_rng();
         let key: [u8; 32] = rng.gen();
-        let key = EthPrivateKey::from_slice(&key).unwrap();
-        println!(
-            "No Ethereum key provided, your generated key is\n {} -> {}",
-            key,
-            key.to_public_key().unwrap()
-        );
-        key
+        EthPrivateKey::from_slice(&key).unwrap()
     };
 
     let ethereum_address = ethereum_key.to_public_key().unwrap();
@@ -119,6 +113,21 @@ async fn main() {
     )
     .await
     .expect("Failed to update Eth address");
+
+    if let Some(phrase) = generated_cosmos {
+        println!(
+            "No Cosmos key provided, your generated key is\n {} -> {}",
+            phrase.as_str(),
+            cosmos_key.to_address(&contact.get_prefix()).unwrap()
+        );
+    }
+    if generated_eth {
+        println!(
+            "No Ethereum key provided, your generated key is\n Private: {} -> Address: {}",
+            ethereum_key,
+            ethereum_key.to_public_key().unwrap()
+        );
+    }
 
     let eth_address = ethereum_key.to_public_key().unwrap();
     println!(
