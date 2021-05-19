@@ -242,7 +242,7 @@ pub async fn send_logic_call_confirm(
             orchestrator: our_address.to_string(),
             eth_signer: our_eth_address.to_string(),
             signature: bytes_to_hex_str(&eth_signature.to_bytes()),
-            invalidation_id: bytes_to_hex_str(&call.invalidation_id),
+            invalidation_id: bytes_to_hex_str(&call.invalidation_scope),
             invalidation_nonce: call.invalidation_nonce,
         };
         let msg = Msg::new("/gravity.v1.MsgConfirmLogicCall", confirm);

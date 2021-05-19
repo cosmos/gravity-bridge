@@ -1,7 +1,7 @@
 use clarity::Address as EthAddress;
 use deep_space::address::Address;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use gravity_proto::gravity::QueryBatchConfirmsRequest;
+use gravity_proto::gravity::BatchTxsRequest;
 use gravity_proto::gravity::QueryCurrentValsetRequest;
 use gravity_proto::gravity::QueryLastEventNonceByAddrRequest;
 use gravity_proto::gravity::QueryLastPendingBatchRequestByAddrRequest;
@@ -202,7 +202,7 @@ pub async fn get_oldest_unsigned_logic_call(
     client: &mut GravityQueryClient<Channel>,
     address: Address,
 ) -> Result<Option<LogicCall>, GravityError> {
-    let request = client
+    let request = client.
         .last_pending_logic_call_by_addr(QueryLastPendingLogicCallByAddrRequest {
             address: address.to_string(),
         })
