@@ -62,7 +62,7 @@ pub async fn happy_path_test(
     let secret: [u8; 32] = rng.gen();
     let dest_cosmos_private_key = CosmosPrivateKey::from_secret(&secret);
     let dest_cosmos_address = dest_cosmos_private_key
-        .to_address(CosmosAddress::DEFAULT_PREFIX)
+        .to_address(ADDRESS_PREFIX.as_str())
         .unwrap();
     let dest_eth_private_key = EthPrivateKey::from_slice(&secret).unwrap();
     let dest_eth_address = dest_eth_private_key.to_public_key().unwrap();

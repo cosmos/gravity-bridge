@@ -185,7 +185,7 @@ pub async fn main() {
             let contact = Contact::new(
                 COSMOS_NODE_GRPC.as_str(),
                 TOTAL_TIMEOUT,
-                CosmosAddress::DEFAULT_PREFIX,
+                ADDRESS_PREFIX.as_str(),
             )
             .unwrap();
             transaction_stress_test(&web30, &contact, keys, gravity_address, erc20_addresses).await;

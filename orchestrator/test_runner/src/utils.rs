@@ -1,4 +1,5 @@
 use crate::get_test_token_name;
+use crate::ADDRESS_PREFIX;
 use crate::COSMOS_NODE_GRPC;
 use crate::ETH_NODE;
 use crate::TOTAL_TIMEOUT;
@@ -188,9 +189,7 @@ pub fn get_user_key() -> BridgeUserKey {
     let eth_address = eth_key.to_public_key().unwrap();
     // the destination on cosmos that sends along to the final ethereum destination
     let cosmos_key = CosmosPrivateKey::from_secret(&secret);
-    let cosmos_address = cosmos_key
-        .to_address(CosmosAddress::DEFAULT_PREFIX)
-        .unwrap();
+    let cosmos_address = cosmos_key.to_address(ADDRESS_PREFIX.as_str()).unwrap();
     let mut rng = rand::thread_rng();
     let secret: [u8; 32] = rng.gen();
     // the final destination of the tokens back on Ethereum
@@ -248,10 +247,10 @@ pub async fn start_orchestrators(
         info!(
             "Spawning Orchestrator with delegate keys {} {} and validator key {}",
             k.eth_key.to_public_key().unwrap(),
-            k.orch_key
-                .to_address(CosmosAddress::DEFAULT_PREFIX)
-                .unwrap(),
-            k.validator_key.to_address("cosmosvaloper").unwrap()
+            k.orch_key.to_address(ADDRESS_PREFIX.as_str()).unwrap(),
+            k.validator_key
+                .to_address(&format!("{}valoper", ADDRESS_PREFIX.as_str()))
+                .unwrap()
         );
         let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC.as_str())
             .await
@@ -263,7 +262,7 @@ pub async fn start_orchestrators(
             let contact = Contact::new(
                 COSMOS_NODE_GRPC.as_str(),
                 OPERATION_TIMEOUT,
-                CosmosAddress::DEFAULT_PREFIX,
+                ADDRESS_PREFIX.as_str(),
             )
             .unwrap();
             let fut = orchestrator_main_loop(
