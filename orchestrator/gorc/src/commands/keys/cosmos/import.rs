@@ -2,10 +2,18 @@ use abscissa_core::{Command, Options, Runnable};
 
 #[derive(Command, Debug, Default, Options)]
 pub struct ImportCosmosKeyCmd {
-    #[options(short = "n", long = "name", help = "import private key [name] [mnemnoic]")]
+    #[options(
+        short = "n",
+        long = "name",
+        help = "import private key [name] [mnemnoic]"
+    )]
     pub name: String,
 
-    #[options(short = "m", long = "mnemnoic", help = "import private key [name] [mnemnoic]")]
+    #[options(
+        short = "m",
+        long = "mnemnoic",
+        help = "import private key [name] [mnemnoic]"
+    )]
     pub mnemnoic: String,
 }
 

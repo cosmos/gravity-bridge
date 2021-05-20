@@ -27,7 +27,7 @@ pub enum EthKeysCmd {
     List(list::ListEthKeyCmd),
 
     #[options(help = "show [name]")]
-    Show(show::ShowEthKeyCmd)
+    Show(show::ShowEthKeyCmd),
 }
 
 impl EthKeysCmd {

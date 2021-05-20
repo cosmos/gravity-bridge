@@ -27,12 +27,11 @@ pub enum CosmosKeysCmd {
     List(list::ListCosmosKeyCmd),
 
     #[options(help = "show [name]")]
-    Show(show::ShowCosmosKeyCmd)
+    Show(show::ShowCosmosKeyCmd),
 }
-
 
 impl CosmosKeysCmd {
     //fn run(&self) {
-        // Your code goes here
+    // Your code goes here
     //}
 }
