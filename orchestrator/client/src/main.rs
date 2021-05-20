@@ -22,7 +22,7 @@ use docopt::Docopt;
 use env_logger::Env;
 use ethereum_gravity::deploy_erc20::deploy_erc20;
 use ethereum_gravity::send_to_cosmos::send_to_cosmos;
-use gravity_proto::gravity::QueryDenomToErc20Request;
+use gravity_proto::gravity::DenomToErc20Request;
 use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
 use std::time::Instant;
 use std::{process::exit, time::Duration, u128};
@@ -171,7 +171,7 @@ async fn main() {
         let mut grpc = connections.grpc.unwrap();
 
         let res = grpc
-            .denom_to_erc20(QueryDenomToErc20Request {
+            .denom_to_erc20(DenomToErc20Request {
                 denom: gravity_denom.clone(),
             })
             .await;
@@ -358,7 +358,7 @@ async fn main() {
         let denom = args.flag_cosmos_denom;
 
         let res = grpc
-            .denom_to_erc20(QueryDenomToErc20Request {
+            .denom_to_erc20(DenomToErc20Request {
                 denom: denom.clone(),
             })
             .await;
@@ -391,7 +391,7 @@ async fn main() {
         let start = Instant::now();
         loop {
             let res = grpc
-                .denom_to_erc20(QueryDenomToErc20Request {
+                .denom_to_erc20(DenomToErc20Request {
                     denom: denom.clone(),
                 })
                 .await;
