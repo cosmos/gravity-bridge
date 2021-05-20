@@ -1,4 +1,3 @@
-use super::*;
 use abscissa_core::{Command, Options, Runnable};
 
 #[derive(Command, Debug, Default, Options)]
@@ -10,6 +9,6 @@ pub struct ShowCosmosKeyCmd {
 /// The `gork keys cosmos show [name]` subcommand: show keys
 impl Runnable for ShowCosmosKeyCmd {
     fn run(&self) {
-        /// todo(shella): glue with signatory crate to list keys
+        // todo(shella): glue with signatory crate to list keys
     }
 }

@@ -1,32 +1,38 @@
 //! `cosmos keys` subcommand
 
+mod add;
+mod delete;
+mod import;
+mod list;
+mod show;
+mod update;
+
 use abscissa_core::{Command, Options, Runnable};
 
 #[derive(Command, Debug, Options, Runnable)]
 pub enum CosmosKeysCmd {
     #[options(help = "add [name]")]
-    Add(AddCosmosKeyCmd),
+    Add(add::AddCosmosKeyCmd),
 
     #[options(help = "import [name] [mnemnoic]")]
-    Import(ImportCosmosKeyCmd),
+    Import(import::ImportCosmosKeyCmd),
 
     #[options(help = "delete [name]")]
-    Delete(DeleteCosmosKeyCmd),
+    Delete(delete::DeleteCosmosKeyCmd),
 
     #[options(help = "update [name] [new-name]")]
-    Update(UpdateCosmosKeyCmd),
+    Update(update::UpdateCosmosKeyCmd),
 
     #[options(help = "list")]
-    List(ListCosmosKeyCmd),
+    List(list::ListCosmosKeyCmd),
 
     #[options(help = "show [name]")]
-    Show(ShowCosmosKeyCmd)
+    Show(show::ShowCosmosKeyCmd)
 }
 
 
-impl Runnable for Cosmos {
-    /// Start the application.
-    fn run(&self) {
+impl CosmosKeysCmd {
+    //fn run(&self) {
         // Your code goes here
-    }
+    //}
 }

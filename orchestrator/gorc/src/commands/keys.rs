@@ -1,10 +1,12 @@
 //! `keys` subcommand
 
 mod cosmos;
-
 mod eth;
 
 use abscissa_core::{Command, Options, Runnable};
+
+use crate::commands::keys::cosmos::CosmosKeysCmd;
+use crate::commands::keys::eth::EthKeysCmd;
 
 /// `keys` subcommand
 ///
@@ -15,8 +17,8 @@ use abscissa_core::{Command, Options, Runnable};
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub enum KeysCmd {
-    CosmosKeysCmd(cosmos::Cosmos),
-    EthKeysCmd(eth::Eth),
+    CosmosKeysCmd(CosmosKeysCmd),
+    EthKeysCmd(EthKeysCmd),
 }
 
 impl Runnable for KeysCmd {

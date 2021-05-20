@@ -1,4 +1,3 @@
-use super::*;
 use abscissa_core::{Command, Options, Runnable};
 
 #[derive(Command, Debug, Default, Options)]
@@ -13,6 +12,6 @@ pub struct ImportCosmosKeyCmd {
 /// The `gork keys cosmos import [name] [mnemnoic]` subcommand: import key
 impl Runnable for ImportCosmosKeyCmd {
     fn run(&self) {
-        /// todo(shella): glue with signatory crate to import key
+        // todo(shella): glue with signatory crate to import key
     }
 }
