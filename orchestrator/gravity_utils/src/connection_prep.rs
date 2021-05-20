@@ -7,8 +7,8 @@ use deep_space::client::ChainStatus;
 use deep_space::Address as CosmosAddress;
 use deep_space::Contact;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use gravity_proto::gravity::QueryDelegateKeysByEthAddress;
-use gravity_proto::gravity::QueryDelegateKeysByOrchestratorAddress;
+use gravity_proto::gravity::DelegateKeysByEthereumSignerRequest;
+use gravity_proto::gravity::DelegateKeysByOrchestratorAddress;
 use std::process::exit;
 use std::time::Duration;
 use tokio::time::sleep as delay_for;
@@ -236,12 +236,12 @@ pub async fn check_delegate_addresses(
     prefix: &str,
 ) {
     let eth_response = client
-        .get_delegate_key_by_eth(QueryDelegateKeysByEthAddress {
-            eth_address: delegate_eth_address.to_string(),
+        .delegate_keys_by_ethereum_signer(DelegateKeysByEthereumSignerRequest {
+            ethereum_signer: delegate_eth_address.to_string(),
         })
         .await;
     let orchestrator_response = client
-        .get_delegate_key_by_orchestrator(QueryDelegateKeysByOrchestratorAddress {
+        .delegate_keys_by_orchestrator(DelegateKeysByOrchestratorAddress {
             orchestrator_address: delegate_orchestrator_address.to_bech32(prefix).unwrap(),
         })
         .await;
@@ -252,7 +252,7 @@ pub async fn check_delegate_addresses(
             let o = o.into_inner();
             let req_delegate_orchestrator_address: CosmosAddress =
                 e.orchestrator_address.parse().unwrap();
-            let req_delegate_eth_address: EthAddress = o.eth_address.parse().unwrap();
+            let req_delegate_eth_address: EthAddress = o.ethereum_signer.parse().unwrap();
             if req_delegate_eth_address != delegate_eth_address
                 && req_delegate_orchestrator_address != delegate_orchestrator_address
             {

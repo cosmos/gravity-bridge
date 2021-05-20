@@ -14,13 +14,13 @@ and defines overall functioning of the staking module.
 +++ <https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/genesis.proto#L72-L104>
 
 
-### OutgoingTxBatch
+### BatchTx
 
 Stored in two possible ways, first with a height and second without (unsafe). Unsafe is used for testing and export and import of state.
 
 | key          | Value | Type   | Encoding               |
 |--------------|-------|--------|------------------------|
-| `[]byte{0xa} + []byte(tokenContract) + nonce (big endian encoded)` | A batch of outgoing transactions | `types.OutgoingTxBatch` | Protobuf encoded |
+| `[]byte{0xa} + common.HexToAddress(tokenContract).Bytes() + nonce (big endian encoded)` | A batch of outgoing transactions | `types.BatchTx` | Protobuf encoded |
 
 ### ValidatorSet
 
@@ -55,7 +55,7 @@ When a validator signs over a validator set this is considered a `valSetConfirma
 
 | Key                                         | Value                  | Type                     | Encoding         |
 |---------------------------------------------|------------------------|--------------------------|------------------|
-| `[]byte{0x3} + (nonce + []byte(AccAddress)` | Validator Confirmation | `types.MsgValsetConfirm` | Protobuf encoded |
+| `[]byte{0x3} + (nonce + []byte(AccAddress)` | Validator Confirmation | `types.MsgSubmitEthereumSignature` | Protobuf encoded |
 
 ### ConfirmBatch
 
@@ -63,7 +63,7 @@ When a validator confirms a batch it is added to the confirm batch store. It is 
 
 | Key                                                                 | Value                        | Type                    | Encoding         |
 |---------------------------------------------------------------------|------------------------------|-------------------------|------------------|
-| `[]byte{0xe1} + []byte(tokenContract) + nonce + []byte(AccAddress)` | Validator Batch Confirmation | `types.MsgConfirmBatch` | Protobuf encoded |
+| `[]byte{0xe1} + common.HexToAddress(tokenContract).Bytes() + nonce + []byte(AccAddress)` | Validator Batch Confirmation | `types.MsgConfirmBatch` | Protobuf encoded |
 
 ### OrchestratorValidator
 
@@ -82,13 +82,13 @@ A validator has an associated counter chain address.
 | `[]byte{0x1} + []byte(ValAddress)` | Ethereum address assigned by a validator | `[]byte` | Protobuf encoded |
 
 
-### OutgoingLogicCall
+### ContractCallTx
 
 When a user requests a logic call to be executed on an opposing chain it is stored in a store within the gravity module.
 
 | Key                                 | Value                                        | Type     | Encoding         |
 |-------------------------------------|----------------------------------------------|----------|------------------|
-| `[]byte{0xde} + []byte(invalidationId) + nonce (big endian encoded)` | A user created logic call to be sent to the counter chain | `types.OutgoingLogicCall` | Protobuf encoded |
+| `[]byte{0xde} + []byte(invalidationId) + nonce (big endian encoded)` | A user created logic call to be sent to the counter chain | `types.ContractCallTx` | Protobuf encoded |
 
 ### ConfirmLogicCall
 
@@ -126,7 +126,7 @@ A denom that is originally from a counter chain will be from a contract. The tok
 
 | Key                                 | Value                                        | Type     | Encoding         |
 |-------------------------------------|----------------------------------------------|----------|------------------|
-| `[]byte{0xf4} + []byte(tokenContract)` | Latest height a batch slashing occurred | `[]byte` | stored in byte format |
+| `[]byte{0xf4} + common.HexToAddress(tokenContract).Bytes()` | Latest height a batch slashing occurred | `[]byte` | stored in byte format |
 
 ### LastEventNonce
 

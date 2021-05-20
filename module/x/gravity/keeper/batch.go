@@ -1,74 +1,60 @@
 package keeper
 
 import (
+	"encoding/binary"
 	"fmt"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-const OutgoingTxBatchSize = 100
+// TODO: should we make this a parameter or a a call arg?
+const BatchTxSize = 100
 
-// BuildOutgoingTXBatch starts the following process chain:
+// BuildBatchTx starts the following process chain:
 // - find bridged denominator for given voucher type
 // - determine if a an unexecuted batch is already waiting for this token type, if so confirm the new batch would
 //   have a higher total fees. If not exit withtout creating a batch
 // - select available transactions from the outgoing transaction pool sorted by fee desc
 // - persist an outgoing batch object with an incrementing ID = nonce
 // - emit an event
-func (k Keeper) BuildOutgoingTXBatch(
-	ctx sdk.Context,
-	contractAddress string,
-	maxElements int) (*types.OutgoingTxBatch, error) {
-	if maxElements == 0 {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "max elements value")
-	}
-
-	lastBatch := k.GetLastOutgoingBatchByTokenType(ctx, contractAddress)
-
-	// lastBatch may be nil if there are no existing batches, we only need
-	// to perform this check if a previous batch exists
-	if lastBatch != nil {
-		// this traverses the current tx pool for this token type and determines what
-		// fees a hypothetical batch would have if created
-		currentFees := k.GetBatchFeesByTokenType(ctx, contractAddress)
-		if currentFees == nil {
-			return nil, sdkerrors.Wrap(types.ErrInvalid, "error getting fees from tx pool")
-		}
-
-		lastFees := lastBatch.GetFees()
-		if lastFees.GT(currentFees.TotalFees) {
-			return nil, sdkerrors.Wrap(types.ErrInvalid, "new batch would not be more profitable")
+func (k Keeper) BuildBatchTx(ctx sdk.Context, contractAddress common.Address, maxElements int) *types.BatchTx {
+	// if there is a more profitable batch for this token type do not create a new batch
+	if lastBatch := k.getLastOutgoingBatchByTokenType(ctx, contractAddress); lastBatch != nil {
+		if lastBatch.GetFees().GTE(k.getBatchFeesByTokenType(ctx, contractAddress, maxElements)) {
+			return nil
 		}
 	}
 
-	selectedTx, err := k.pickUnbatchedTX(ctx, contractAddress, maxElements)
-	if len(selectedTx) == 0 || err != nil {
-		return nil, err
-	}
-	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
-	batch := &types.OutgoingTxBatch{
-		BatchNonce:    nextID,
-		BatchTimeout:  k.getBatchTimeoutHeight(ctx),
-		Transactions:  selectedTx,
-		TokenContract: contractAddress,
-	}
-	k.StoreBatch(ctx, batch)
+	var selectedStes []*types.SendToEthereum
+	k.iterateUnbatchedSendToEthereumsByContract(ctx, contractAddress, func(ste *types.SendToEthereum) bool {
+		selectedStes = append(selectedStes, ste)
+		k.deleteUnbatchedSendToEthereum(ctx, ste.Id, ste.Erc20Fee)
+		return len(selectedStes) == maxElements
+	})
 
-	batchEvent := sdk.NewEvent(
+	batch := &types.BatchTx{
+		BatchNonce:    k.incrementLastOutgoingBatchNonce(ctx),
+		Timeout:       k.getBatchTimeoutHeight(ctx),
+		Transactions:  selectedStes,
+		TokenContract: contractAddress.Hex(),
+		Height:        uint64(ctx.BlockHeight()),
+	}
+	k.SetOutgoingTx(ctx, batch)
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeOutgoingBatch,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, fmt.Sprint(nextID)),
-		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nextID)),
-	)
-	ctx.EventManager().EmitEvent(batchEvent)
-	return batch, nil
+		sdk.NewAttribute(types.AttributeKeyContract, k.getBridgeContractAddress(ctx)),
+		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
+		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, fmt.Sprint(batch.BatchNonce)),
+		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(batch.BatchNonce)),
+	))
+
+	return batch
 }
 
 // This gets the batch timeout height in Ethereum blocks.
@@ -78,224 +64,140 @@ func (k Keeper) getBatchTimeoutHeight(ctx sdk.Context) uint64 {
 	// we store the last observed Cosmos and Ethereum heights, we do not concern ourselves if these values are zero because
 	// no batch can be produced if the last Ethereum block height is not first populated by a deposit event.
 	heights := k.GetLastObservedEthereumBlockHeight(ctx)
-	if heights.CosmosBlockHeight == 0 || heights.EthereumBlockHeight == 0 {
+	if heights.CosmosHeight == 0 || heights.EthereumHeight == 0 {
 		return 0
 	}
 	// we project how long it has been in milliseconds since the last Ethereum block height was observed
-	projectedMillis := (uint64(currentCosmosHeight) - heights.CosmosBlockHeight) * params.AverageBlockTime
+	projectedMillis := (uint64(currentCosmosHeight) - heights.CosmosHeight) * params.AverageBlockTime
 	// we convert that projection into the current Ethereum height using the average Ethereum block time in millis
-	projectedCurrentEthereumHeight := (projectedMillis / params.AverageEthereumBlockTime) + heights.EthereumBlockHeight
+	projectedCurrentEthereumHeight := (projectedMillis / params.AverageEthereumBlockTime) + heights.EthereumHeight
 	// we convert our target time for block timeouts (lets say 12 hours) into a number of blocks to
 	// place on top of our projection of the current Ethereum block height.
 	blocksToAdd := params.TargetBatchTimeout / params.AverageEthereumBlockTime
 	return projectedCurrentEthereumHeight + blocksToAdd
 }
 
-// OutgoingTxBatchExecuted is run when the Cosmos chain detects that a batch has been executed on Ethereum
-// It frees all the transactions in the batch, then cancels all earlier batches
-func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, nonce uint64) error {
-	b := k.GetOutgoingTXBatch(ctx, tokenContract, nonce)
-	if b == nil {
-		return sdkerrors.Wrap(types.ErrUnknown, "nonce")
-	}
-
-	// cleanup outgoing TX pool
-	for _, tx := range b.Transactions {
-		k.removePoolEntry(ctx, tx.Id)
-	}
-	var err error
-	// Iterate through remaining batches
-	k.IterateOutgoingTXBatches(ctx, func(key []byte, iter_batch *types.OutgoingTxBatch) bool {
+// batchTxExecuted is run when the Cosmos chain detects that a batch has been executed on Ethereum
+// It deletes all the transactions in the batch, then cancels all earlier batches
+func (k Keeper) batchTxExecuted(ctx sdk.Context, tokenContract common.Address, nonce uint64) {
+	otx := k.GetOutgoingTx(ctx, types.MakeBatchTxKey(tokenContract, nonce))
+	batchTx, _ := otx.(*types.BatchTx)
+	k.IterateOutgoingTxsByType(ctx, types.BatchTxPrefixByte, func(key []byte, otx types.OutgoingTx) bool {
 		// If the iterated batches nonce is lower than the one that was just executed, cancel it
-		if iter_batch.BatchNonce < b.BatchNonce {
-			err = k.CancelOutgoingTXBatch(ctx, tokenContract, iter_batch.BatchNonce)
+		btx, _ := otx.(*types.BatchTx)
+		if (btx.BatchNonce < batchTx.BatchNonce) && (batchTx.TokenContract == tokenContract.Hex()) {
+			k.CancelBatchTx(ctx, tokenContract, btx.BatchNonce)
 		}
 		return false
 	})
-
-	// Delete batch since it is finished
-	k.DeleteBatch(ctx, *b)
-
-	return err
+	k.DeleteOutgoingTx(ctx, batchTx.GetStoreIndex())
 }
 
-// StoreBatch stores a transaction batch
-func (k Keeper) StoreBatch(ctx sdk.Context, batch *types.OutgoingTxBatch) {
-	store := ctx.KVStore(k.storeKey)
-	// set the current block height when storing the batch
-	batch.Block = uint64(ctx.BlockHeight())
-	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce)
-	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
-
-	blockKey := types.GetOutgoingTxBatchBlockKey(batch.Block)
-	store.Set(blockKey, k.cdc.MustMarshalBinaryBare(batch))
-}
-
-// StoreBatchUnsafe stores a transaction batch w/o setting the height
-func (k Keeper) StoreBatchUnsafe(ctx sdk.Context, batch *types.OutgoingTxBatch) {
-	store := ctx.KVStore(k.storeKey)
-	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce)
-	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
-
-	blockKey := types.GetOutgoingTxBatchBlockKey(batch.Block)
-	store.Set(blockKey, k.cdc.MustMarshalBinaryBare(batch))
-}
-
-// DeleteBatch deletes an outgoing transaction batch
-func (k Keeper) DeleteBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce))
-	store.Delete(types.GetOutgoingTxBatchBlockKey(batch.Block))
-}
-
-// pickUnbatchedTX find TX in pool and remove from "available" second index
-func (k Keeper) pickUnbatchedTX(
-	ctx sdk.Context,
-	contractAddress string,
-	maxElements int) ([]*types.OutgoingTransferTx, error) {
-	var selectedTx []*types.OutgoingTransferTx
-	var err error
-	k.IterateOutgoingPoolByFee(ctx, contractAddress, func(txID uint64, tx *types.OutgoingTransferTx) bool {
-		if tx != nil && tx.Erc20Fee != nil {
-			selectedTx = append(selectedTx, tx)
-			err = k.removeFromUnbatchedTXIndex(ctx, *tx.Erc20Fee, txID)
-			return err != nil || len(selectedTx) == maxElements
-		}
-
-		return true
+// getBatchFeesByTokenType gets the fees the next batch of a given token type would
+// have if created. This info is both presented to relayers for the purpose of determining
+// when to request batches and also used by the batch creation process to decide not to create
+// a new batch
+func (k Keeper) getBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr common.Address, maxElements int) sdk.Int {
+	feeAmount := sdk.ZeroInt()
+	i := 0
+	k.iterateUnbatchedSendToEthereumsByContract(ctx, tokenContractAddr, func(tx *types.SendToEthereum) bool {
+		feeAmount = feeAmount.Add(tx.Erc20Fee.Amount)
+		i++
+		return i == maxElements
 	})
-	return selectedTx, err
+
+	return feeAmount
 }
 
-// GetOutgoingTXBatch loads a batch object. Returns nil when not exists.
-func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, tokenContract string, nonce uint64) *types.OutgoingTxBatch {
-	store := ctx.KVStore(k.storeKey)
-	key := types.GetOutgoingTxBatchKey(tokenContract, nonce)
-	bz := store.Get(key)
-	if len(bz) == 0 {
-		return nil
-	}
-	var b types.OutgoingTxBatch
-	k.cdc.MustUnmarshalBinaryBare(bz, &b)
-	for _, tx := range b.Transactions {
-		tx.Erc20Token.Contract = tokenContract
-		tx.Erc20Fee.Contract = tokenContract
-	}
-	return &b
+// GetBatchFeesByTokenType gets the fees the next batch of a given token type would
+// have if created. This info is both presented to relayers for the purpose of determining
+// when to request batches and also used by the batch creation process to decide not to create
+// a new batch
+func (k Keeper) GetBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr common.Address, maxElements int) sdk.Int {
+	feeAmount := sdk.ZeroInt()
+	i := 0
+	k.iterateUnbatchedSendToEthereumsByContract(ctx, tokenContractAddr, func(tx *types.SendToEthereum) bool {
+		feeAmount = feeAmount.Add(tx.Erc20Fee.Amount)
+		i++
+		return i == maxElements
+	})
+	return feeAmount
 }
 
-// CancelOutgoingTXBatch releases all TX in the batch and deletes the batch
-func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract string, nonce uint64) error {
-	batch := k.GetOutgoingTXBatch(ctx, tokenContract, nonce)
-	if batch == nil {
-		return types.ErrUnknown
-	}
+// CancelBatchTx releases all TX in the batch and deletes the batch
+func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, nonce uint64) {
+	otx := k.GetOutgoingTx(ctx, types.MakeBatchTxKey(tokenContract, nonce))
+	batch, _ := otx.(*types.BatchTx)
+
+	// free transactions from batch and reindex them
 	for _, tx := range batch.Transactions {
-		tx.Erc20Fee.Contract = tokenContract
-		k.prependToUnbatchedTXIndex(ctx, tokenContract, *tx.Erc20Fee, tx.Id)
+		k.setUnbatchedSendToEthereum(ctx, tx)
 	}
 
 	// Delete batch since it is finished
-	k.DeleteBatch(ctx, *batch)
+	k.DeleteOutgoingTx(ctx, batch.GetStoreIndex())
 
-	batchEvent := sdk.NewEvent(
-		types.EventTypeOutgoingBatchCanceled,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, fmt.Sprint(nonce)),
-		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nonce)),
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOutgoingBatchCanceled,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyContract, k.getBridgeContractAddress(ctx)),
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
+			sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, fmt.Sprint(nonce)),
+			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nonce)),
+		),
 	)
-	ctx.EventManager().EmitEvent(batchEvent)
-	return nil
 }
 
-// IterateOutgoingTXBatches iterates through all outgoing batches in DESC order.
-func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, batch *types.OutgoingTxBatch) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OutgoingTXBatchKey)
-	iter := prefixStore.ReverseIterator(nil, nil)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var batch types.OutgoingTxBatch
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &batch)
-		// cb returns true to stop early
-		if cb(iter.Key(), &batch) {
-			break
+// getLastOutgoingBatchByTokenType gets the latest outgoing tx batch by token type
+func (k Keeper) getLastOutgoingBatchByTokenType(ctx sdk.Context, token common.Address) *types.BatchTx {
+	var lastBatch *types.BatchTx = nil
+	lastNonce := uint64(0)
+	k.IterateOutgoingTxsByType(ctx, types.BatchTxPrefixByte, func(key []byte, otx types.OutgoingTx) bool {
+		btx, _ := otx.(*types.BatchTx)
+		if common.HexToAddress(btx.TokenContract) == token && btx.BatchNonce > lastNonce {
+			lastBatch = btx
+			lastNonce = btx.BatchNonce
 		}
-	}
-}
-
-// GetOutgoingTxBatches returns the outgoing tx batches
-func (k Keeper) GetOutgoingTxBatches(ctx sdk.Context) (out []*types.OutgoingTxBatch) {
-	k.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
-		out = append(out, batch)
 		return false
 	})
-	return
-}
-
-// GetLastOutgoingBatchByTokenType gets the latest outgoing tx batch by token type
-func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token string) *types.OutgoingTxBatch {
-	batches := k.GetOutgoingTxBatches(ctx)
-	var lastBatch *types.OutgoingTxBatch = nil
-	lastNonce := uint64(0)
-	for _, batch := range batches {
-		if batch.TokenContract == token && batch.BatchNonce > lastNonce {
-			lastBatch = batch
-			lastNonce = batch.BatchNonce
-		}
-	}
 	return lastBatch
 }
 
-// SetLastSlashedBatchBlock sets the latest slashed Batch block height
-func (k Keeper) SetLastSlashedBatchBlock(ctx sdk.Context, blockHeight uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastSlashedBatchBlock, types.UInt64Bytes(blockHeight))
+// SetLastSlashedOutgoingTxBlockHeight sets the latest slashed Batch block height
+func (k Keeper) SetLastSlashedOutgoingTxBlockHeight(ctx sdk.Context, blockHeight uint64) {
+	ctx.KVStore(k.storeKey).Set([]byte{types.LastSlashedOutgoingTxBlockKey}, sdk.Uint64ToBigEndian(blockHeight))
 }
 
-// GetLastSlashedBatchBlock returns the latest slashed Batch block
-func (k Keeper) GetLastSlashedBatchBlock(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastSlashedBatchBlock)
-
-	if len(bytes) == 0 {
+// GetLastSlashedOutgoingTxBlockHeight returns the latest slashed Batch block
+func (k Keeper) GetLastSlashedOutgoingTxBlockHeight(ctx sdk.Context) uint64 {
+	if bz := ctx.KVStore(k.storeKey).Get([]byte{types.LastSlashedOutgoingTxBlockKey}); bz == nil {
 		return 0
+	} else {
+		return binary.BigEndian.Uint64(bz)
 	}
-	return types.UInt64FromBytes(bytes)
 }
 
-// GetUnSlashedBatches returns all the unslashed batches in state
-func (k Keeper) GetUnSlashedBatches(ctx sdk.Context, maxHeight uint64) (out []*types.OutgoingTxBatch) {
-	lastSlashedBatchBlock := k.GetLastSlashedBatchBlock(ctx)
-	k.IterateBatchBySlashedBatchBlock(ctx,
-		lastSlashedBatchBlock,
-		maxHeight,
-		func(_ []byte, batch *types.OutgoingTxBatch) bool {
-			if batch.Block > lastSlashedBatchBlock {
-				out = append(out, batch)
-			}
-			return false
-		})
+func (k Keeper) GetUnSlashedOutgoingTxs(ctx sdk.Context, maxHeight uint64) (out []types.OutgoingTx) {
+	lastSlashed := k.GetLastSlashedOutgoingTxBlockHeight(ctx)
+	k.iterateOutgoingTxs(ctx, func(key []byte, otx types.OutgoingTx) bool {
+		if (otx.GetCosmosHeight() < maxHeight) && (otx.GetCosmosHeight() > lastSlashed) {
+			out = append(out, otx)
+		}
+		return false
+	})
 	return
 }
 
-// IterateBatchBySlashedBatchBlock iterates through all Batch by last slashed Batch block in ASC order
-func (k Keeper) IterateBatchBySlashedBatchBlock(
-	ctx sdk.Context,
-	lastSlashedBatchBlock uint64,
-	maxHeight uint64,
-	cb func([]byte, *types.OutgoingTxBatch) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OutgoingTXBatchBlockKey)
-	iter := prefixStore.Iterator(types.UInt64Bytes(lastSlashedBatchBlock), types.UInt64Bytes(maxHeight))
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var Batch types.OutgoingTxBatch
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &Batch)
-		// cb returns true to stop early
-		if cb(iter.Key(), &Batch) {
-			break
-		}
+func (k Keeper) incrementLastOutgoingBatchNonce(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get([]byte{types.LastOutgoingBatchNonceKey})
+	var id uint64 = 0
+	if bz != nil {
+		id = binary.BigEndian.Uint64(bz)
 	}
+	newId := id + 1
+	bz = sdk.Uint64ToBigEndian(newId)
+	store.Set([]byte{types.LastOutgoingBatchNonceKey}, bz)
+	return newId
 }

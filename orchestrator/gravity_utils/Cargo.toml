@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 gravity_proto = {path = "../gravity_proto/"}
+cosmos-sdk-proto = "0.5"
 
 deep_space = "2.1"
 web30 = "0.12"

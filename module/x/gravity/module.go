@@ -1,7 +1,6 @@
 package gravity
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -20,7 +19,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/client/cli"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/client/rest"
+	// "github.com/cosmos/gravity-bridge/module/x/gravity/client/rest"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -40,9 +39,7 @@ func (AppModuleBasic) Name() string {
 }
 
 // RegisterLegacyAminoCodec implements app module basic
-func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	types.RegisterCodec(cdc)
-}
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
 
 // DefaultGenesis implements app module basic
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
@@ -61,7 +58,7 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, _ client.TxEncodi
 
 // RegisterRESTRoutes implements app module basic
 func (AppModuleBasic) RegisterRESTRoutes(ctx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(ctx, rtr, types.StoreKey)
+	// rest.RegisterRoutes(ctx, rtr, types.StoreKey)
 }
 
 // GetQueryCmd implements app module basic
@@ -76,9 +73,7 @@ func (AppModuleBasic) GetTxCmd() *cobra.Command {
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the distribution module.
 // also implements app modeul basic
-func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
-}
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {}
 
 // RegisterInterfaces implements app bmodule basic
 func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
@@ -126,7 +121,7 @@ func (am AppModule) QuerierRoute() string {
 
 // LegacyQuerierHandler returns the distribution module sdk.Querier.
 func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return keeper.NewQuerier(am.keeper)
+	return nil
 }
 
 // RegisterServices registers module services.
@@ -150,14 +145,13 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONMarshaler) json
 }
 
 // BeginBlock implements app module
-func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {}
+func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
+	BeginBlocker(ctx, am.keeper)
+}
 
 // EndBlock implements app module
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	EndBlocker(ctx, am.keeper)
-	// this begin blocker is only for testing purposes, don't import into your
-	// own chain running gravity
-	TestingEndBlocker(ctx, am.keeper)
 	return []abci.ValidatorUpdate{}
 }
 

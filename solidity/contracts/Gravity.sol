@@ -35,7 +35,9 @@ contract Gravity is ReentrancyGuard {
 	mapping(address => uint256) public state_lastBatchNonces;
 	mapping(bytes32 => uint256) public state_invalidationMapping;
 	uint256 public state_lastValsetNonce = 0;
-	uint256 public state_lastEventNonce = 0;
+    // event nonce zero is reserved by the Cosmos module as a special
+    // value indicating that no events have yet been submitted
+    uint256 public state_lastEventNonce = 1;
 
 	// These are set once at initialization
 	bytes32 public state_gravityId;
@@ -70,6 +72,7 @@ contract Gravity is ReentrancyGuard {
 	);
 	event ValsetUpdatedEvent(
 		uint256 indexed _newValsetNonce,
+		uint256 _eventNonce,
 		address[] _validators,
 		uint256[] _powers
 	);
@@ -298,7 +301,7 @@ contract Gravity is ReentrancyGuard {
 		// a block height beyond which this batch is not valid
 		// used to provide a fee-free timeout
 		uint256 _batchTimeout
-	) nonReentrant public {
+	) public nonReentrant {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the batch nonce is higher than the last nonce for this token
@@ -407,7 +410,7 @@ contract Gravity is ReentrancyGuard {
 		bytes32[] memory _r,
 		bytes32[] memory _s,
 		LogicCallArgs memory _args
-	) public nonReentrant{
+	) public nonReentrant {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the call has not timed out
@@ -592,6 +595,7 @@ contract Gravity is ReentrancyGuard {
 
 		// LOGS
 
-		emit ValsetUpdatedEvent(0, _validators, _powers);
+		state_lastEventNonce = state_lastEventNonce.add(1);
+	    emit ValsetUpdatedEvent(_newValsetNonce, state_lastEventNonce, _newValidators, _newPowers);
 	}
 }

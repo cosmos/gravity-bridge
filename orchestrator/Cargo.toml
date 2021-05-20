@@ -1,5 +1,5 @@
 [workspace]
-members = ["orchestrator", "cosmos_gravity", "ethereum_gravity", "gravity_utils", "proto_build", "test_runner", "gravity_proto", "relayer", "client", "register_delegate_keys"]
+members = ["orchestrator", "cosmos_gravity", "ethereum_gravity", "gravity_utils", "proto_build", "test_runner", "gravity_proto", "relayer", "client", "register_delegate_keys", "gorc"]
 default-members = ["orchestrator"]
 
 

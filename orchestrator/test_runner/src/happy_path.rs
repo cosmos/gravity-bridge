@@ -436,18 +436,26 @@ async fn submit_duplicate_erc20_send(
         .await
         .expect("Did not find coins!");
 
-    let ethereum_sender = "0x912fd21d7a69678227fe6d08c64222db41477ba0"
-        .parse()
-        .unwrap();
+    let ethereum_sender = "0x912fd21d7a69678227fe6d08c64222db41477ba0";
 
-    let event = SendToCosmosEvent {
-        event_nonce: nonce,
-        block_height: 500u16.into(),
-        erc20: erc20_address,
-        sender: ethereum_sender,
-        destination: receiver,
-        amount,
+    let event = gravity_proto::gravity::SendToCosmosEvent{
+        event_nonce:ethereum_gravity::utils::downcast_uint256( nonce).unwrap(),
+        token_contract: erc20_address.to_string(),
+        amount: amount.to_string(),
+        ethereum_sender: ethereum_sender.to_string(),
+        cosmos_receiver: receiver.to_string(),
+        ethereum_height: 500u64,
+
     };
+
+    // let event = SendToCosmosEvent {
+    //     event_nonce: nonce,
+    //     block_height: ethereum_gravity::utils::downcast_uint256(,
+    //     erc20: erc20_address,
+    //     sender: ethereum_sender,
+    //     destination: receiver,
+    //     amount,
+    // };
 
     // iterate through all validators and try to send an event with duplicate nonce
     for k in keys.iter() {

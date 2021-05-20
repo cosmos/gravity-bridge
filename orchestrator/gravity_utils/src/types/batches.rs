@@ -10,14 +10,14 @@ use deep_space::Address as CosmosAddress;
 pub struct BatchTransaction {
     pub id: u64,
     pub sender: CosmosAddress,
-    pub destination: EthAddress,
+    pub ethereum_recipient: EthAddress,
     pub erc20_token: Erc20Token,
     pub erc20_fee: Erc20Token,
 }
 
 impl BatchTransaction {
     pub fn from_proto(
-        input: gravity_proto::gravity::OutgoingTransferTx,
+        input: gravity_proto::gravity::SendToEthereumTx,
     ) -> Result<Self, GravityError> {
         if input.erc20_fee.is_none() || input.erc20_token.is_none() {
             return Err(GravityError::InvalidBridgeStateError(
@@ -27,7 +27,7 @@ impl BatchTransaction {
         Ok(BatchTransaction {
             id: input.id,
             sender: input.sender.parse()?,
-            destination: input.dest_address.parse()?,
+            ethereum_recipient: input.ethereum_recipient.parse()?,
             erc20_token: Erc20Token::from_proto(input.erc20_token.unwrap())?,
             erc20_fee: Erc20Token::from_proto(input.erc20_fee.unwrap())?,
         })
@@ -54,7 +54,7 @@ impl TransactionBatch {
         for item in self.transactions.iter() {
             amounts.push(Token::Uint(item.erc20_token.amount.clone()));
             fees.push(Token::Uint(item.erc20_fee.amount.clone()));
-            destinations.push(item.destination)
+            destinations.push(item.ethereum_recipient)
         }
         assert_eq!(amounts.len(), destinations.len());
         assert_eq!(fees.len(), destinations.len());
@@ -65,9 +65,7 @@ impl TransactionBatch {
         )
     }
 
-    pub fn from_proto(
-        input: gravity_proto::gravity::OutgoingTxBatch,
-    ) -> Result<Self, GravityError> {
+    pub fn from_proto(input: gravity_proto::gravity::BatchTx) -> Result<Self, GravityError> {
         let mut transactions = Vec::new();
         let mut running_total_fee: Option<Erc20Token> = None;
         for tx in input.transactions {
@@ -84,8 +82,8 @@ impl TransactionBatch {
         }
         if let Some(total_fee) = running_total_fee {
             Ok(TransactionBatch {
-                batch_timeout: input.batch_timeout,
-                nonce: input.batch_nonce,
+                batch_timeout: input.timeout,
+                nonce: input.nonce,
                 transactions,
                 token_contract: total_fee.token_contract_address,
                 total_fee,
@@ -102,7 +100,6 @@ impl TransactionBatch {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BatchConfirmResponse {
     pub nonce: u64,
-    pub orchestrator: CosmosAddress,
     pub token_contract: EthAddress,
     pub ethereum_signer: EthAddress,
     pub eth_signature: EthSignature,
@@ -110,14 +107,13 @@ pub struct BatchConfirmResponse {
 
 impl BatchConfirmResponse {
     pub fn from_proto(
-        input: gravity_proto::gravity::MsgConfirmBatch,
+        input: gravity_proto::gravity::BatchTxSignature,
     ) -> Result<Self, GravityError> {
         Ok(BatchConfirmResponse {
             nonce: input.nonce,
-            orchestrator: input.orchestrator.parse()?,
             token_contract: input.token_contract.parse()?,
             ethereum_signer: input.eth_signer.parse()?,
-            eth_signature: input.signature.parse()?,
+            eth_signature: EthSignature::from_bytes(&input.signature)?,
         })
     }
 }

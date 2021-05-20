@@ -3,6 +3,8 @@ package gravity
 import (
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
@@ -44,13 +46,13 @@ func initializeTestingVars(t *testing.T) *testingVars {
 	tv.myOrchestratorAddr = make([]byte, sdk.AddrLen)
 	tv.myValAddr = sdk.ValAddress(tv.myOrchestratorAddr) // revisit when proper mapping is impl in keeper
 
-	tv.erc20 = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
+	tv.erc20 = common.HexToAddress("0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e").Hex()
 	tv.denom = "uatom"
 
 	tv.input = keeper.CreateTestEnv(t)
 	tv.ctx = tv.input.Context
 	tv.input.GravityKeeper.StakingKeeper = keeper.NewStakingKeeperMock(tv.myValAddr)
-	tv.input.GravityKeeper.SetOrchestratorValidator(tv.ctx, tv.myValAddr, tv.myOrchestratorAddr)
+	tv.input.GravityKeeper.SetOrchestratorValidatorAddress(tv.ctx, tv.myValAddr, tv.myOrchestratorAddr)
 	tv.h = NewHandler(tv.input.GravityKeeper)
 
 	return &tv
@@ -68,27 +70,29 @@ func addDenomToERC20Relation(tv *testingVars) {
 		Display: "atom",
 	})
 
-	var (
-		myNonce = uint64(1)
-	)
+	var myNonce = uint64(1)
 
-	ethClaim := types.MsgERC20DeployedClaim{
+	deployedEvent := &types.ERC20DeployedEvent{
 		CosmosDenom:   tv.denom,
 		TokenContract: tv.erc20,
-		Name:          "atom",
-		Symbol:        "atom",
-		Decimals:      6,
+		Erc20Name:     "atom",
+		Erc20Symbol:   "atom",
+		Erc20Decimals: 6,
 		EventNonce:    myNonce,
-		Orchestrator:  tv.myOrchestratorAddr.String(),
 	}
 
-	_, err := tv.h(tv.ctx, &ethClaim)
+	eva, err := types.PackEvent(deployedEvent)
+	require.NoError(tv.t, err)
+
+	msgSumbitEvent := &types.MsgSubmitEthereumEvent{Event: eva, Signer: tv.myOrchestratorAddr.String()}
+
+	_, err = tv.h(tv.ctx, msgSumbitEvent)
 	require.NoError(tv.t, err)
 
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
-	// check if attestation persisted
-	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, ethClaim.ClaimHash())
+	// check if event vote record persisted
+	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, deployedEvent.Hash())
 	require.NotNil(tv.t, a)
 
 	// check if erc20<>denom relation added to db
@@ -100,7 +104,7 @@ func addDenomToERC20Relation(tv *testingVars) {
 	assert.True(tv.t, isCosmosOriginated)
 
 	assert.Equal(tv.t, tv.denom, gotDenom)
-	assert.Equal(tv.t, tv.erc20, gotERC20)
+	assert.Equal(tv.t, tv.erc20, gotERC20.Hex())
 }
 
 func lockCoinsInModule(tv *testingVars) {
@@ -123,11 +127,11 @@ func lockCoinsInModule(tv *testingVars) {
 	assert.Equal(tv.t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}, balance1)
 
 	// send some coins
-	msg := &types.MsgSendToEth{
-		Sender:    userCosmosAddr.String(),
-		EthDest:   ethDestination,
-		Amount:    sendingCoin,
-		BridgeFee: feeCoin,
+	msg := &types.MsgSendToEthereum{
+		Sender:            userCosmosAddr.String(),
+		EthereumRecipient: ethDestination,
+		Amount:            sendingCoin,
+		BridgeFee:         feeCoin,
 	}
 
 	_, err := tv.h(tv.ctx, msg)
@@ -158,21 +162,25 @@ func acceptDepositEvent(tv *testingVars) {
 		Contract: tv.erc20,
 	}
 
-	ethClaim := types.MsgDepositClaim{
+	sendToCosmosEvent := &types.SendToCosmosEvent{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
 		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
-		Orchestrator:   myOrchestratorAddr.String(),
+		EthereumHeight: 1000,
 	}
 
-	_, err := tv.h(tv.ctx, &ethClaim)
+	eva, err := types.PackEvent(sendToCosmosEvent)
+	require.NoError(tv.t, err)
+
+	msgSubmitEvent := &types.MsgSubmitEthereumEvent{eva, myOrchestratorAddr.String()}
+	_, err = tv.h(tv.ctx, msgSubmitEvent)
 	require.NoError(tv.t, err)
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
 	// check that attestation persisted
-	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, ethClaim.ClaimHash())
+	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, sendToCosmosEvent.Hash())
 	require.NotNil(tv.t, a)
 
 	// Check that user balance has gone up

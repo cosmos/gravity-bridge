@@ -10,8 +10,8 @@ use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use deep_space::Contact;
 use futures::future::join_all;
 use gravity_proto::gravity::{
-    query_client::QueryClient as GravityQueryClient, QueryDelegateKeysByEthAddress,
-    QueryDelegateKeysByOrchestratorAddress,
+    query_client::QueryClient as GravityQueryClient, DelegateKeysByEthereumSignerRequest,
+    DelegateKeysByOrchestratorAddress,
 };
 use rand::Rng;
 use std::time::Duration;
@@ -32,8 +32,8 @@ pub async fn orch_keys_update(
         let eth_address = k.eth_key.to_public_key().unwrap();
         let orch_address = k.orch_key.to_address(&contact.get_prefix()).unwrap();
         let eth_response = grpc_client
-            .get_delegate_key_by_eth(QueryDelegateKeysByEthAddress {
-                eth_address: eth_address.to_string(),
+            .delegate_keys_by_ethereum_signer(DelegateKeysByEthereumSignerRequest {
+                ethereum_signer: eth_address.to_string(),
             })
             .await
             .unwrap()
@@ -44,7 +44,7 @@ pub async fn orch_keys_update(
         assert_eq!(parsed_response_orch_address, orch_address);
 
         let orchestrator_response = grpc_client
-            .get_delegate_key_by_orchestrator(QueryDelegateKeysByOrchestratorAddress {
+            .delegate_keys_by_orchestrator(DelegateKeysByOrchestratorAddress {
                 orchestrator_address: orch_address.to_string(),
             })
             .await
@@ -52,7 +52,7 @@ pub async fn orch_keys_update(
             .into_inner();
 
         let parsed_response_eth_address: EthAddress =
-            orchestrator_response.eth_address.parse().unwrap();
+            orchestrator_response.ethereum_signer.parse().unwrap();
         assert_eq!(parsed_response_eth_address, eth_address);
     }
 
