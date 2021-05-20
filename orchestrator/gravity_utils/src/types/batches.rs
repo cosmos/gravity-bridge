@@ -65,9 +65,7 @@ impl TransactionBatch {
         )
     }
 
-    pub fn from_proto(
-        input: gravity_proto::gravity::BatchTx,
-    ) -> Result<Self, GravityError> {
+    pub fn from_proto(input: gravity_proto::gravity::BatchTx) -> Result<Self, GravityError> {
         let mut transactions = Vec::new();
         let mut running_total_fee: Option<Erc20Token> = None;
         for tx in input.transactions {

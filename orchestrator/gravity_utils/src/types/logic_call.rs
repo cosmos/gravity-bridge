@@ -17,9 +17,7 @@ pub struct LogicCall {
 }
 
 impl LogicCall {
-    pub fn from_proto(
-        input: gravity_proto::gravity::ContractCallTx,
-    ) -> Result<Self, GravityError> {
+    pub fn from_proto(input: gravity_proto::gravity::ContractCallTx) -> Result<Self, GravityError> {
         let mut transfers: Vec<Erc20Token> = Vec::new();
         let mut fees: Vec<Erc20Token> = Vec::new();
         for transfer in input.tokens {

@@ -260,7 +260,7 @@ pub fn encode_logic_call_confirm(gravity_id: String, call: LogicCall) -> Vec<u8>
         call.logic_contract_address.into(),          // Address of a logic contract
         Token::UnboundedBytes(call.payload),         // Encoded arguments to logic contract
         call.timeout.into(),                         // Timeout on batch
-        Token::Bytes(call.invalidation_scope),          // Scope of logic batch
+        Token::Bytes(call.invalidation_scope),       // Scope of logic batch
         call.invalidation_nonce.into(),              // Nonce of logic batch. See 2-d nonce scheme.
     ])
 }
