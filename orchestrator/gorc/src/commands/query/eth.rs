@@ -2,11 +2,13 @@
 
 use abscissa_core::{Command, Options, Runnable};
 
-
 #[derive(Command, Debug, Options)]
-pub enum Eth{
+pub enum Eth {
     #[options(help = "balance [key-name]")]
     Balance(Balance),
+
+    #[options(help = "contract")]
+    Contract(Contract),
 }
 
 impl Runnable for Eth {
@@ -17,15 +19,13 @@ impl Runnable for Eth {
 }
 
 #[derive(Command, Debug, Options)]
-pub struct Balance{
+pub struct Balance {
     #[options(free)]
     free: Vec<String>,
 
     #[options(help = "print help message")]
     help: bool,
-
 }
-
 
 impl Runnable for Balance {
     fn run(&self) {
@@ -34,22 +34,13 @@ impl Runnable for Balance {
     }
 }
 
-
-
 #[derive(Command, Debug, Options)]
-pub struct Contract{
-    #[options(free)]
-    free: Vec<String>,
-
+pub struct Contract {
     #[options(help = "print help message")]
     help: bool,
-
 }
 
 impl Runnable for Contract {
     /// Start the application.
-    fn run(&self) {
-       
-
-    }
+    fn run(&self) {}
 }

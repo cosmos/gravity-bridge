@@ -2,9 +2,8 @@
 
 use abscissa_core::{Command, Options, Runnable};
 
-
 #[derive(Command, Debug, Options)]
-pub enum Cosmos{
+pub enum Cosmos {
     #[options(help = "balance [key-name]")]
     Balance(Balance),
     #[options(help = "gravity-keys [key-name] ")]
@@ -19,15 +18,13 @@ impl Runnable for Cosmos {
 }
 
 #[derive(Command, Debug, Options)]
-pub struct Balance{
+pub struct Balance {
     #[options(free)]
     free: Vec<String>,
 
     #[options(help = "print help message")]
     help: bool,
-
 }
-
 
 impl Runnable for Balance {
     fn run(&self) {
@@ -36,16 +33,13 @@ impl Runnable for Balance {
     }
 }
 
-
-
 #[derive(Command, Debug, Options)]
-pub struct Gravity_keys{
+pub struct Gravity_keys {
     #[options(free)]
     free: Vec<String>,
 
     #[options(help = "print help message")]
     help: bool,
-
 }
 
 impl Runnable for Gravity_keys {
@@ -53,6 +47,5 @@ impl Runnable for Gravity_keys {
     fn run(&self) {
         assert!(self.free.len() == 1);
         let key_name = self.free[0].clone();
-
     }
 }

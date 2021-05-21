@@ -12,16 +12,16 @@ use abscissa_core::{Command, Options, Runnable};
 #[derive(Command, Debug, Options)]
 pub struct KeysCmd {
     // Example `--foobar` (with short `-f` argument)
-    // #[options(short = "f", help = "foobar path"]
-    // foobar: Option<PathBuf>
+// #[options(short = "f", help = "foobar path"]
+// foobar: Option<PathBuf>
 
-    // Example `--baz` argument with no short version
-    // #[options(no_short, help = "baz path")]
-    // baz: Option<PathBuf>
+// Example `--baz` argument with no short version
+// #[options(no_short, help = "baz path")]
+// baz: Option<PathBuf>
 
-    // "free" arguments don't have an associated flag
-    // #[options(free)]
-    // free_args: Vec<String>,
+// "free" arguments don't have an associated flag
+// #[options(free)]
+// free_args: Vec<String>,
 }
 
 impl Runnable for KeysCmd {
