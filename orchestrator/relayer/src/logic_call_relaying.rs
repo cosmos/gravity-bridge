@@ -36,7 +36,7 @@ pub async fn relay_logic_calls(
     for call in latest_calls {
         let sigs = get_logic_call_signatures(
             grpc_client,
-            call.invalidation_id.clone(),
+            call.invalidation_scope.clone(),
             call.invalidation_nonce,
         )
         .await;
@@ -50,14 +50,14 @@ pub async fn relay_logic_calls(
             } else {
                 warn!(
                     "LogicCall {}/{} can not be submitted yet, waiting for more signatures",
-                    bytes_to_hex_str(&call.invalidation_id),
+                    bytes_to_hex_str(&call.invalidation_scope),
                     call.invalidation_nonce
                 );
             }
         } else {
             error!(
                 "could not get signatures for {}/{} with {:?}",
-                bytes_to_hex_str(&call.invalidation_id),
+                bytes_to_hex_str(&call.invalidation_scope),
                 call.invalidation_nonce,
                 sigs
             );
@@ -72,7 +72,7 @@ pub async fn relay_logic_calls(
 
     let latest_ethereum_call = get_logic_call_nonce(
         gravity_contract_address,
-        oldest_signed_call.invalidation_id.clone(),
+        oldest_signed_call.invalidation_scope.clone(),
         our_ethereum_address,
         web3,
     )

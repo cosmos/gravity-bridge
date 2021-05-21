@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	cfg "github.com/tendermint/tendermint/config"
@@ -116,8 +117,8 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 
 			ethAddress := args[2]
 
-			if err := gravitytypes.ValidateEthAddress(ethAddress); err != nil {
-				return errors.Wrapf(err, "invalid ethereum address")
+			if !common.IsHexAddress(ethAddress) {
+				return errors.Wrapf(gravitytypes.ErrInvalid, "invalid ethereum address")
 			}
 
 			orchAddress, err := sdk.AccAddressFromBech32(args[3])
@@ -179,10 +180,10 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 				return errors.Wrap(err, "failed to build create-validator message")
 			}
 
-			delegateGravityMsg := &gravitytypes.MsgSetOrchestratorAddress{
-				Validator:    sdk.ValAddress(key.GetAddress()).String(),
-				Orchestrator: orchAddress.String(),
-				EthAddress:   ethAddress,
+			delegateGravityMsg := &gravitytypes.MsgDelegateKeys{
+				ValidatorAddress:    sdk.ValAddress(key.GetAddress()).String(),
+				OrchestratorAddress: orchAddress.String(),
+				EthereumAddress:     ethAddress,
 			}
 
 			msgs := []sdk.Msg{msg, delegateGravityMsg}

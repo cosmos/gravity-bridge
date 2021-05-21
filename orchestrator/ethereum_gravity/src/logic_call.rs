@@ -23,14 +23,14 @@ pub async fn send_eth_logic_call(
     let eth_address = our_eth_key.to_public_key().unwrap();
     info!(
         "Ordering signatures and submitting LogicCall {}:{} to Ethereum",
-        bytes_to_hex_str(&call.invalidation_id),
+        bytes_to_hex_str(&call.invalidation_scope),
         new_call_nonce
     );
     trace!("Call {:?}", call);
 
     let before_nonce = get_logic_call_nonce(
         gravity_contract_address,
-        call.invalidation_id.clone(),
+        call.invalidation_scope.clone(),
         eth_address,
         &web3,
     )
@@ -68,7 +68,7 @@ pub async fn send_eth_logic_call(
 
     let last_nonce = get_logic_call_nonce(
         gravity_contract_address,
-        call.invalidation_id,
+        call.invalidation_scope,
         eth_address,
         &web3,
     )
@@ -180,7 +180,7 @@ fn encode_logic_call_payload(
         call.logic_contract_address.into(),
         Token::UnboundedBytes(call.payload.clone()),
         call.timeout.into(),
-        Token::Bytes(call.invalidation_id.clone()),
+        Token::Bytes(call.invalidation_scope.clone()),
         call.invalidation_nonce.into(),
     ];
     let tokens = &[
@@ -222,7 +222,7 @@ mod tests {
         let logic_contract_address = "0x17c1736CcF692F653c433d7aa2aB45148C016F68"
             .parse()
             .unwrap();
-        let invalidation_id =
+        let invalidation_scope =
             hex_str_to_bytes("0x696e76616c69646174696f6e4964000000000000000000000000000000000000")
                 .unwrap();
         let invalidation_nonce = 1u8.into();
@@ -243,7 +243,7 @@ mod tests {
             )
             .unwrap(),
             timeout: 4766922941000,
-            invalidation_id: invalidation_id.clone(),
+            invalidation_scope: invalidation_scope.clone(),
             invalidation_nonce,
         };
 
@@ -256,7 +256,7 @@ mod tests {
             }],
         };
         let confirm = LogicCallConfirmResponse {
-            invalidation_id,
+            invalidation_id:invalidation_scope,
             invalidation_nonce,
             ethereum_signer,
             eth_signature: Signature {
@@ -274,10 +274,6 @@ mod tests {
                     .unwrap(),
                 ),
             },
-            // this value is totally random as it's not included in any way in the eth encoding.
-            orchestrator: "cosmos1vlms2r8f6x7yxjh3ynyzc7ckarqd8a96ckjvrp"
-                .parse()
-                .unwrap(),
         };
 
         assert_eq!(

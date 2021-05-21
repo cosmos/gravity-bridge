@@ -288,30 +288,34 @@ pub async fn eth_signer_main_loop(
             ),
         }
 
-        match get_oldest_unsigned_logic_call(&mut grpc_client, our_cosmos_address).await {
-            Ok(Some(last_unsigned_call)) => {
+        let logic_calls =get_oldest_unsigned_logic_call(&mut grpc_client, our_cosmos_address).await;
+        if let Ok(logic_calls) = logic_calls{
+            for logic_call in logic_calls{
                 info!(
                     "Sending Logic call confirm for {}:{}",
-                    bytes_to_hex_str(&last_unsigned_call.invalidation_id),
-                    last_unsigned_call.invalidation_nonce
+                    bytes_to_hex_str(&logic_call.invalidation_scope),
+                    logic_call.invalidation_nonce
                 );
                 let res = send_logic_call_confirm(
                     &contact,
                     ethereum_key,
                     fee.clone(),
-                    vec![last_unsigned_call],
+                    vec![logic_call],
                     cosmos_key,
                     gravity_id.clone(),
                 )
                 .await;
                 trace!("call confirm result is {:?}", res);
             }
-            Ok(None) => trace!("No unsigned logic call! Everything good!"),
-            Err(e) => info!(
+        } else if let Err(e) = logic_calls {
+            info!(
                 "Failed to get unsigned Logic Calls, check your Cosmos gRPC {:?}",
                 e
-            ),
+            )
         }
+        
+
+
 
         // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
         // this is not required for any specific reason. In fact we expect and plan for

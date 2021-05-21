@@ -181,21 +181,21 @@ var (
 
 	// TestingGravityParams is a set of gravity params for testing
 	TestingGravityParams = types.Params{
-		GravityId:                     "testgravityid",
-		ContractSourceHash:            "62328f7bc12efb28f86111d08c29b39285680a906ea0e524e0209d6f6657b713",
-		BridgeEthereumAddress:         "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
-		BridgeChainId:                 11,
-		SignedBatchesWindow:           10,
-		SignedValsetsWindow:           10,
-		UnbondSlashingValsetsWindow:   15,
-		SignedClaimsWindow:            10,
-		TargetBatchTimeout:            60001,
-		AverageBlockTime:              5000,
-		AverageEthereumBlockTime:      15000,
-		SlashFractionValset:           sdk.NewDecWithPrec(1, 2),
-		SlashFractionBatch:            sdk.NewDecWithPrec(1, 2),
-		SlashFractionClaim:            sdk.NewDecWithPrec(1, 2),
-		SlashFractionConflictingClaim: sdk.NewDecWithPrec(1, 2),
+		GravityId:                                 "testgravityid",
+		ContractSourceHash:                        "62328f7bc12efb28f86111d08c29b39285680a906ea0e524e0209d6f6657b713",
+		BridgeEthereumAddress:                     "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
+		BridgeChainId:                             11,
+		SignedBatchesWindow:                       10,
+		SignedSignerSetTxsWindow:                  10,
+		UnbondSlashingSignerSetTxsWindow:          15,
+		EthereumSignaturesWindow:                  10,
+		TargetBatchTimeout:                        60001,
+		AverageBlockTime:                          5000,
+		AverageEthereumBlockTime:                  15000,
+		SlashFractionSignerSetTx:                  sdk.NewDecWithPrec(1, 2),
+		SlashFractionBatch:                        sdk.NewDecWithPrec(1, 2),
+		SlashFractionEthereumSignature:            sdk.NewDecWithPrec(1, 2),
+		SlashFractionConflictingEthereumSignature: sdk.NewDecWithPrec(1, 2),
 	}
 )
 
@@ -211,6 +211,15 @@ type TestInput struct {
 	Context        sdk.Context
 	Marshaler      codec.Marshaler
 	LegacyAmino    *codec.LegacyAmino
+}
+
+func (input TestInput) AddSendToEthTxsToPool(t *testing.T, ctx sdk.Context, tokenContract gethcommon.Address, sender sdk.AccAddress, receiver gethcommon.Address, ids ...uint64) {
+	for i, id := range ids {
+		amount := types.NewERC20Token(uint64(i+100), tokenContract.Hex()).GravityCoin()
+		fee := types.NewERC20Token(id, tokenContract.Hex()).GravityCoin()
+		_, err := input.GravityKeeper.createSendToEthereum(ctx, sender, receiver.Hex(), amount, fee)
+		require.NoError(t, err)
+	}
 }
 
 // SetupFiveValChain does all the initialization for a 5 Validator chain using the keys here
@@ -253,7 +262,9 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 
 	// Register eth addresses for each validator
 	for i, addr := range ValAddrs {
-		input.GravityKeeper.SetEthAddress(input.Context, addr, EthAddrs[i].String())
+		input.GravityKeeper.setValidatorEthereumAddress(input.Context, addr, EthAddrs[i])
+		input.GravityKeeper.SetOrchestratorValidatorAddress(input.Context, addr, AccAddrs[i])
+		input.GravityKeeper.setEthereumOrchestratorAddress(input.Context, EthAddrs[i], AccAddrs[i])
 	}
 
 	// Return the test input
@@ -407,7 +418,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		),
 	)
 
-	k.SetParams(ctx, TestingGravityParams)
+	k.setParams(ctx, TestingGravityParams)
 
 	return TestInput{
 		GravityKeeper:  k,
@@ -439,7 +450,7 @@ func MakeTestCodec() *codec.LegacyAmino {
 	sdk.RegisterLegacyAminoCodec(cdc)
 	ccodec.RegisterCrypto(cdc)
 	params.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
-	types.RegisterCodec(cdc)
+	//types.RegisterCodec(cdc)
 	return cdc
 }
 
@@ -471,7 +482,9 @@ func NewStakingKeeperMock(operators ...sdk.ValAddress) *StakingKeeperMock {
 	}
 	const defaultTestPower = 100
 	for _, a := range operators {
+
 		r.BondedValidators = append(r.BondedValidators, stakingtypes.Validator{
+			ConsensusPubkey: codectypes.UnsafePackAny(ed25519.GenPrivKey().PubKey()),
 			OperatorAddress: a.String(),
 			Status:          stakingtypes.Bonded,
 		})
@@ -494,7 +507,12 @@ func NewStakingKeeperWeightedMock(t ...MockStakingValidatorData) *StakingKeeperM
 	}
 
 	for i, a := range t {
+		pk, err := codectypes.NewAnyWithValue(ed25519.GenPrivKey().PubKey())
+		if err != nil {
+			panic(err)
+		}
 		r.BondedValidators[i] = stakingtypes.Validator{
+			ConsensusPubkey: pk,
 			OperatorAddress: a.Operator.String(),
 			Status:          stakingtypes.Bonded,
 		}
@@ -587,7 +605,7 @@ func (s *StakingKeeperMock) ValidatorByConsAddr(ctx sdk.Context, addr sdk.ConsAd
 }
 
 func (s *StakingKeeperMock) GetParams(ctx sdk.Context) stakingtypes.Params {
-	panic("unexpected call")
+	return stakingtypes.DefaultParams()
 }
 
 func (s *StakingKeeperMock) GetValidator(ctx sdk.Context, addr sdk.ValAddress) (validator stakingtypes.Validator, found bool) {
@@ -595,7 +613,9 @@ func (s *StakingKeeperMock) GetValidator(ctx sdk.Context, addr sdk.ValAddress) (
 }
 
 func (s *StakingKeeperMock) ValidatorQueueIterator(ctx sdk.Context, endTime time.Time, endHeight int64) sdk.Iterator {
-	panic("unexpected call")
+	store := ctx.KVStore(sdk.NewKVStoreKey("staking"))
+	return store.Iterator(stakingtypes.ValidatorQueueKey, sdk.InclusiveEndBytes(stakingtypes.GetValidatorQueueKey(endTime, endHeight)))
+
 }
 
 // Slash staisfies the interface

@@ -1,0 +1,91 @@
+syntax = "proto3";
+package gravity.v1;
+
+import "cosmos_proto/cosmos.proto";
+import "google/protobuf/timestamp.proto";
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
+
+// EthereumEventVoteRecord is an event that is pending of confirmation by 2/3 of
+// the signer set. The event is then attested and executed in the state machine
+// once the required threshold is met.
+message EthereumEventVoteRecord {
+  google.protobuf.Any event = 1
+      [ (cosmos_proto.accepts_interface) = "EthereumEvent" ];
+  repeated string votes = 2;
+  bool accepted = 3;
+}
+
+// LatestEthereumBlockHeight defines the latest observed ethereum block height
+// and the corresponding timestamp value in nanoseconds.
+message LatestEthereumBlockHeight {
+  uint64 ethereum_height = 1;
+  uint64 cosmos_height = 2;
+}
+
+// EthereumSigner represents a cosmos validator with its corresponding bridge
+// operator ethereum address and its staking consensus power.
+message EthereumSigner {
+  uint64 power = 1;
+  string ethereum_address = 2;
+}
+
+// SignerSetTx is the Ethereum Bridge multisig set that relays
+// transactions the two chains. The staking validators keep ethereum keys which
+// are used to check signatures on Ethereum in order to get significant gas
+// savings.
+message SignerSetTx {
+  uint64 nonce = 1;
+  uint64 height = 2;
+  repeated EthereumSigner signers = 3
+      [ (gogoproto.castrepeated) = "EthereumSigners" ];
+}
+
+// BatchTx represents a batch of transactions going from Cosmos to Ethereum.
+// Batch txs are are identified by a unique hash and the token contract that is
+// shared by all the SendToEthereum
+message BatchTx {
+  uint64 batch_nonce = 1;
+  uint64 timeout = 2;
+  repeated SendToEthereum transactions = 3;
+  string token_contract = 4;
+  uint64 height = 5;
+}
+
+// SendToEthereum represents an individual SendToEthereum from Cosmos to
+// Ethereum
+message SendToEthereum {
+  uint64 id = 1;
+  string sender = 2;
+  string ethereum_recipient = 3;
+  ERC20Token erc20_token = 4 [ (gogoproto.nullable) = false ];
+  ERC20Token erc20_fee = 5 [ (gogoproto.nullable) = false ];
+}
+
+// ContractCallTx represents an individual arbitratry logic call transaction
+// from Cosmos to Ethereum.
+message ContractCallTx {
+  uint64 invalidation_nonce = 1;
+  bytes invalidation_scope = 2
+      [ (gogoproto.casttype) =
+            "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
+  string address = 3;
+  bytes payload = 4;
+  uint64 timeout = 5;
+  repeated ERC20Token tokens = 6 [ (gogoproto.nullable) = false ];
+  repeated ERC20Token fees = 7 [ (gogoproto.nullable) = false ];
+  uint64 height = 8;
+}
+
+message ERC20Token {
+  string contract = 1;
+  bytes amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message IDSet { repeated uint64 ids = 1; }
