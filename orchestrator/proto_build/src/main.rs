@@ -4,9 +4,6 @@
 
 // Building new Gravity rust proto definitions
 // run 'cargo run'
-// go to gravity_proto/prost
-// delete all files except gravity.v1.rs
-// re-write calls to super::super::cosmos as cosmos-sdk-proto::cosmos
 
 use regex::Regex;
 use std::{
