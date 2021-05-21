@@ -9,6 +9,7 @@ pub mod deploy_erc20;
 pub mod logic_call;
 pub mod send_to_cosmos;
 pub mod submit_batch;
+mod test_cases;
 pub mod utils;
 pub mod valset_update;
 
