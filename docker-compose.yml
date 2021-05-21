@@ -124,3 +124,13 @@ services:
       - DENOM
       - CONTRACT_ADDR
       - RUST_BACKTRACE=1
+
+  test_runner:
+    build:
+      context: ./orchestrator
+      dockerfile: ./Dockerfile_testnet
+    depends_on:
+      - gravity0
+      - ethereum
+    environment:
+      - VALIDATOR="gravity0"

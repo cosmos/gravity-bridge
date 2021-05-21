@@ -22,6 +22,7 @@ home_dir="$CHAINDIR/$CHAINID"
 #fi
 
 # stop processes
+export DOCKER_SCAN_SUGGEST=false
 docker-compose down
 rm -r $CHAINDIR
 
@@ -287,3 +288,7 @@ docker-compose --env-file $n3dir/orchestrator.env up --no-start orchestrator3
 docker-compose --env-file $n3dir/orchestrator.env start orchestrator3
 
 echo "Run tests"
+docker-compose build test-runner
+docker-compose run test-runner
+
+echo "Done."
