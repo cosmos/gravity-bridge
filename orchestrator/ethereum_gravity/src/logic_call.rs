@@ -23,14 +23,14 @@ pub async fn send_eth_logic_call(
     let eth_address = our_eth_key.to_public_key().unwrap();
     info!(
         "Ordering signatures and submitting LogicCall {}:{} to Ethereum",
-        bytes_to_hex_str(&call.invalidation_scope),
+        bytes_to_hex_str(&call.invalidation_id),
         new_call_nonce
     );
     trace!("Call {:?}", call);
 
     let before_nonce = get_logic_call_nonce(
         gravity_contract_address,
-        call.invalidation_scope.clone(),
+        call.invalidation_id.clone(),
         eth_address,
         &web3,
     )
@@ -68,7 +68,7 @@ pub async fn send_eth_logic_call(
 
     let last_nonce = get_logic_call_nonce(
         gravity_contract_address,
-        call.invalidation_scope,
+        call.invalidation_id,
         eth_address,
         &web3,
     )
@@ -180,7 +180,7 @@ fn encode_logic_call_payload(
         call.logic_contract_address.into(),
         Token::UnboundedBytes(call.payload.clone()),
         call.timeout.into(),
-        Token::Bytes(call.invalidation_scope.clone()),
+        Token::Bytes(call.invalidation_id.clone()),
         call.invalidation_nonce.into(),
     ];
     let tokens = &[
@@ -256,7 +256,7 @@ mod tests {
             }],
         };
         let confirm = LogicCallConfirmResponse {
-            invalidation_id:invalidation_scope,
+            invalidation_id: invalidation_scope,
             invalidation_nonce,
             ethereum_signer,
             eth_signature: Signature {

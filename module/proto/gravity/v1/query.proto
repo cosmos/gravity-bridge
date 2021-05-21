@@ -176,12 +176,7 @@ message SignerSetTxEthereumSignaturesRequest {
   string address = 2;
 }
 message SignerSetTxEthereumSignaturesResponse {
-  // repeated SignerSetTxSignature confirm = 1;
-  // TODO(levi) confirm orchestrator just needs the sigs from all the
-  // validators:
-  repeated bytes signature = 1
-      [ (gogoproto.casttype) =
-            "github.com/ethereum/go-ethereum/common/hexutil.Bytes" ];
+  repeated SignerSetTxSignature signatures = 1;
 }
 
 //  rpc SignerSetTxs
@@ -257,10 +252,7 @@ message ContractCallTxEthereumSignaturesRequest {
   string address = 3;
 }
 message ContractCallTxEthereumSignaturesResponse {
-  // Note these are returned with the signature empty
-  // TODO(levi) review rust to ensure we can have bytes repeated ContractCallTx
-  // logic_call_confirms = 1;
-  repeated bytes signature = 1;
+  repeated ContractCallTxSignature signatures = 1;
 }
 
 message BatchTxEthereumSignaturesRequest {
@@ -271,9 +263,7 @@ message BatchTxEthereumSignaturesRequest {
   string address = 3;
 }
 message BatchTxEthereumSignaturesResponse {
-  // TODO(levi) review rust to ensure we can have bytes repeated
-  // BatchTxSignature confirms = 1;
-  repeated bytes signature = 1;
+  repeated BatchTxSignature signatures = 1;
 }
 
 message LastSubmittedEthereumEventRequest { string address = 1; }

@@ -114,50 +114,61 @@ pub async fn check_for_events(
             Erc20DeployedEvent::filter_by_event_nonce(last_event_nonce, &erc20_deploys);
         let logic_calls =
             LogicCallExecutedEvent::filter_by_event_nonce(last_event_nonce, &logic_calls);
-        let mut proto_deposits = Vec::new();
-        for deposit in deposits{
-            proto_deposits.push(gravity_proto::gravity::SendToCosmosEvent{
-                event_nonce: ethereum_gravity::utils::downcast_uint256(deposit.event_nonce).unwrap(),
-                token_contract: deposit.erc20.to_string(),
-                amount: deposit.amount.to_string(),
-                ethereum_sender: deposit.sender.to_string(),
-                cosmos_receiver: deposit.destination.to_string(),
-                ethereum_height: ethereum_gravity::utils::downcast_uint256(deposit.block_height).unwrap(),
+        // TODO JEHAN: delete this after checking that everything else works
+        // let mut proto_deposits = Vec::new();
+        // for deposit in deposits {
+        //     let amount: [u8; 32] = deposit.amount.into();
+        //     proto_deposits.push(gravity_proto::gravity::SendToCosmosEvent {
+        //         event_nonce: ethereum_gravity::utils::downcast_uint256(deposit.event_nonce)
+        //             .unwrap(),
+        //         token_contract: deposit.erc20.to_string(),
+        //         amount: amount.into(),
+        //         ethereum_sender: deposit.sender.to_string(),
+        //         cosmos_receiver: deposit.destination.to_string(),
+        //         ethereum_height: ethereum_gravity::utils::downcast_uint256(deposit.block_height)
+        //             .unwrap(),
+        //     })
+        // }
+        // let mut proto_erc20_deploys = Vec::new();
+        // for erc20_deploy in erc20_deploys {
+        //     proto_erc20_deploys.push(gravity_proto::gravity::Erc20DeployedEvent {
+        //         event_nonce: ethereum_gravity::utils::downcast_uint256(erc20_deploy.event_nonce)
+        //             .unwrap(),
+        //         cosmos_denom: erc20_deploy.cosmos_denom,
+        //         token_contract: erc20_deploy.erc20_address.to_string(),
+        //         erc20_name: erc20_deploy.name,
+        //         erc20_symbol: erc20_deploy.symbol,
+        //         erc20_decimals: erc20_deploy.decimals as u64,
+        //         ethereum_height: ethereum_gravity::utils::downcast_uint256(
+        //             erc20_deploy.block_height,
+        //         )
+        //         .unwrap(),
+        //     })
+        // }
 
-            })
-        }
-        let mut proto_erc20_deploys = Vec::new();
-        for erc20_deploy in erc20_deploys{
-            proto_erc20_deploys.push(gravity_proto::gravity::Erc20DeployedEvent{
-                event_nonce: ethereum_gravity::utils::downcast_uint256(erc20_deploy.event_nonce).unwrap(),
-                cosmos_denom: erc20_deploy.cosmos_denom,
-                token_contract: erc20_deploy.erc20_address.to_string(),
-                erc20_name: erc20_deploy.name,
-                erc20_symbol: erc20_deploy.symbol,
-                erc20_decimals: erc20_deploy.decimals as u64,
-                ethereum_height: ethereum_gravity::utils::downcast_uint256(erc20_deploy.block_height).unwrap(),
-                
-            })
-        }
-        
-        if !proto_deposits.is_empty() {
-            info!(
-                "Oracle observed deposit with ethereum sender {}, cosmos_reciever {}, amount {}, and event nonce {}",
-                proto_deposits[0].ethereum_sender, proto_deposits[0].cosmos_receiver, proto_deposits[0].amount, proto_deposits[0].event_nonce
-            )
-        }
+        // TODO JEHAN: bring this back in after checking that everything else works
+        // if !proto_deposits.is_empty() {
+        //     info!(
+        //         "Oracle observed deposit with ethereum sender {}, cosmos_reciever {}, amount {}, and event nonce {}",
+        //         proto_deposits[0].ethereum_sender, proto_deposits[0].cosmos_receiver, Uint256::from_bytes_be(proto_deposits[0].amount.as_slice()), proto_deposits[0].event_nonce
+        //     )
+        // }
+
         if !withdraws.is_empty() {
             info!(
                 "Oracle observed batch with nonce {}, contract {}, and event nonce {}",
                 withdraws[0].batch_nonce, withdraws[0].erc20, withdraws[0].event_nonce
             )
         }
-        if !proto_erc20_deploys.is_empty() {
-            info!(
-                "Oracle observed ERC20 deployment with denom {} erc20 name {} and symbol {} and event nonce {}",
-                proto_erc20_deploys[0].cosmos_denom, proto_erc20_deploys[0].erc20_name, proto_erc20_deploys[0].erc20_symbol, proto_erc20_deploys[0].event_nonce,
-            )
-        }
+
+        // TODO JEHAN: bring this back in after checking that everything else works
+        // if !proto_erc20_deploys.is_empty() {
+        //     info!(
+        //         "Oracle observed ERC20 deployment with denom {} erc20 name {} and symbol {} and event nonce {}",
+        //         proto_erc20_deploys[0].cosmos_denom, proto_erc20_deploys[0].erc20_name, proto_erc20_deploys[0].erc20_symbol, proto_erc20_deploys[0].event_nonce,
+        //     )
+        // }
+
         if !logic_calls.is_empty() {
             info!(
                 "Oracle observed logic call execution with ID {} Nonce {} and event nonce {}",
@@ -167,17 +178,17 @@ pub async fn check_for_events(
             )
         }
 
-        if !proto_deposits.is_empty()
+        if !deposits.is_empty()
             || !withdraws.is_empty()
-            || !proto_erc20_deploys.is_empty()
+            || !erc20_deploys.is_empty()
             || !logic_calls.is_empty()
         {
             let res = send_ethereum_claims(
                 contact,
                 our_private_key,
-                proto_deposits,
+                deposits,
                 withdraws,
-                proto_erc20_deploys,
+                erc20_deploys,
                 logic_calls,
                 fee,
             )

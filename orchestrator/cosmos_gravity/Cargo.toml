@@ -20,6 +20,7 @@ sha3 = "0.9"
 tokio = "1.4"
 web30 = "0.12"
 tonic = "0.4"
+cosmos-sdk-proto = "0.5"
 
 [dev-dependencies]
 env_logger = "0.8"

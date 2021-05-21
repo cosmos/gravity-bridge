@@ -908,6 +908,7 @@ version = "0.1.0"
 dependencies = [
  "actix",
  "clarity",
+ "cosmos-sdk-proto",
  "deep_space 2.1.1",
  "env_logger",
  "ethereum_gravity",

@@ -1,37 +1,25 @@
 use clarity::Address as EthAddress;
 use deep_space::address::Address;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use gravity_proto::gravity::BatchTxsRequest;
-//use gravity_proto::gravity::QueryCurrentValsetRequest;
-use gravity_proto::gravity::LastSubmittedEthereumEventRequest;
-use gravity_proto::gravity::{BatchTxEthereumSignaturesRequest,PendingBatchTxEthereumSignaturesRequest,PendingContractCallTxEthereumSignaturesRequest};
-use gravity_proto::gravity::ContractCallTxEthereumSignaturesRequest;
-//use gravity_proto::gravity::QueryLastPendingValsetRequestByAddrRequest;
-//use gravity_proto::gravity::QueryLastValsetRequestsRequest;
-//use gravity_proto::gravity::QueryLogicConfirmsRequest;
-use gravity_proto::gravity::ContractCallTxsRequest;
-use gravity_proto::gravity::BatchTxRequest;
-// use gravity_proto::gravity::SignerSetTxEthereumSignaturesRequest;
-// use gravity_proto::gravity::QueryValsetRequestRequest;
+use gravity_proto::gravity::*;
 use gravity_utils::error::GravityError;
 use gravity_utils::types::*;
 use tonic::transport::Channel;
+
+use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
 
 /// get the valset for a given nonce (block) height
 pub async fn get_valset(
     client: &mut GravityQueryClient<Channel>,
     nonce: u64,
 ) -> Result<Option<Valset>, GravityError> {
-    todo!();
-    // let request = client
-    //     .valset_request(QueryValsetRequestRequest { nonce })
-    //     .await?;
-    // let valset = request.into_inner().valset;
-    // let valset = match valset {
-    //     Some(v) => Some(v.into()),
-    //     None => None,
-    // };
-    // Ok(valset)
+    let request = client.signer_set_tx(SignerSetTxRequest { nonce }).await?;
+    let valset = request.into_inner().signer_set;
+    let valset = match valset {
+        Some(v) => Some(v.into()),
+        None => None,
+    };
+    Ok(valset)
 }
 
 /// get the current valset. You should never sign this valset
@@ -42,17 +30,18 @@ pub async fn get_valset(
 pub async fn get_current_valset(
     client: &mut GravityQueryClient<Channel>,
 ) -> Result<Valset, GravityError> {
-    todo!();
-    // let request = client.current_valset(QueryCurrentValsetRequest {}).await?;
-    // let valset = request.into_inner().valset;
-    // if let Some(valset) = valset {
-    //     Ok(valset.into())
-    // } else {
-    //     error!("Current valset returned None? This should be impossible");
-    //     Err(GravityError::InvalidBridgeStateError(
-    //         "Must have a current valset!".to_string(),
-    //     ))
-    // }
+    let request = client
+        .signer_set_tx(SignerSetTxRequest { nonce: 0 })
+        .await?;
+    let valset = request.into_inner().signer_set;
+    if let Some(valset) = valset {
+        Ok(valset.into())
+    } else {
+        error!("Current valset returned None? This should be impossible");
+        Err(GravityError::InvalidBridgeStateError(
+            "Must have a current valset!".to_string(),
+        ))
+    }
 }
 
 /// This hits the /pending_valset_requests endpoint and will provide
@@ -61,29 +50,35 @@ pub async fn get_oldest_unsigned_valsets(
     client: &mut GravityQueryClient<Channel>,
     address: Address,
 ) -> Result<Vec<Valset>, GravityError> {
-    todo!();
-    // let request = client
-    //     .last_pending_valset_request_by_addr(QueryLastPendingValsetRequestByAddrRequest {
-    //         address: address.to_string(),
-    //     })
-    //     .await?;
-    // let valsets = request.into_inner().valsets;
-    // // convert from proto valset type to rust valset type
-    // let valsets = valsets.iter().map(|v| v.into()).collect();
-    // Ok(valsets)
+    let request = client
+        .pending_signer_set_tx_ethereum_signatures(PendingSignerSetTxEthereumSignaturesRequest {
+            address: address.to_string(),
+        })
+        .await?;
+    let valsets = request.into_inner().signer_sets;
+    // convert from proto valset type to rust valset type
+    let valsets = valsets.iter().map(|v| v.clone().into()).collect();
+    Ok(valsets)
 }
 
-/// this input views the last five valset requests that have been made, useful if you're
+/// this input views the last five signer set txs that have been made, useful if you're
 /// a relayer looking to ferry confirmations
+/// TODO: this is not going to work because it no longer embeds the signatures in the signer set
 pub async fn get_latest_valsets(
     client: &mut GravityQueryClient<Channel>,
 ) -> Result<Vec<Valset>, GravityError> {
-    todo!();
-    // let request = client
-    //     .last_valset_requests(QueryLastValsetRequestsRequest {})
-    //     .await?;
-    // let valsets = request.into_inner().valsets;
-    // Ok(valsets.iter().map(|v| v.into()).collect())
+    let request = client
+        .signer_set_txs(SignerSetTxsRequest {
+            pagination: Some(PageRequest {
+                key: vec![],
+                offset: 0,
+                limit: 5,
+                count_total: false,
+            }),
+        })
+        .await?;
+    let valsets = request.into_inner().signer_sets;
+    Ok(valsets.iter().map(|v| v.clone().into()).collect())
 }
 
 /// get all valset confirmations for a given nonce
@@ -91,33 +86,36 @@ pub async fn get_all_valset_confirms(
     client: &mut GravityQueryClient<Channel>,
     nonce: u64,
 ) -> Result<Vec<ValsetConfirmResponse>, GravityError> {
-    todo!();
-    // let request = client
-    //     .valset_confirms_by_nonce(QueryValsetConfirmsByNonceRequest { nonce })
-    //     .await?;
-    // let confirms = request.into_inner().confirms;
-    // let mut parsed_confirms = Vec::new();
-    // for item in confirms {
-    //     parsed_confirms.push(ValsetConfirmResponse::from_proto(item)?)
-    // }
-    // Ok(parsed_confirms)
+    let request = client
+        .signer_set_tx_ethereum_signatures(SignerSetTxEthereumSignaturesRequest {
+            nonce,
+            address: "".into(),
+        })
+        .await?;
+    let confirms = request.into_inner().signatures;
+    let mut parsed_confirms = Vec::new();
+    for item in confirms {
+        parsed_confirms.push(ValsetConfirmResponse::from_proto(item)?)
+    }
+    Ok(parsed_confirms)
 }
 
 pub async fn get_oldest_unsigned_transaction_batch(
     client: &mut GravityQueryClient<Channel>,
     address: Address,
 ) -> Result<Option<TransactionBatch>, GravityError> {
-    todo!();
-    // let request = client
-    //     .pending_batch_tx_ethereum_signatures(PendingBatchTxEthereumSignaturesRequest {
-    //         address: address.to_string(),
-    //     })
-    //     .await?;
-    // let batch = request.into_inner().batches;
-    // match batch {
-    //     Some(batch) => Ok(Some(TransactionBatch::from_proto(batch)?)),
-    //     None => Ok(None),
-    // }
+    let request = client
+        .pending_batch_tx_ethereum_signatures(PendingBatchTxEthereumSignaturesRequest {
+            address: address.to_string(),
+        })
+        .await?;
+    // TODO(levi) is this really getting the oldest; feels like newest?
+    let batches = request.into_inner().batches;
+    let batch = batches.get(0);
+    match batch {
+        Some(batch) => Ok(Some(TransactionBatch::from_proto(batch.clone())?)),
+        None => Ok(None),
+    }
 }
 
 /// gets the latest 100 transaction batches, regardless of token type
@@ -125,16 +123,15 @@ pub async fn get_oldest_unsigned_transaction_batch(
 pub async fn get_latest_transaction_batches(
     client: &mut GravityQueryClient<Channel>,
 ) -> Result<Vec<TransactionBatch>, GravityError> {
-    todo!();
-    // let request = client
-    //     .pending_batch_tx_ethereum_signatures(BatchTxEthereumSignaturesRequest {})
-    //     .await?;
-    // let batches = request.into_inner().batches;
-    // let mut out = Vec::new();
-    // for batch in batches {
-    //     out.push(TransactionBatch::from_proto(batch)?)
-    // }
-    // Ok(out)
+    let request = client
+        .batch_txs(BatchTxsRequest { pagination: None })
+        .await?;
+    let batches = request.into_inner().batches;
+    let mut out = Vec::new();
+    for batch in batches {
+        out.push(TransactionBatch::from_proto(batch)?)
+    }
+    Ok(out)
 }
 
 /// get all batch confirmations for a given nonce and denom
@@ -145,11 +142,12 @@ pub async fn get_transaction_batch_signatures(
 ) -> Result<Vec<BatchConfirmResponse>, GravityError> {
     let request = client
         .batch_tx_ethereum_signatures(BatchTxEthereumSignaturesRequest {
-            nonce: nonce,
+            nonce,
             contract_address: contract_address.to_string(),
+            address: String::from(""),
         })
         .await?;
-    let batch_confirms = request.into_inner().confirms;
+    let batch_confirms = request.into_inner().signatures;
     let mut out = Vec::new();
     for confirm in batch_confirms {
         out.push(BatchConfirmResponse::from_proto(confirm)?)
@@ -176,7 +174,7 @@ pub async fn get_latest_logic_calls(
     client: &mut GravityQueryClient<Channel>,
 ) -> Result<Vec<LogicCall>, GravityError> {
     let request = client
-        .contract_call_txs(ContractCallTxsRequest {})
+        .contract_call_txs(ContractCallTxsRequest { pagination: None })
         .await?;
     let calls = request.into_inner().calls;
     let mut out = Vec::new();
@@ -193,16 +191,16 @@ pub async fn get_logic_call_signatures(
 ) -> Result<Vec<LogicCallConfirmResponse>, GravityError> {
     let request = client
         .contract_call_tx_ethereum_signatures(ContractCallTxEthereumSignaturesRequest {
-            // invalidation_scope,
-            // invalidation_nonce,
-            address:"ethereum addresses".to_string(),
+            invalidation_scope,
+            invalidation_nonce,
+            address: String::from(""),
         })
         .await?;
-    let call_confirms = request.into_inner().logic_call_confirms;
+    let call_confirms = request.into_inner().signatures;
     let mut out = Vec::new();
-    // for confirm in call_confirms {
-    //     out.push(LogicCallConfirmResponse::from_proto(confirm)?)
-    // }
+    for confirm in call_confirms {
+        out.push(LogicCallConfirmResponse::from_proto(confirm)?)
+    }
     Ok(out)
 }
 
@@ -210,11 +208,12 @@ pub async fn get_oldest_unsigned_logic_call(
     client: &mut GravityQueryClient<Channel>,
     address: Address,
 ) -> Result<Vec<LogicCall>, GravityError> {
-    let request = client.
-        pending_contract_call_tx_ethereum_signatures(PendingContractCallTxEthereumSignaturesRequest 
-            {
-            address: address.to_string(),
-        })
+    let request = client
+        .pending_contract_call_tx_ethereum_signatures(
+            PendingContractCallTxEthereumSignaturesRequest {
+                address: address.to_string(),
+            },
+        )
         .await?;
     let calls = request.into_inner().calls;
     let mut out = Vec::new();
