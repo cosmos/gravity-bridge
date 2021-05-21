@@ -29,7 +29,7 @@ pub struct SendToEth{
     #[options(help = "print help message")]
     help: bool,
 
-    #[options(help = "numeber of times to sent to cosmos")]
+    #[options(help = "numeber of times to sent to ethereum")]
     times: Option<u32>,
 
 }
@@ -110,6 +110,10 @@ pub struct Send{
 impl Runnable for Send {
     /// Start the application.
     fn run(&self) {
-        // Your code goes here
+        assert!(self.free.len() == 3);
+        let from_key = self.free[0].clone();
+        let to_addr = self.free[1].clone();
+        let coin_amount = self.free[2].clone();
+
     }
 }
