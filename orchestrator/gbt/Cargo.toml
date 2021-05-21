@@ -1,8 +1,15 @@
 [package]
-name = "client"
-version = "0.4.2"
+name = "gbt"
+version = "0.1.0"
 authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
+license = "Apache-2.0"
+description = "User tooling for the Althea Ethereum <=> Cosmos Gravtiy bridge"
+repository = "https://github.com/althea-net/cosmos-gravity-bridge"
+homepage = "https://gravitybridge.althea.net/"
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 ethereum_gravity = {path = "../ethereum_gravity"}
@@ -13,12 +20,13 @@ gravity_proto = {path = "../gravity_proto/"}
 deep_space = "2.2"
 serde_derive = "1.0"
 clarity = "0.4"
-docopt = "1"
+clap = "3.0.0-beta.2"
 serde = "1.0"
 actix-rt = "2.2"
 lazy_static = "1"
 url = "2"
 web30 = "0.14"
 env_logger = "0.8"
+log = "0.4"
 openssl-probe = "0.1"
 tokio = "1.4"
