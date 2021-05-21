@@ -1213,6 +1213,7 @@ dependencies = [
  "log",
  "openssl-probe",
  "rand 0.8.3",
+ "relayer",
  "serde",
  "serde_derive",
  "tokio 1.6.0",

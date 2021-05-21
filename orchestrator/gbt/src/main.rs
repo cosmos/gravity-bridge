@@ -1,7 +1,10 @@
 #[macro_use]
 extern crate log;
 
-use crate::args::{ClientSubcommand, KeysSubcommand, SubCommand};
+use crate::{
+    args::{ClientSubcommand, KeysSubcommand, SubCommand},
+    relayer::relayer,
+};
 use args::Opts;
 use clap::Clap;
 use client::cosmos_to_eth::cosmos_to_eth;
@@ -13,6 +16,7 @@ use keys::set_orchestrator_address::set_orchestrator_address;
 mod args;
 mod client;
 mod keys;
+mod relayer;
 mod utils;
 
 #[actix_rt::main]
@@ -50,7 +54,7 @@ async fn main() {
             }
         },
         SubCommand::Orchestrator(orchestrator_opts) => {}
-        SubCommand::Relayer(relayer_opts) => {}
+        SubCommand::Relayer(relayer_opts) => relayer(relayer_opts, address_prefix).await,
     }
 
     // this may be unreachable

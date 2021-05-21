@@ -8,10 +8,6 @@ edition = "2018"
 name = "relayer"
 path = "src/lib.rs"
 
-[[bin]]
-name = "relayer"
-path = "src/main.rs"
-
 [dependencies]
 ethereum_gravity = {path = "../ethereum_gravity"}
 cosmos_gravity = {path = "../cosmos_gravity"}

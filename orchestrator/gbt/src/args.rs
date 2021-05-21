@@ -6,7 +6,6 @@ use clap::Clap;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use deep_space::address::Address as CosmosAddress;
-use deep_space::PrivateKey as CosmosPrivateKey;
 
 /// Gravity Bridge tools (gbt) provides tools for interacting with the Althea Gravity bridge for Cosmos based blockchains.
 #[derive(Clap)]
@@ -41,9 +40,23 @@ pub struct OrchestratorOpts {}
 
 /// The Gravity Bridge Relayer is an unpermissioned role that takes data from the Cosmos blockchain
 /// packages it into Ethereum transactions and is paid to submit these transactions to the Ethereum blockchain
+/// The relayer will attempt to only relay profitable transactions, but there is no guarantee that it will succeed
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
-pub struct RelayerOpts {}
+pub struct RelayerOpts {
+    /// An Ethereum private key containing ETH to pay for fees, this will also hold the relayers earnings
+    #[clap(short, long, parse(try_from_str))]
+    pub ethereum_key: EthPrivateKey,
+    /// The address fo the Gravity contract on Ethereum
+    #[clap(short, long, parse(try_from_str))]
+    pub gravity_contract_address: EthAddress,
+    /// (Optional) The Ethereum RPC server that will be used
+    #[clap(short, long, default_value = "http://localhost:8545")]
+    pub ethereum_rpc: String,
+    /// (Optional) The Cosmos gRPC server that will be used to
+    #[clap(short, long, default_value = "http://localhost:9090")]
+    pub cosmos_grpc: String,
+}
 
 /// The Gravity Bridge client contains helpful command line tools for interacting with the Gravity bridge
 #[derive(Clap)]
