@@ -301,6 +301,8 @@ pub struct MsgDelegateKeys {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgDelegateKeysResponse {}
+#[cfg(feature = "grpc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "grpc")))]
 #[doc = r" Generated client implementations."]
 pub mod msg_client {
     #![allow(unused_variables, dead_code, missing_docs)]
@@ -625,8 +627,7 @@ pub struct SignerSetTxConfirmationsResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignerSetTxsRequest {
     #[prost(message, optional, tag = "1")]
-    pub pagination:
-        ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
+    pub pagination: ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignerSetTxsResponse {
@@ -640,8 +641,7 @@ pub struct SignerSetTxsResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchTxsRequest {
     #[prost(message, optional, tag = "1")]
-    pub pagination:
-        ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
+    pub pagination: ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchTxsResponse {
@@ -655,8 +655,7 @@ pub struct BatchTxsResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ContractCallTxsRequest {
     #[prost(message, optional, tag = "1")]
-    pub pagination:
-        ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
+    pub pagination: ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ContractCallTxsResponse {
@@ -827,8 +826,7 @@ pub struct UnbatchedSendToEthereumsRequest {
     #[prost(string, tag = "1")]
     pub sender_address: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "2")]
-    pub pagination:
-        ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
+    pub pagination: ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UnbatchedSendToEthereumsResponse {
@@ -838,6 +836,8 @@ pub struct UnbatchedSendToEthereumsResponse {
     pub pagination:
         ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageResponse>,
 }
+#[cfg(feature = "grpc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "grpc")))]
 #[doc = r" Generated client implementations."]
 pub mod query_client {
     #![allow(unused_variables, dead_code, missing_docs)]
