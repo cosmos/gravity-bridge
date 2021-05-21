@@ -39,12 +39,12 @@ services:
       - ethereum
       - gravity0
     environment:
-      - COSMOS_KEY=${COSMOS_KEY}
-      - COSMOS_PHRASE=${COSMOS_PHRASE}
-      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
-      - VALIDATOR=${VALIDATOR}
-      - DENOM=${DENOM}
-      - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - COSMOS_KEY
+      - COSMOS_PHRASE
+      - ETH_PRIVATE_KEY
+      - VALIDATOR
+      - DENOM
+      - CONTRACT_ADDR
       - RUST_BACKTRACE=1
 
   gravity1:
@@ -65,12 +65,12 @@ services:
       - ethereum
       - gravity1
     environment:
-      - COSMOS_KEY=${COSMOS_KEY}
-      - COSMOS_PHRASE=${COSMOS_PHRASE}
-      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
-      - VALIDATOR=${VALIDATOR}
-      - DENOM=${DENOM}
-      - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - COSMOS_KEY
+      - COSMOS_PHRASE
+      - ETH_PRIVATE_KEY
+      - VALIDATOR
+      - DENOM
+      - CONTRACT_ADDR
       - RUST_BACKTRACE=1
 
   gravity2:
@@ -91,12 +91,12 @@ services:
       - ethereum
       - gravity2
     environment:
-      - COSMOS_KEY=${COSMOS_KEY}
-      - COSMOS_PHRASE=${COSMOS_PHRASE}
-      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
-      - VALIDATOR=${VALIDATOR}
-      - DENOM=${DENOM}
-      - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - COSMOS_KEY
+      - COSMOS_PHRASE
+      - ETH_PRIVATE_KEY
+      - VALIDATOR
+      - DENOM
+      - CONTRACT_ADDR
       - RUST_BACKTRACE=1
 
   gravity3:
@@ -117,10 +117,10 @@ services:
       - ethereum
       - gravity3
     environment:
-      - COSMOS_KEY=${COSMOS_KEY}
-      - COSMOS_PHRASE=${COSMOS_PHRASE}
-      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
-      - VALIDATOR=${VALIDATOR}
-      - DENOM=${DENOM}
-      - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - COSMOS_KEY
+      - COSMOS_PHRASE
+      - ETH_PRIVATE_KEY
+      - VALIDATOR
+      - DENOM
+      - CONTRACT_ADDR
       - RUST_BACKTRACE=1
