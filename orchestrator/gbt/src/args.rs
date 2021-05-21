@@ -36,7 +36,27 @@ pub enum SubCommand {
 /// the Gravity Bridge module. It contains an Ethereum Signer, Oracle, and optional relayer
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
-pub struct OrchestratorOpts {}
+pub struct OrchestratorOpts {
+    /// Cosmos phrase containing the tokens you would like to send
+    #[clap(short, long)]
+    pub cosmos_phrase: String,
+    /// An Ethereum private key containing ETH to pay for fees, this will also hold the relayers earnings
+    /// in the near future it will be possible to disable the Orchestrators integrated relayer
+    #[clap(short, long, parse(try_from_str))]
+    pub ethereum_key: EthPrivateKey,
+    /// (Optional) The Cosmos gRPC server that will be used
+    #[clap(short, long, default_value = "http://localhost:9090")]
+    pub cosmos_grpc: String,
+    /// (Optional) The Ethereum RPC server that will be used
+    #[clap(short, long, default_value = "http://localhost:8545")]
+    pub ethereum_rpc: String,
+    /// The Cosmos Denom in which to pay Cosmos chain fees
+    #[clap(short, long)]
+    pub fees: String,
+    /// The address fo the Gravity contract on Ethereum
+    #[clap(short, long, parse(try_from_str))]
+    pub gravity_contract_address: EthAddress,
+}
 
 /// The Gravity Bridge Relayer is an unpermissioned role that takes data from the Cosmos blockchain
 /// packages it into Ethereum transactions and is paid to submit these transactions to the Ethereum blockchain
@@ -77,7 +97,7 @@ pub enum ClientSubcommand {
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct CosmosToEthOpts {
-    /// Cosmos phrase
+    /// Cosmos phrase containing the tokens you would like to send
     #[clap(short, long)]
     pub cosmos_phrase: String,
     /// (Optional) The Cosmos gRPC server that will be used to submit the transaction

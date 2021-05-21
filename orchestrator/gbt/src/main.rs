@@ -3,6 +3,7 @@ extern crate log;
 
 use crate::{
     args::{ClientSubcommand, KeysSubcommand, SubCommand},
+    orchestrator::orchestrator,
     relayer::relayer,
 };
 use args::Opts;
@@ -16,6 +17,7 @@ use keys::set_orchestrator_address::set_orchestrator_address;
 mod args;
 mod client;
 mod keys;
+mod orchestrator;
 mod relayer;
 mod utils;
 
@@ -53,7 +55,9 @@ async fn main() {
                 set_orchestrator_address(set_orchestrator_address_opts, address_prefix).await
             }
         },
-        SubCommand::Orchestrator(orchestrator_opts) => {}
+        SubCommand::Orchestrator(orchestrator_opts) => {
+            orchestrator(orchestrator_opts, address_prefix).await
+        }
         SubCommand::Relayer(relayer_opts) => relayer(relayer_opts, address_prefix).await,
     }
 

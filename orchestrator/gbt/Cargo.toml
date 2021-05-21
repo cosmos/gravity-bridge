@@ -17,6 +17,7 @@ cosmos_gravity = {path = "../cosmos_gravity"}
 gravity_utils = {path = "../gravity_utils"}
 gravity_proto = {path = "../gravity_proto/"}
 relayer = {path = "../relayer/"}
+orchestrator = {path = "../orchestrator/"}
 
 deep_space = "2.2"
 serde_derive = "1.0"
