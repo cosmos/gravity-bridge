@@ -1970,7 +1970,7 @@ dependencies = [
 
 [[package]]
 name = "orchestrator"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "actix-rt 2.2.0",
  "clarity",
@@ -2422,7 +2422,7 @@ dependencies = [
 
 [[package]]
 name = "relayer"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "actix",
  "actix-rt 2.2.0",
