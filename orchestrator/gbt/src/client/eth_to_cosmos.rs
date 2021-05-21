@@ -7,7 +7,7 @@ use ethereum_gravity::send_to_cosmos::send_to_cosmos;
 use gravity_utils::connection_prep::{check_for_eth, create_rpc_connections};
 
 pub async fn eth_to_cosmos(args: EthToCosmosOpts, prefix: String) {
-    let erc20_address = args.erc20_contract_address;
+    let erc20_address = args.token_contract_address;
     let gravity_address = args.gravity_contract_address;
     let cosmos_dest = args.destination;
     let ethereum_key = args.ethereum_key;

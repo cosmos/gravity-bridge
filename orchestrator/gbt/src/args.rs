@@ -19,6 +19,7 @@ pub struct Opts {
     #[clap(short, long)]
     pub quiet: bool,
     /// Set the address prefix for the Cosmos chain
+    /// default is 'cosmos'
     #[clap(short, long)]
     pub address_prefix: Option<String>,
     #[clap(subcommand)]
@@ -37,7 +38,7 @@ pub enum SubCommand {
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct OrchestratorOpts {
-    /// Cosmos phrase containing the tokens you would like to send
+    /// Cosmos mnemonic phrase containing the tokens you would like to send
     #[clap(short, long)]
     pub cosmos_phrase: String,
     /// An Ethereum private key containing ETH to pay for fees, this will also hold the relayers earnings
@@ -45,10 +46,10 @@ pub struct OrchestratorOpts {
     #[clap(short, long, parse(try_from_str))]
     pub ethereum_key: EthPrivateKey,
     /// (Optional) The Cosmos gRPC server that will be used
-    #[clap(short, long, default_value = "http://localhost:9090")]
+    #[clap(long, default_value = "http://localhost:9090")]
     pub cosmos_grpc: String,
     /// (Optional) The Ethereum RPC server that will be used
-    #[clap(short, long, default_value = "http://localhost:8545")]
+    #[clap(long, default_value = "http://localhost:8545")]
     pub ethereum_rpc: String,
     /// The Cosmos Denom in which to pay Cosmos chain fees
     #[clap(short, long)]
@@ -71,7 +72,7 @@ pub struct RelayerOpts {
     #[clap(short, long, parse(try_from_str))]
     pub gravity_contract_address: EthAddress,
     /// (Optional) The Ethereum RPC server that will be used
-    #[clap(short, long, default_value = "http://localhost:8545")]
+    #[clap(long, default_value = "http://localhost:8545")]
     pub ethereum_rpc: String,
     /// (Optional) The Cosmos gRPC server that will be used to
     #[clap(short, long, default_value = "http://localhost:9090")]
@@ -97,15 +98,15 @@ pub enum ClientSubcommand {
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct CosmosToEthOpts {
-    /// Cosmos phrase containing the tokens you would like to send
+    /// Cosmos mnemonic phrase containing the tokens you would like to send
     #[clap(short, long)]
     pub cosmos_phrase: String,
     /// (Optional) The Cosmos gRPC server that will be used to submit the transaction
-    #[clap(short, long, default_value = "http://localhost:9090")]
+    #[clap(long, default_value = "http://localhost:9090")]
     pub cosmos_grpc: String,
     /// The Denom from the Cosmos chain to bridge
     #[clap(short, long)]
-    pub cosmos_denom: String,
+    pub denom: String,
     /// The amount of tokens you are sending eg. 1.2 ATOM
     #[clap(short, long, parse(try_from_str))]
     pub amount: f64,
@@ -123,17 +124,17 @@ pub struct CosmosToEthOpts {
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct EthToCosmosOpts {
     /// The Ethereum private key to register, will be generated if not provided
-    #[clap(short, long, parse(try_from_str))]
+    #[clap(long, parse(try_from_str))]
     pub ethereum_key: EthPrivateKey,
     /// (Optional) The Ethereum RPC server that will be used to submit the transaction
-    #[clap(short, long, default_value = "http://localhost:8545")]
+    #[clap(long, default_value = "http://localhost:8545")]
     pub ethereum_rpc: String,
     /// The address fo the Gravity contract on Ethereum
     #[clap(short, long, parse(try_from_str))]
     pub gravity_contract_address: EthAddress,
     /// The ERC20 contract address of the ERC20 you are sending
     #[clap(short, long, parse(try_from_str))]
-    pub erc20_contract_address: EthAddress,
+    pub token_contract_address: EthAddress,
     /// The amount of tokens you are sending eg. 1.2 ATOM
     #[clap(short, long, parse(try_from_str))]
     pub amount: f64,
@@ -148,10 +149,10 @@ pub struct EthToCosmosOpts {
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct DeployErc20RepresentationOpts {
     /// (Optional) The Cosmos gRPC server that will be used to submit the transaction
-    #[clap(short, long, default_value = "http://localhost:9090")]
+    #[clap(long, default_value = "http://localhost:9090")]
     pub cosmos_grpc: String,
     /// (Optional) The Ethereum RPC server that will be used to submit the transaction
-    #[clap(short, long, default_value = "http://localhost:8545")]
+    #[clap(long, default_value = "http://localhost:8545")]
     pub ethereum_rpc: String,
     /// The Cosmos Denom you wish to create an ERC20 representation for
     #[clap(short, long)]
@@ -163,13 +164,13 @@ pub struct DeployErc20RepresentationOpts {
     #[clap(short, long, parse(try_from_str))]
     pub gravity_contract_address: EthAddress,
     /// The name value for the ERC20 contract, must mach Cosmos denom metadata in order to be adopted
-    #[clap(short, long)]
+    #[clap(long)]
     pub erc20_name: String,
     /// The symbol value for the ERC20 contract, must mach Cosmos denom metadata in order to be adopted
-    #[clap(short, long)]
+    #[clap(long)]
     pub erc20_symbol: String,
     /// The decimals value for the ERC20 contract, must mach Cosmos denom metadata in order to be adopted
-    #[clap(short, long)]
+    #[clap(long)]
     pub erc20_decimals: u8,
 }
 
@@ -202,7 +203,7 @@ pub struct SetOrchestratorAddressOpts {
     #[clap(short, long, parse(try_from_str))]
     pub cosmos_phrase: Option<String>,
     /// (Optional) The Cosmos gRPC server that will be used to submit the transaction
-    #[clap(short, long, default_value = "http://localhost:9090")]
+    #[clap(long, default_value = "http://localhost:9090")]
     pub cosmos_grpc: String,
     /// The Cosmos Denom in which to pay Cosmos chain fees
     #[clap(short, long)]

@@ -10,7 +10,7 @@ use std::process::exit;
 pub async fn cosmos_to_eth(args: CosmosToEthOpts, address_prefix: String) {
     let amount = args.amount;
     let cosmos_phrase = args.cosmos_phrase;
-    let gravity_denom = args.cosmos_denom;
+    let gravity_denom = args.denom;
     let cosmos_grpc = args.cosmos_grpc;
     let eth_dest = args.eth_destination;
     let no_batch = args.no_batch;
