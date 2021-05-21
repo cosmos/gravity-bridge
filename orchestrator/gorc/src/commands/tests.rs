@@ -2,7 +2,6 @@
 
 use abscissa_core::{Command, Options, Runnable};
 
-
 #[derive(Command, Debug, Options)]
 pub enum TestsCmd {
     #[options(help = "runner")]

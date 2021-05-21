@@ -31,26 +31,26 @@ use once_cell::sync::Lazy;
 pub static RUNNER: Lazy<CmdRunner> = Lazy::new(|| CmdRunner::default());
 
 /// Use `GorcConfig::default()` value if no config or args
-#[test]
-fn start_no_args() {
-    let mut runner = RUNNER.clone();
-    let mut cmd = runner.arg("start").capture_stdout().run();
-    cmd.stdout().expect_line("Hello, world!");
-    cmd.wait().unwrap().expect_success();
-}
+// #[test]
+// fn start_no_args() {
+//     let mut runner = RUNNER.clone();
+//     let mut cmd = runner.arg("start").capture_stdout().run();
+//     cmd.stdout().expect_line("Hello, world!");
+//     cmd.wait().unwrap().expect_success();
+// }
 
-/// Use command-line argument value
-#[test]
-fn start_with_args() {
-    let mut runner = RUNNER.clone();
-    let mut cmd = runner
-        .args(&["start", "acceptance", "test"])
-        .capture_stdout()
-        .run();
+// /// Use command-line argument value
+// #[test]
+// fn start_with_args() {
+    // let mut runner = RUNNER.clone();
+    // let mut cmd = runner
+    //     .args(&["start", "acceptance", "test"])
+    //     .capture_stdout()
+    //     .run();
 
-    cmd.stdout().expect_line("Hello, acceptance test!");
-    cmd.wait().unwrap().expect_success();
-}
+    // cmd.stdout().expect_line("Hello, acceptance test!");
+    // cmd.wait().unwrap().expect_success();
+// }
 
 /// Use configured value
 // #[test]
