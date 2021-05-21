@@ -1,8 +1,8 @@
+use crate::message_signatures::encode_tx_batch_confirm_hashed;
 use crate::utils::{encode_valset_struct, get_tx_batch_nonce, GasCost};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use gravity_utils::error::GravityError;
-use gravity_utils::message_signatures::encode_tx_batch_confirm_hashed;
 use gravity_utils::types::*;
 use std::{cmp::min, time::Duration};
 use web30::{

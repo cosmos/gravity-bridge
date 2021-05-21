@@ -3,16 +3,13 @@
 
 #[cfg(test)]
 mod tests {
-    use std::fs::read_to_string;
-
+    use crate::message_signatures::encode_valset_confirm;
     use crate::valset_update::encode_valset_update_payload;
     use clarity::utils::bytes_to_hex_str;
     use clarity::utils::hex_str_to_bytes;
     use clarity::PrivateKey;
-    use gravity_utils::{
-        message_signatures::encode_valset_confirm,
-        types::{Valset, ValsetConfirmResponse, ValsetMember},
-    };
+    use gravity_utils::types::{Valset, ValsetConfirmResponse, ValsetMember};
+    use std::fs::read_to_string;
 
     /// This test compares the encoding of a full hub validator set 125 member batch from ethersjs
     /// with our own encoding, this should location any encoding issues effectively. Note that this

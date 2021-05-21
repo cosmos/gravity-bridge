@@ -1,14 +1,15 @@
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{address::Address as EthAddress, utils::bytes_to_hex_str};
 use cosmos_gravity::query::{get_latest_logic_calls, get_logic_call_signatures};
+use ethereum_gravity::message_signatures::encode_logic_call_confirm_hashed;
 use ethereum_gravity::one_eth;
 use ethereum_gravity::{
     logic_call::send_eth_logic_call,
     utils::{downcast_to_u128, get_logic_call_nonce},
 };
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::types::LogicCall;
 use gravity_utils::types::{LogicCallConfirmResponse, Valset};
-use gravity_utils::{message_signatures::encode_logic_call_confirm_hashed, types::LogicCall};
 use std::time::Duration;
 use tonic::transport::Channel;
 use web30::client::Web3;

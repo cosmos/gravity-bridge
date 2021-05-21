@@ -1052,11 +1052,13 @@ dependencies = [
 name = "ethereum_gravity"
 version = "0.1.0"
 dependencies = [
+ "actix",
  "clarity",
  "deep_space 2.2.1",
  "gravity_utils",
  "log",
  "num256",
+ "rand 0.8.3",
  "sha3",
  "web30",
 ]

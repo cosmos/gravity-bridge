@@ -1,8 +1,9 @@
+use crate::message_signatures::encode_logic_call_confirm_hashed;
 use crate::utils::{encode_valset_struct, get_logic_call_nonce, GasCost};
 use clarity::{abi::Token, utils::bytes_to_hex_str, PrivateKey as EthPrivateKey};
 use clarity::{Address as EthAddress, Uint256};
+use gravity_utils::error::GravityError;
 use gravity_utils::types::*;
-use gravity_utils::{error::GravityError, message_signatures::encode_logic_call_confirm_hashed};
 use std::{cmp::min, time::Duration};
 use web30::{client::Web3, types::TransactionRequest};
 

@@ -7,6 +7,9 @@ use deep_space::Contact;
 use deep_space::Fee;
 use deep_space::Msg;
 use deep_space::{coin::Coin, utils::bytes_to_hex_str};
+use ethereum_gravity::message_signatures::{
+    encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
+};
 use ethereum_gravity::utils::downcast_uint256;
 use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::service_client::ServiceClient as TxServiceClient;
@@ -23,9 +26,6 @@ use gravity_proto::gravity::MsgSendToEth;
 use gravity_proto::gravity::MsgSetOrchestratorAddress;
 use gravity_proto::gravity::MsgValsetConfirm;
 use gravity_proto::gravity::MsgValsetUpdatedClaim;
-use gravity_utils::message_signatures::{
-    encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
-};
 use gravity_utils::types::*;
 use std::{collections::HashMap, time::Duration};
 
