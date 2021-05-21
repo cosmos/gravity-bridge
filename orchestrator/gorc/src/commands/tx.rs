@@ -17,9 +17,6 @@ use abscissa_core::{Command, Options, Runnable};
 pub enum TxCmd {
     Cosmos(cosmos::Cosmos),
     Eth(eth::Eth),
-
-
-
 }
 
 impl Runnable for TxCmd {

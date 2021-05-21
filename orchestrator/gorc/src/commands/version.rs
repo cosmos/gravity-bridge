@@ -12,10 +12,6 @@ pub struct VersionCmd {}
 impl Runnable for VersionCmd {
     /// Print version message
     fn run(&self) {
-        println!(
-            "{} {}",
-            GorcCmd::name(),
-            GorcCmd::version()
-        );
+        println!("{} {}", GorcCmd::name(), GorcCmd::version());
     }
 }
