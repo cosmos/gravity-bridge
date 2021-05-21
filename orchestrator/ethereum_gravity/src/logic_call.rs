@@ -243,7 +243,7 @@ mod tests {
             )
             .unwrap(),
             timeout: 4766922941000,
-            invalidation_scope: invalidation_scope.clone(),
+            invalidation_id: invalidation_scope.clone(),
             invalidation_nonce,
         };
 
