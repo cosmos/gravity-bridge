@@ -614,12 +614,6 @@ checksum = "d0d27fb6b6f1e43147af148af49d49329413ba781aa0d5e10979831c210173b5"
 
 [[package]]
 name = "bech32"
-version = "0.7.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2dabbe35f96fb9507f7330793dc490461b2962659ac5d427181e451a623751d1"
-
-[[package]]
-name = "bech32"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c7f7096bc256f5e5cb960f60dfc4f4ef979ca65abe7fb9d5a4f77150d3783d4"
@@ -773,7 +767,7 @@ dependencies = [
  "num-bigint 0.4.0",
  "num-traits",
  "num256",
- "secp256k1 0.20.2",
+ "secp256k1",
  "serde",
  "serde-rlp",
  "serde_bytes",
@@ -786,22 +780,6 @@ name = "const_fn"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f92cfa0fd5690b3cf8c1ef2cabbd9b7ef22fa53cf5e1f92b05103f6d5d1cf6e7"
-
-[[package]]
-name = "contact"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46eb2b658f7d46ac4a9737d8d69f4784796aea04b7388935d3eddd4470b883f4"
-dependencies = [
- "actix-web",
- "deep_space 0.2.5",
- "log",
- "num256",
- "serde",
- "serde_derive",
- "serde_json",
- "tokio 0.2.25",
-]
 
 [[package]]
 name = "convert_case"
@@ -844,7 +822,7 @@ version = "0.1.0"
 dependencies = [
  "actix",
  "clarity",
- "deep_space 2.2.1",
+ "deep_space",
  "env_logger",
  "ethereum_gravity",
  "gravity_proto",
@@ -900,16 +878,6 @@ dependencies = [
 
 [[package]]
 name = "crypto-mac"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4857fd85a0c34b3c3297875b747c1e02e06b6a0ea32dd892d8192b9ce0813ea6"
-dependencies = [
- "generic-array",
- "subtle",
-]
-
-[[package]]
-name = "crypto-mac"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25fab6889090c8133f3deb8f73ba3c65a7f456f66436fc012a1b1e272b1e103e"
@@ -920,49 +888,26 @@ dependencies = [
 
 [[package]]
 name = "deep_space"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afd044e670beb23ce6a2007d139ed3787b99c85b5ff3982b8fdfda66c3682e53"
-dependencies = [
- "base64",
- "bech32 0.7.3",
- "hmac 0.10.1",
- "num-bigint 0.3.2",
- "num-traits",
- "num256",
- "pbkdf2 0.6.0",
- "rand 0.7.3",
- "ripemd160",
- "secp256k1 0.19.0",
- "serde",
- "serde_derive",
- "serde_json",
- "sha2",
- "unicode-normalization",
-]
-
-[[package]]
-name = "deep_space"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca139f9d89cb6caa12edc74c512288e0cd3c6ffcff6ad4f4cb220c07e2cad151"
 dependencies = [
  "base64",
- "bech32 0.8.0",
+ "bech32",
  "bytes 1.0.1",
  "cosmos-sdk-proto",
- "hmac 0.11.0",
+ "hmac",
  "log",
  "num-bigint 0.4.0",
  "num-traits",
  "num256",
- "pbkdf2 0.8.0",
+ "pbkdf2",
  "prost",
  "prost-types",
  "rand 0.8.3",
  "ripemd160",
  "rust_decimal",
- "secp256k1 0.20.2",
+ "secp256k1",
  "serde",
  "serde_derive",
  "serde_json",
@@ -1068,7 +1013,7 @@ version = "0.1.0"
 dependencies = [
  "actix",
  "clarity",
- "deep_space 2.2.1",
+ "deep_space",
  "gravity_utils",
  "log",
  "num256",
@@ -1259,7 +1204,7 @@ dependencies = [
  "clap",
  "clarity",
  "cosmos_gravity",
- "deep_space 2.2.1",
+ "deep_space",
  "env_logger",
  "ethereum_gravity",
  "gravity_proto",
@@ -1267,6 +1212,7 @@ dependencies = [
  "lazy_static",
  "log",
  "openssl-probe",
+ "rand 0.8.3",
  "serde",
  "serde_derive",
  "tokio 1.6.0",
@@ -1328,7 +1274,7 @@ version = "0.1.0"
 dependencies = [
  "actix",
  "clarity",
- "deep_space 2.2.1",
+ "deep_space",
  "gravity_proto",
  "log",
  "num-bigint 0.4.0",
@@ -1408,21 +1354,11 @@ dependencies = [
 
 [[package]]
 name = "hmac"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1441c6b1e930e2817404b5046f1f989899143a12bf92de603b69f4e0aee1e15"
-dependencies = [
- "crypto-mac 0.10.0",
- "digest",
-]
-
-[[package]]
-name = "hmac"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a2a2320eb7ec0ebe8da8f744d7812d9fc4cb4d09344ac01898dbcb6a20ae69b"
 dependencies = [
- "crypto-mac 0.11.0",
+ "crypto-mac",
  "digest",
 ]
 
@@ -1817,17 +1753,6 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d0a3d5e207573f948a9e5376662aa743a2ea13f7c50a554d7af443a73fbfeba"
-dependencies = [
- "autocfg",
- "num-integer",
- "num-traits",
-]
-
-[[package]]
-name = "num-bigint"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e0d047c1062aa51e256408c560894e5251f08925980e53cf1aa5bd00eec6512"
@@ -2014,7 +1939,7 @@ dependencies = [
  "actix-rt 2.2.0",
  "clarity",
  "cosmos_gravity",
- "deep_space 2.2.1",
+ "deep_space",
  "docopt",
  "env_logger",
  "ethereum_gravity",
@@ -2086,28 +2011,13 @@ checksum = "acbf547ad0c65e31259204bd90935776d1c693cec2f4ff7abb7a1bbbd40dfe58"
 
 [[package]]
 name = "pbkdf2"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3b8c0d71734018084da0c0354193a5edfb81b20d2d57a92c5b154aefc554a4a"
-dependencies = [
- "base64",
- "crypto-mac 0.10.0",
- "hmac 0.10.1",
- "rand 0.7.3",
- "rand_core 0.5.1",
- "sha2",
- "subtle",
-]
-
-[[package]]
-name = "pbkdf2"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d95f5254224e617595d2cc3cc73ff0a5eaf2637519e25f03388154e9378b6ffa"
 dependencies = [
  "base64ct",
- "crypto-mac 0.11.0",
- "hmac 0.11.0",
+ "crypto-mac",
+ "hmac",
  "password-hash",
  "sha2",
 ]
@@ -2467,29 +2377,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 
 [[package]]
-name = "register_delegate_keys"
-version = "0.4.2"
-dependencies = [
- "actix-rt 2.2.0",
- "clarity",
- "contact",
- "cosmos_gravity",
- "deep_space 2.2.1",
- "docopt",
- "env_logger",
- "ethereum_gravity",
- "gravity_proto",
- "gravity_utils",
- "lazy_static",
- "openssl-probe",
- "rand 0.8.3",
- "relayer",
- "serde",
- "serde_derive",
- "web30",
-]
-
-[[package]]
 name = "relayer"
 version = "0.4.3"
 dependencies = [
@@ -2497,7 +2384,7 @@ dependencies = [
  "actix-rt 2.2.0",
  "clarity",
  "cosmos_gravity",
- "deep_space 2.2.1",
+ "deep_space",
  "docopt",
  "env_logger",
  "ethereum_gravity",
@@ -2593,29 +2480,11 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "secp256k1"
-version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6179428c22c73ac0fbb7b5579a56353ce78ba29759b3b8575183336ea74cdfb"
-dependencies = [
- "secp256k1-sys 0.3.0",
-]
-
-[[package]]
-name = "secp256k1"
 version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee5070fdc6f26ca5be6dcfc3d07c76fdb974a63a8b246b459854274145f5a258"
 dependencies = [
- "secp256k1-sys 0.4.0",
-]
-
-[[package]]
-name = "secp256k1-sys"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11553d210db090930f4432bea123b31f70bbf693ace14504ea2a35e796c28dd2"
-dependencies = [
- "cc",
+ "secp256k1-sys",
 ]
 
 [[package]]
@@ -2943,7 +2812,7 @@ dependencies = [
  "actix-web",
  "clarity",
  "cosmos_gravity",
- "deep_space 2.2.1",
+ "deep_space",
  "docopt",
  "env_logger",
  "ethereum_gravity",

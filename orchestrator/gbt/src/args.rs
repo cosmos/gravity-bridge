@@ -145,12 +145,12 @@ pub struct DeployErc20RepresentationOpts {
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct KeyOpts {
     #[clap(subcommand)]
-    subcmd: KeysSubcommand,
+    pub subcmd: KeysSubcommand,
 }
 
 #[derive(Clap)]
 pub enum KeysSubcommand {
-    SetOrchestratorAddress(SetOrchestratorAddress),
+    SetOrchestratorAddress(SetOrchestratorAddressOpts),
 }
 
 /// Register delegate keys for the Gravity Orchestrator.
@@ -158,23 +158,20 @@ pub enum KeysSubcommand {
 /// If you would like sign using a ledger see `cosmos tx gravity set-orchestrator-address` instead
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
-pub struct SetOrchestratorAddress {
+pub struct SetOrchestratorAddressOpts {
     /// The Cosmos private key of the validator
     #[clap(short, long, parse(try_from_str))]
-    validator_phrase: CosmosPrivateKey,
+    pub validator_phrase: String,
     /// (Optional) The Ethereum private key to register, will be generated if not provided
     #[clap(short, long, parse(try_from_str))]
-    ethereum_key: Option<EthPrivateKey>,
+    pub ethereum_key: Option<EthPrivateKey>,
     /// (Optional) The phrase for the Cosmos key to register, will be generated if not provided.
     #[clap(short, long, parse(try_from_str))]
-    cosmos_phrase: Option<CosmosPrivateKey>,
-    ///The prefix for Addresses on this chain (eg 'cosmos')
-    #[clap(short, long)]
-    address_prefix: String,
-    /// (Optional) The Cosmos RPC url, usually the validator. Default is localhost:9090
-    #[clap(short, long)]
-    cosmos_grpc: Option<String>,
+    pub cosmos_phrase: Option<String>,
+    /// (Optional) The Cosmos gRPC server that will be used to submit the transaction
+    #[clap(short, long, default_value = "http://localhost:9090")]
+    pub cosmos_grpc: String,
     /// The Cosmos Denom in which to pay Cosmos chain fees
     #[clap(short, long)]
-    fees: String,
+    pub fees: String,
 }
