@@ -228,6 +228,11 @@ sleep 10
 echo "Applying contracts"
 docker-compose build contract_deployer
 contractAddress=$(docker-compose up contract_deployer | grep "Gravity deployed at Address" | grep -Eow '0x[0-9a-fA-F]{40}')
+if [[ ! $contractAddress ]]
+then
+  echo "contract failed to deploy."
+  exit 1
+fi
 echo "Contract address: $contractAddress"
 
 echo "Gathering keys for orchestrators"
@@ -288,7 +293,7 @@ docker-compose --env-file $n3dir/orchestrator.env up --no-start orchestrator3
 docker-compose --env-file $n3dir/orchestrator.env start orchestrator3
 
 echo "Run tests"
-docker-compose build test-runner
-docker-compose run test-runner
+docker-compose build test_runner
+docker-compose run test_runner
 
 echo "Done."
