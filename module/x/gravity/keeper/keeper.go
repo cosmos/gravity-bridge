@@ -3,10 +3,11 @@ package keeper
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"math"
 	"sort"
 	"strconv"
+
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 
@@ -236,7 +237,7 @@ func (k Keeper) CurrentSignerSet(ctx sdk.Context) types.EthereumSigners {
 		totalPower += p
 
 		ethereumSigners[i] = &types.EthereumSigner{Power: p}
-		if ethAddr := k.GetValidatorEthereumAddress(ctx, val); ethAddr.Hex() == "0x0000000000000000000000000000000000000000" {
+		if ethAddr := k.GetValidatorEthereumAddress(ctx, val); ethAddr.Hex() != "0x0000000000000000000000000000000000000000" {
 			ethereumSigners[i].EthereumAddress = ethAddr.Hex()
 		}
 	}

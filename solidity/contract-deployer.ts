@@ -236,7 +236,7 @@ async function deploy() {
   const latestValset = await getLatestValset();
 
   let eth_addresses = [];
-  let powers = [];
+  let powers: number[] = [];
   let powers_sum = 0;
   // this MUST be sorted uniformly across all components of Gravity in this
   // case we perform the sorting in module/x/gravity/keeper/types.go to the
@@ -244,11 +244,11 @@ async function deploy() {
   // having strange problems with updating the validator set you should go
   // look there.
   for (let i = 0; i < latestValset.signers.length; i++) {
-    if (latestValset.signers[i].ethereumAddress == null) {
+    if (latestValset.signers[i].ethereumAddress == "") {
       continue;
     }
     eth_addresses.push(latestValset.signers[i].ethereumAddress);
-    powers.push(latestValset.signers[i].power);
+    powers.push(latestValset.signers[i].power.toNumber());
     powers_sum += latestValset.signers[i].power.toNumber();
   }
 
@@ -299,7 +299,7 @@ async function getLatestValset(): Promise<SignerSetTx> {
 
 async function getGravityId(): Promise<string> {
   let queryService = await getQueryService();
-  const res = await queryService.Params({})
+  const res = await queryService.Params({});
   if (!res.params) {
     console.log("Could not retrieve params");
     exit(1);
