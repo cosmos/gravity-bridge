@@ -10,7 +10,12 @@ import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { exit } from "process";
 import { start } from "node:repl";
 import { SSL_OP_EPHEMERAL_RSA } from "node:constants";
-import { QueryClientImpl } from "./gen/gravity/v1/query";
+
+import { createProtobufRpcClient, QueryClient } from "@cosmjs/stargate";
+import { Tendermint34Client } from "@cosmjs/tendermint-rpc";
+import { Query, QueryClientImpl } from "./gen/gravity/v1/query";
+import { SignerSetTx } from "./gen/gravity/v1/gravity";
+import Long from "long";
 
 const args = commandLineArgs([
   // the ethernum node used to deploy the contract
@@ -89,6 +94,14 @@ type NodeStatus = {
   sync_info: SyncInfo;
   validator_info: JSON;
 };
+
+async function getQueryService(): Promise<Query> {
+  const cosmosNode = args["cosmos-node"];
+  const tendermintClient = await Tendermint34Client.connect(cosmosNode);
+  const queryClient = new QueryClient(tendermintClient);
+  const rpcClient = createProtobufRpcClient(queryClient);
+  return new QueryClientImpl(rpcClient);
+}
 
 async function deploy() {
   var startTime = new Date();
@@ -230,13 +243,13 @@ async function deploy() {
   // output of the endpoint should always be sorted correctly. If you're
   // having strange problems with updating the validator set you should go
   // look there.
-  for (let i = 0; i < latestValset.members.length; i++) {
-    if (latestValset.members[i].ethereum_address == null) {
+  for (let i = 0; i < latestValset.signers.length; i++) {
+    if (latestValset.signers[i].ethereumAddress == null) {
       continue;
     }
-    eth_addresses.push(latestValset.members[i].ethereum_address);
-    powers.push(latestValset.members[i].power);
-    powers_sum += latestValset.members[i].power;
+    eth_addresses.push(latestValset.signers[i].ethereumAddress);
+    powers.push(latestValset.signers[i].power);
+    powers_sum += latestValset.signers[i].power.toNumber();
   }
 
   // 66% of uint32_max
@@ -273,32 +286,18 @@ function getContractArtifacts(path: string): { bytecode: string; abi: string } {
 const decode = (str: string): string =>
   Buffer.from(str, "base64").toString("binary");
 
-async function getLatestValset(): Promise<Valset> {
-  let block_height_request_string = args["cosmos-node"] + "/status";
-  let block_height_response = await axios.get(block_height_request_string);
-  let info: StatusWrapper = await block_height_response.data;
-  let block_height = info.result.sync_info.latest_block_height;
-  if (info.result.sync_info.catching_up) {
-    console.log(
-      "This node is still syncing! You can not deploy using this validator set!"
-    );
+async function getLatestValset(): Promise<SignerSetTx> {
+  let queryService = await getQueryService();
+
+  const req = { nonce: Long.fromInt(0) };
+  const res = await queryService.SignerSetTx(req);
+  if (!res.signerSet) {
+    console.log("Could not retrieve signer set");
     exit(1);
   }
-  let request_string = args["cosmos-node"] + "/abci_query";
-  let response = await axios.get(request_string, {
-    params: {
-      path: '"/custom/gravity/currentValset/"',
-      height: block_height,
-      prove: "false",
-    },
-  });
-  let valsets: ABCIWrapper = await response.data;
-  console.log(decode(valsets.result.response.value));
-  let valset: ValsetTypeWrapper = JSON.parse(
-    decode(valsets.result.response.value)
-  );
-  return valset.value;
+  return res.signerSet;
 }
+
 async function getGravityId(): Promise<string> {
   let block_height_request_string = args["cosmos-node"] + "/status";
   let block_height_response = await axios.get(block_height_request_string);
