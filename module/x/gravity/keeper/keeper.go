@@ -309,7 +309,7 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 }
 
 // getDelegateKeys iterates both the EthAddress and Orchestrator address indexes to produce
-// a vector of MsgSetOrchestratorAddress entires containing all the delgate keys for state
+// a vector of MsgSetDelegateKeys entries containing all the delgate keys for state
 // export / import. This may seem at first glance to be excessively complicated, why not combine
 // the EthAddress and Orchestrator address indexes and simply iterate one thing? The answer is that
 // even though we set the Eth and Orchestrator address in the same place we use them differently we

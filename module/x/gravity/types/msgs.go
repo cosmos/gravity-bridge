@@ -22,7 +22,7 @@ var (
 	_ cdctypes.UnpackInterfacesMessage = &EthereumEventVoteRecord{}
 )
 
-// NewMsgDelegateKeys returns a new msgSetOrchestratorAddress
+// NewMsgDelegateKeys returns a new MsgDelegateKeys
 func NewMsgDelegateKeys(val sdk.ValAddress, orch sdk.AccAddress, eth string) *MsgDelegateKeys {
 	return &MsgDelegateKeys{
 		ValidatorAddress:    val.String(),
