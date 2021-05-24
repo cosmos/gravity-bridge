@@ -288,7 +288,6 @@ const decode = (str: string): string =>
 
 async function getLatestValset(): Promise<SignerSetTx> {
   let queryService = await getQueryService();
-
   const req = { nonce: Long.fromInt(0) };
   const res = await queryService.SignerSetTx(req);
   if (!res.signerSet) {
@@ -299,29 +298,13 @@ async function getLatestValset(): Promise<SignerSetTx> {
 }
 
 async function getGravityId(): Promise<string> {
-  let block_height_request_string = args["cosmos-node"] + "/status";
-  let block_height_response = await axios.get(block_height_request_string);
-  let info: StatusWrapper = await block_height_response.data;
-  let block_height = info.result.sync_info.latest_block_height;
-  if (info.result.sync_info.catching_up) {
-    console.log(
-      "This node is still syncing! You can not deploy using this gravityID!"
-    );
+  let queryService = await getQueryService();
+  const res = await queryService.Params({})
+  if (!res.params) {
+    console.log("Could not retrieve params");
     exit(1);
   }
-  let request_string = args["cosmos-node"] + "/abci_query";
-  let response = await axios.get(request_string, {
-    params: {
-      path: '"/custom/gravity/gravityID/"',
-      height: block_height,
-      prove: "false",
-    },
-  });
-  let gravityIDABCIResponse: ABCIWrapper = await response.data;
-  let gravityID: string = JSON.parse(
-    decode(gravityIDABCIResponse.result.response.value)
-  );
-  return gravityID;
+  return res.params.gravityId;
 }
 
 async function submitGravityAddress(address: string) {}
