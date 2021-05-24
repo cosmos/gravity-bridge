@@ -50,8 +50,17 @@ fn get_default_config() -> String {
 
 /// Load the config file, this operates at runtime
 pub fn load_config(home_dir: PathBuf) -> GravityBridgeToolsConfig {
-    let config = fs::read_to_string(home_dir.with_file_name(CONFIG_NAME))
-        .expect("Could not find config file! Run `gbt init`");
+    let config_file = home_dir.with_file_name(CONFIG_NAME);
+    if !config_file.exists() {
+        info!(
+            "Config file at {} not detected, using defaults, use `gbt init` to generate a config.",
+            config_file.to_str().unwrap()
+        );
+        return GravityBridgeToolsConfig::default();
+    }
+
+    let config =
+        fs::read_to_string(config_file).expect("Could not find config file! Run `gbt init`");
     match toml::from_str(&config) {
         Ok(v) => v,
         Err(e) => {
