@@ -24,7 +24,7 @@ home_dir="$CHAINDIR/$CHAINID"
 # stop processes
 export DOCKER_SCAN_SUGGEST=false
 docker-compose down
-rm -r $CHAINDIR
+rm -rf $CHAINDIR
 
 n0name="gravity0"
 n1name="gravity1"
