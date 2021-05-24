@@ -1,11 +1,14 @@
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate serde_derive;
 
+use crate::config::init_config;
 use crate::{
     args::{ClientSubcommand, KeysSubcommand, SubCommand},
-    orchestrator::orchestrator,
-    relayer::relayer,
+    config::load_config,
 };
+use crate::{orchestrator::orchestrator, relayer::relayer};
 use args::Opts;
 use clap::Clap;
 use client::cosmos_to_eth::cosmos_to_eth;
@@ -13,9 +16,11 @@ use client::deploy_erc20_representation::deploy_erc20_representation;
 use client::eth_to_cosmos::eth_to_cosmos;
 use env_logger::Env;
 use keys::set_orchestrator_address::set_orchestrator_address;
+use std::{path::PathBuf, process::exit};
 
 mod args;
 mod client;
+mod config;
 mod keys;
 mod orchestrator;
 mod relayer;
@@ -31,11 +36,16 @@ async fn main() {
     let opts: Opts = Opts::parse();
 
     // handle global config here
-    let address_prefix = if let Some(p) = opts.address_prefix {
-        p
-    } else {
-        deep_space::Address::DEFAULT_PREFIX.to_string()
+    let address_prefix = opts.address_prefix;
+    let home_dir: PathBuf = match (dirs::home_dir(), opts.home) {
+        (_, Some(user_home)) => PathBuf::from(&user_home),
+        (Some(default_home_dir), None) => default_home_dir,
+        (None, None) => {
+            error!("Failed to automatically determine your home directory, please provide a path to the --home argument!");
+            exit(1);
+        }
     };
+    let _config = load_config(home_dir.clone());
 
     // control flow for the command structure
     match opts.subcmd {
@@ -59,6 +69,7 @@ async fn main() {
             orchestrator(orchestrator_opts, address_prefix).await
         }
         SubCommand::Relayer(relayer_opts) => relayer(relayer_opts, address_prefix).await,
+        SubCommand::Init(init_opts) => init_config(init_opts, home_dir),
     }
 
     // this may be unreachable

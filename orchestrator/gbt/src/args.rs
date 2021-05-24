@@ -1,6 +1,8 @@
 //! Command line argument definitions for Gravity bridge tools
 //! See the clap documentation for how exactly this works, note that doc comments are displayed to the user
 
+use std::path::PathBuf;
+
 use clap::AppSettings;
 use clap::Clap;
 use clarity::Address as EthAddress;
@@ -18,10 +20,14 @@ pub struct Opts {
     /// Decrease the logging verbosity
     #[clap(short, long)]
     pub quiet: bool,
+    /// The home directory for Gravity Bridge Tools, by default
+    /// $HOME/.althea_gbt/
+    #[clap(short, long, parse(from_str))]
+    pub home: Option<PathBuf>,
     /// Set the address prefix for the Cosmos chain
     /// default is 'cosmos'
-    #[clap(short, long)]
-    pub address_prefix: Option<String>,
+    #[clap(short, long, default_value = "cosmos")]
+    pub address_prefix: String,
     #[clap(subcommand)]
     pub subcmd: SubCommand,
 }
@@ -32,7 +38,9 @@ pub enum SubCommand {
     Relayer(RelayerOpts),
     Client(ClientOpts),
     Keys(KeyOpts),
+    Init(InitOpts),
 }
+
 /// The Gravity Bridge orchestrator is required for all validators of the Cosmos chain running
 /// the Gravity Bridge module. It contains an Ethereum Signer, Oracle, and optional relayer
 #[derive(Clap)]
@@ -209,3 +217,8 @@ pub struct SetOrchestratorAddressOpts {
     #[clap(short, long)]
     pub fees: String,
 }
+
+/// Initialize configuration
+#[derive(Clap)]
+#[clap(setting = AppSettings::ColoredHelp)]
+pub struct InitOpts {}
