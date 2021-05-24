@@ -66,11 +66,13 @@ func TestCurrentValsetNormalization(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			operators := make([]MockStakingValidatorData, len(spec.srcPowers))
 			for i, v := range spec.srcPowers {
+				cAddr := bytes.Repeat([]byte{byte(i)}, sdk.AddrLen)
 				operators[i] = MockStakingValidatorData{
 					// any unique addr
-					Operator: bytes.Repeat([]byte{byte(i)}, sdk.AddrLen),
+					Operator: cAddr,
 					Power:    int64(v),
 				}
+				input.GravityKeeper.SetEthAddressForValidator(ctx, cAddr, "0xf71402f886b45c134743F4c00750823Bbf5Fd045")
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
 			r := input.GravityKeeper.GetCurrentValset(ctx)

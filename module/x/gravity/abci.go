@@ -28,11 +28,13 @@ func createValsets(ctx sdk.Context, k keeper.Keeper) {
 	//      This will make sure the unbonding validator has to provide an attestation to a new Valset
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
 	// 3. If power change between validators of CurrentValset and latest valset request is > 5%
+
+	// get the last valsets to compare against
 	latestValset := k.GetLatestValset(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
 	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
-		// Store valset
+		// if the conditions are true, put in a new validator set request to be signed and submitted to Ethereum
 		k.SetValsetRequest(ctx)
 	}
 }

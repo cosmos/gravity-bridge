@@ -61,12 +61,16 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 /////////////////////////////
 
 // SetValsetRequest returns a new instance of the Gravity BridgeValidatorSet
+// by taking a snapshot of the current set
 // i.e. {"nonce": 1, "memebers": [{"eth_addr": "foo", "power": 11223}]}
 func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	valset := k.GetCurrentValset(ctx)
 	k.StoreValset(ctx, valset)
 
-	// Store the checkpoint as a legit past valset
+	// Store the checkpoint as a legit past valset, this is only for evidence
+	// based slashing. We are storing the checkpoint that will be signed with
+	// the validators Etheruem keys so that we know not to slash them if someone
+	// attempts to submit the signature of this validator set as evidence of bad behavior
 	checkpoint := valset.GetCheckpoint(k.GetGravityID(ctx))
 	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
 
@@ -415,7 +419,7 @@ func (k Keeper) GetValidatorByEthAddress(ctx sdk.Context, ethAddr string) (valid
 // GetCurrentValset gets powers from the store and normalizes them
 // into an integer percentage with a resolution of uint32 Max meaning
 // a given validators 'gravity power' is computed as
-// Cosmos power / total cosmos power = x / uint32 Max
+// Cosmos power for that validator / total cosmos power = x / uint32 Max
 // where x is the voting power on the gravity contract. This allows us
 // to only use integer division which produces a known rounding error
 // from truncation equal to the ratio of the validators
@@ -423,21 +427,34 @@ func (k Keeper) GetValidatorByEthAddress(ctx sdk.Context, ethAddr string) (valid
 // total voting power. This is an acceptable rounding error since floating
 // point may cause consensus problems if different floating point unit
 // implementations are involved.
+//
+// 'total cosmos power' has an edge case, if a validator has not set their
+// Ethereum key they are not included in the total. If they where control
+// of the bridge could be lost in the following situation.
+//
+// If we have 100 total power, and 100 total power joins the validator set
+// the new validators hold more than 33% of the bridge power, if we generate
+// and submit a valset and they don't have their eth keys set they can never
+// update the validator set again and the bridge and all its' funds are lost.
+// For this reason we exclude validators with unset eth keys from validator sets
 func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-	bridgeValidators := make([]*types.BridgeValidator, len(validators))
+	// allocate enough space for all validators, but len zero, we then append
+	// so that we have an array with extra capacity but the correct length depending
+	// on how many validators have keys set.
+	bridgeValidators := make([]*types.BridgeValidator, 0, len(validators))
 	var totalPower uint64
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
-	for i, validator := range validators {
+	for _, validator := range validators {
 		val := validator.GetOperator()
 
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
-		totalPower += p
 
-		bridgeValidators[i] = &types.BridgeValidator{Power: p}
 		if ethAddr, found := k.GetEthAddressByValidator(ctx, val); found {
-			bridgeValidators[i].EthereumAddress = ethAddr
+			bv := &types.BridgeValidator{Power: p, EthereumAddress: ethAddr}
+			bridgeValidators = append(bridgeValidators, bv)
+			totalPower += p
 		}
 	}
 	// normalize power values
