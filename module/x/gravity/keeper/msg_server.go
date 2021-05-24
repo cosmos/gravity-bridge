@@ -64,7 +64,6 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 }
 
 // ValsetConfirm handles MsgValsetConfirm
-// TODO: check msgValsetConfirm to have an Orchestrator field instead of a Validator field
 func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm) (*types.MsgValsetConfirmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	valset := k.GetValset(ctx, msg.Nonce)
@@ -74,25 +73,10 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 
 	gravityID := k.GetGravityID(ctx)
 	checkpoint := valset.GetCheckpoint(gravityID)
-
-	sigBytes, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-	}
-
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-	}
-
-	ethAddress, found := k.GetEthAddressByValidator(ctx, validator.GetOperator())
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
-	}
-
-	if err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress); err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
+	err := k.confirmHandlerCommon(ctx, msg.Orchestrator, msg.Signature, checkpoint)
+	if err != nil {
+		return nil, err
 	}
 
 	// persist signature
@@ -174,26 +158,10 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 
 	gravityID := k.GetGravityID(ctx)
 	checkpoint := batch.GetCheckpoint(gravityID)
-
-	sigBytes, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-	}
-
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-	}
-
-	ethAddress, found := k.GetEthAddressByValidator(ctx, validator.GetOperator())
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
-	}
-
-	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
+	err := k.confirmHandlerCommon(ctx, msg.Orchestrator, msg.Signature, checkpoint)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
+		return nil, err
 	}
 
 	// check if we already have this confirm
@@ -229,26 +197,10 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 
 	gravityID := k.GetGravityID(ctx)
 	checkpoint := logic.GetCheckpoint(gravityID)
-
-	sigBytes, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-	}
-
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-	}
-
-	ethAddress, found := k.GetEthAddressByValidator(ctx, validator.GetOperator())
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
-	}
-
-	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
+	err = k.confirmHandlerCommon(ctx, msg.Orchestrator, msg.Signature, checkpoint)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
+		return nil, err
 	}
 
 	// check if we already have this confirm
@@ -304,6 +256,32 @@ func (k msgServer) claimHandlerCommon(ctx sdk.Context, msgAny *codectypes.Any, m
 			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.GetEventNonce(), msg.ClaimHash()))),
 		),
 	)
+
+	return nil
+}
+
+// confirmHandlerCommon is an internal function that provides common code for processing claim messages
+func (k msgServer) confirmHandlerCommon(ctx sdk.Context, orchestrator string, signature string, checkpoint []byte) error {
+	sigBytes, err := hex.DecodeString(signature)
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
+	}
+
+	orchaddr, _ := sdk.AccAddressFromBech32(orchestrator)
+	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
+	if !found {
+		return sdkerrors.Wrap(types.ErrUnknown, "validator")
+	}
+
+	ethAddress, found := k.GetEthAddressByValidator(ctx, validator.GetOperator())
+	if !found {
+		return sdkerrors.Wrap(types.ErrEmpty, "eth address")
+	}
+
+	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with checkpoint %s found %s", ethAddress, hex.EncodeToString(checkpoint), signature))
+	}
 
 	return nil
 }
