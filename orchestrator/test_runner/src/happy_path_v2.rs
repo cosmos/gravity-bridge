@@ -113,7 +113,7 @@ pub async fn happy_path_test_v2(
     contact
         .send_tokens(
             send_to_user_coin.clone(),
-            get_fee(),
+            Some(get_fee()),
             user.cosmos_address,
             keys[0].validator_key,
             Some(TOTAL_TIMEOUT),

@@ -16,7 +16,7 @@ cosmos_gravity = {path = "../cosmos_gravity"}
 gravity_utils = {path = "../gravity_utils"}
 gravity_proto = {path = "../gravity_proto/"}
 
-deep_space = "2.2"
+deep_space = "2.3"
 serde_derive = "1.0"
 clarity = "0.4"
 docopt = "1"

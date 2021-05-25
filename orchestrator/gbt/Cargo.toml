@@ -19,7 +19,7 @@ gravity_proto = {path = "../gravity_proto/"}
 relayer = {path = "../relayer/"}
 orchestrator = {path = "../orchestrator/"}
 
-deep_space = "2.2"
+deep_space = "2.3"
 serde_derive = "1.0"
 clarity = "0.4"
 clap = "3.0.0-beta.2"
