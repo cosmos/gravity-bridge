@@ -104,7 +104,8 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, n
 		panic(fmt.Sprintf("unknown batch nonce for outgoing tx batch %s %d", tokenContract, nonce))
 	}
 
-	// cleanup outgoing TX pool
+	// cleanup outgoing TX pool, while these transactions where hidden from GetPoolTransactions
+	// they still exist in the pool and need to be cleaned up.
 	for _, tx := range b.Transactions {
 		k.removePoolEntry(ctx, tx.Id)
 	}

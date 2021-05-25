@@ -111,6 +111,12 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 		return sdkerrors.Wrapf(types.ErrInvalid, "Sender %s did not send Id %d", sender, txId)
 	}
 
+	// An inconsistent entry should never enter the store, but this is the ideal place to exploit
+	// it such a bug if it did ever occur, so we should double check to be really sure
+	if tx.Erc20Fee.Contract != tx.Erc20Token.Contract {
+		return sdkerrors.Wrapf(types.ErrInvalid, "Inconsistent tokens to cancel!: %s %s", tx.Erc20Fee.Contract, tx.Erc20Token.Contract)
+	}
+
 	found := false
 	poolTx := k.GetPoolTransactions(ctx)
 	for _, pTx := range poolTx {
@@ -119,18 +125,15 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 		}
 	}
 	if !found {
-		return sdkerrors.Wrapf(types.ErrInvalid, "Id %d is in a batch", txId)
-	}
-
-	// An inconsistent entry should never enter the store, but this is the ideal place to exploit
-	// it such a bug if it did ever occur, so we should double check to be really sure
-	if tx.Erc20Fee.Contract != tx.Erc20Token.Contract {
-		return sdkerrors.Wrapf(types.ErrInvalid, "Inconsistent tokens to cancel!: %s %s", tx.Erc20Fee.Contract, tx.Erc20Token.Contract)
+		return sdkerrors.Wrapf(types.ErrInvalid, "txId %d is not in unbatched pool! Must be in batch!", txId)
 	}
 
 	// delete this tx from both indexes
+	err = k.removeFromUnbatchedTXIndex(ctx, *tx.Erc20Fee, txId)
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalid, "txId %d not in unbatched index! Must be in a batch!", txId)
+	}
 	k.removePoolEntry(ctx, txId)
-	k.removeFromUnbatchedTXIndex(ctx, *tx.Erc20Fee, txId)
 
 	// reissue the amount and the fee
 
@@ -193,7 +196,10 @@ func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string,
 	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(&idSet))
 }
 
-// removeFromUnbatchedTXIndex removes the tx from the index and makes it implicit no available anymore
+// removeFromUnbatchedTXIndex removes the tx from the index and also removes it from the iterator
+// GetPoolTransactions, making this tx implicitly invisible without a direct request. We remove a tx
+// from the pool for good in OutgoingTxBatchExecuted, but if a batch is canceled or timed out we 'reactivate'
+// an entry by adding it back to the second index.
 func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee types.ERC20Token, txID uint64) error {
 	store := ctx.KVStore(k.storeKey)
 	idxKey := types.GetFeeSecondIndexKey(fee)
@@ -227,6 +233,8 @@ func (k Keeper) setPoolEntry(ctx sdk.Context, val *types.OutgoingTransferTx) err
 	return nil
 }
 
+// getPoolEntry grabs an entry from the tx pool, this *does* include transactions in batches
+// so check the UnbatchedTxIndex or call GetPoolTransactions for that purpose
 func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTransferTx, error) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetOutgoingTxPoolKey(id))
@@ -238,12 +246,15 @@ func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTransfe
 	return &r, nil
 }
 
+// removePoolEntry removes an entry from the tx pool, this *does* include transactions in batches
+// so you will need to run it when cleaning up after a executed batch
 func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetOutgoingTxPoolKey(id))
 }
 
 // GetPoolTransactions, grabs all transactions from the tx pool, useful for queries or genesis save/load
+// this does not include all transactions in batches, because it iterates using the second index key
 func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.OutgoingTransferTx {
 	prefixStore := ctx.KVStore(k.storeKey)
 	// we must use the second index key here because transactions are left in the store, but removed
