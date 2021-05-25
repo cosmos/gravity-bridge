@@ -1,4 +1,4 @@
-use crate::get_test_token_name;
+use crate::get_fee;
 use crate::ADDRESS_PREFIX;
 use crate::COSMOS_NODE_GRPC;
 use crate::ETH_NODE;
@@ -272,7 +272,7 @@ pub async fn start_orchestrators(
                 contact,
                 grpc_client,
                 gravity_address,
-                get_test_token_name(),
+                get_fee(),
             );
             let system = System::new();
             system.block_on(fut);

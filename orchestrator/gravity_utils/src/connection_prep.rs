@@ -3,9 +3,9 @@
 //! by trying more than one thing to handle potentially misconfigured inputs.
 
 use clarity::Address as EthAddress;
-use deep_space::client::ChainStatus;
 use deep_space::Address as CosmosAddress;
 use deep_space::Contact;
+use deep_space::{client::ChainStatus, Coin};
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_proto::gravity::QueryDelegateKeysByEthAddress;
 use gravity_proto::gravity::QueryDelegateKeysByOrchestratorAddress;
@@ -306,19 +306,20 @@ pub async fn check_delegate_addresses(
     }
 }
 
-/// Checks if a given denom, used for fees is in the provided address
-pub async fn check_for_fee_denom(fee_denom: &str, address: CosmosAddress, contact: &Contact) {
-    let mut found = false;
+/// Checks if a given Coin, used for fees is in the provided address in a sufficient quantity
+pub async fn check_for_fee(fee: &Coin, address: CosmosAddress, contact: &Contact) {
     for balance in contact.get_balances(address).await.unwrap() {
-        if balance.denom.contains(&fee_denom) {
-            found = true;
-            break;
+        if balance.denom.contains(&fee.denom) {
+            if balance.amount < fee.amount {
+                error!("You have specified a fee that is greater than your balance of that coin! {}{} > {}{} ", fee.amount, fee.denom, balance.amount, balance.denom);
+                exit(1);
+            } else {
+                return;
+            }
         }
     }
-    if !found {
-        error!("You have specified that fees should be paid in {} but account {} has no balance of that token!", fee_denom, address);
-        exit(1);
-    }
+    error!("You have specified that fees should be paid in {} but account {} has no balance of that token!", fee.denom, address);
+    exit(1);
 }
 
 /// Checks the user has some Ethereum in their address to pay for things

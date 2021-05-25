@@ -393,19 +393,22 @@ pub async fn send_ethereum_claims(
 }
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
-/// they will require some time to be included in a batch
+/// they will require some time to be included in a batch. Note that there are two fees
+/// one is the fee to be sent to Ethereum, which must be the same denom as the amount
+/// the other is the Cosmos chain fee, which can be any allowed coin
 pub async fn send_to_eth(
     private_key: PrivateKey,
     destination: EthAddress,
     amount: Coin,
+    bridge_fee: Coin,
     fee: Coin,
     contact: &Contact,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
-    if amount.denom != fee.denom {
+    if amount.denom != bridge_fee.denom {
         return Err(CosmosGrpcError::BadInput(format!(
             "{} {} is an invalid denom set for SendToEth you must pay fees in the same token your sending",
-            amount.denom, fee.denom,
+            amount.denom, bridge_fee.denom,
         )));
     }
     let balances = contact.get_balances(our_address).await.unwrap();
@@ -433,7 +436,7 @@ pub async fn send_to_eth(
         sender: our_address.to_string(),
         eth_dest: destination.to_string(),
         amount: Some(amount.into()),
-        bridge_fee: Some(fee.clone().into()),
+        bridge_fee: Some(bridge_fee.clone().into()),
     };
 
     let fee = Fee {

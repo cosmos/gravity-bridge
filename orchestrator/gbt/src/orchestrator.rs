@@ -3,14 +3,14 @@ use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use gravity_utils::connection_prep::{
     check_delegate_addresses, check_for_eth, wait_for_cosmos_node_ready,
 };
-use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
+use gravity_utils::connection_prep::{check_for_fee, create_rpc_connections};
 use orchestrator::main_loop::orchestrator_main_loop;
 use orchestrator::main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
 use std::cmp::min;
 
 pub async fn orchestrator(args: OrchestratorOpts, address_prefix: String) {
-    let fee_denom = args.fees;
+    let fee = args.fees;
     let cosmos_grpc = args.cosmos_grpc;
     let ethereum_rpc = args.ethereum_rpc;
     let ethereum_key = args.ethereum_key;
@@ -64,7 +64,7 @@ pub async fn orchestrator(args: OrchestratorOpts, address_prefix: String) {
     .await;
 
     // check if we actually have the promised balance of tokens to pay fees
-    check_for_fee_denom(&fee_denom, public_cosmos_key, &contact).await;
+    check_for_fee(&fee, public_cosmos_key, &contact).await;
     check_for_eth(public_eth_key, &web3).await;
 
     orchestrator_main_loop(
@@ -74,7 +74,7 @@ pub async fn orchestrator(args: OrchestratorOpts, address_prefix: String) {
         connections.contact.unwrap(),
         connections.grpc.unwrap(),
         contract_address,
-        fee_denom,
+        fee,
     )
     .await;
 }

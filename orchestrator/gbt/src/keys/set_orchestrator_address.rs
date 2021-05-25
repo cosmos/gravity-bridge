@@ -2,17 +2,13 @@ use crate::args::SetOrchestratorAddressOpts;
 use crate::utils::TIMEOUT;
 use clarity::PrivateKey as EthPrivateKey;
 use cosmos_gravity::send::update_gravity_delegate_addresses;
-use deep_space::{coin::Coin, mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
-use gravity_utils::connection_prep::check_for_fee_denom;
+use deep_space::{mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
+use gravity_utils::connection_prep::check_for_fee;
 use gravity_utils::connection_prep::{create_rpc_connections, wait_for_cosmos_node_ready};
 use rand::{thread_rng, Rng};
 
 pub async fn set_orchestrator_address(args: SetOrchestratorAddressOpts, prefix: String) {
-    let fee_denom = args.fees;
-    let fee = Coin {
-        denom: fee_denom.clone(),
-        amount: 1u64.into(),
-    };
+    let fee = args.fees;
     let cosmos_grpc = args.cosmos_grpc;
     let validator_phrase = args.validator_phrase;
     let cosmos_phrase = args.cosmos_phrase;
@@ -26,7 +22,7 @@ pub async fn set_orchestrator_address(args: SetOrchestratorAddressOpts, prefix: 
     let validator_key = CosmosPrivateKey::from_phrase(&validator_phrase, "")
         .expect("Failed to parse validator key");
     let validator_addr = validator_key.to_address(&contact.get_prefix()).unwrap();
-    check_for_fee_denom(&fee_denom, validator_addr, &contact).await;
+    check_for_fee(&fee, validator_addr, &contact).await;
 
     let cosmos_key = if let Some(cosmos_phrase) = cosmos_phrase {
         CosmosPrivateKey::from_phrase(&cosmos_phrase, "").expect("Failed to parse cosmos key")

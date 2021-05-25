@@ -7,7 +7,7 @@ use clap::AppSettings;
 use clap::Clap;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use deep_space::address::Address as CosmosAddress;
+use deep_space::{address::Address as CosmosAddress, Coin};
 
 /// Gravity Bridge tools (gbt) provides tools for interacting with the Althea Gravity bridge for Cosmos based blockchains.
 #[derive(Clap)]
@@ -59,9 +59,9 @@ pub struct OrchestratorOpts {
     /// (Optional) The Ethereum RPC server that will be used
     #[clap(long, default_value = "http://localhost:8545")]
     pub ethereum_rpc: String,
-    /// The Cosmos Denom in which to pay Cosmos chain fees
-    #[clap(short, long)]
-    pub fees: String,
+    /// The Cosmos Denom and amount to pay Cosmos chain fees
+    #[clap(short, long, parse(try_from_str))]
+    pub fees: Coin,
     /// The address fo the Gravity contract on Ethereum
     #[clap(short, long, parse(try_from_str))]
     pub gravity_contract_address: EthAddress,
@@ -112,12 +112,12 @@ pub struct CosmosToEthOpts {
     /// (Optional) The Cosmos gRPC server that will be used to submit the transaction
     #[clap(long, default_value = "http://localhost:9090")]
     pub cosmos_grpc: String,
-    /// The Denom from the Cosmos chain to bridge
-    #[clap(short, long)]
-    pub denom: String,
-    /// The amount of tokens you are sending eg. 1.2 ATOM
+    /// The Denom and amount you wish to send eg: 100uatom
     #[clap(short, long, parse(try_from_str))]
-    pub amount: f64,
+    pub amount: Coin,
+    /// The Cosmos Denom and amount to pay Cosmos chain fees eg: 1uatom
+    #[clap(short, long, parse(try_from_str))]
+    pub fees: Coin,
     /// The destination address on the Ethereum chain
     #[clap(short, long, parse(try_from_str))]
     pub eth_destination: EthAddress,
@@ -213,9 +213,9 @@ pub struct SetOrchestratorAddressOpts {
     /// (Optional) The Cosmos gRPC server that will be used to submit the transaction
     #[clap(long, default_value = "http://localhost:9090")]
     pub cosmos_grpc: String,
-    /// The Cosmos Denom in which to pay Cosmos chain fees
-    #[clap(short, long)]
-    pub fees: String,
+    /// The Cosmos Denom and amount to pay Cosmos chain fees
+    #[clap(short, long, parse(try_from_str))]
+    pub fees: Coin,
 }
 
 /// Initialize configuration

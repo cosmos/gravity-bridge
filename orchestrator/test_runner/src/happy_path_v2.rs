@@ -149,6 +149,7 @@ pub async fn happy_path_test_v2(
         user.eth_address,
         send_to_eth_coin,
         get_fee(),
+        get_fee(),
         contact,
     )
     .await

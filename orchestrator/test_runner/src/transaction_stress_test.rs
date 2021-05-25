@@ -152,7 +152,14 @@ pub async fn transaction_stress_test(
                 denom: send_coin.denom.clone(),
                 amount: 1u8.into(),
             };
-            let res = send_to_eth(c_key, e_dest_addr, send_coin, send_fee, &contact);
+            let res = send_to_eth(
+                c_key,
+                e_dest_addr,
+                send_coin,
+                send_fee.clone(),
+                send_fee,
+                &contact,
+            );
             futs.push(res);
         }
         let results = join_all(futs).await;

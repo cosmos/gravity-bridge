@@ -43,12 +43,9 @@ pub async fn orchestrator_main_loop(
     contact: Contact,
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
-    pay_fees_in: String,
+    user_fee_amount: Coin,
 ) {
-    let fee = Coin {
-        denom: pay_fees_in.clone(),
-        amount: 1u32.into(),
-    };
+    let fee = user_fee_amount;
 
     let a = eth_oracle_main_loop(
         cosmos_key,
