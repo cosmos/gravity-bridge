@@ -90,6 +90,7 @@ $gravity $home2 keys add val $kbt --output json | jq . >> $n2dir/validator_key.j
 $gravity $home3 $cid init n3 &>/dev/null
 $gravity $home3 keys add val $kbt --output json | jq . >> $n3dir/validator_key.json
 
+find $home_dir -name validator_key.json | xargs cat | jq -r '.mnemonic' > $CHAINDIR/validator-keys
 
 echo "Adding validator addresses to genesis files"
 $gravity $home0 add-genesis-account $($gravity $home0 keys show val -a $kbt) $coins &>/dev/null
@@ -106,6 +107,8 @@ $gravity $home0 keys add --dry-run=true --output=json orch | jq . >> $n0dir/orch
 $gravity $home1 keys add --dry-run=true --output=json orch | jq . >> $n1dir/orchestrator_key.json
 $gravity $home2 keys add --dry-run=true --output=json orch | jq . >> $n2dir/orchestrator_key.json
 $gravity $home3 keys add --dry-run=true --output=json orch | jq . >> $n3dir/orchestrator_key.json
+
+find $home_dir -name orchestrator_key.json | xargs cat | jq -r '.mnemonic' > $CHAINDIR/orchestrator-keys
 
 echo "Adding orchestrator keys to genesis"
 n0orchKey="$(jq .address $n0dir/orchestrator_key.json)"
@@ -131,6 +134,8 @@ $gravity $home0 eth_keys add --output=json --dry-run=true | jq . >> $n0dir/eth_k
 $gravity $home1 eth_keys add --output=json --dry-run=true | jq . >> $n1dir/eth_key.json
 $gravity $home2 eth_keys add --output=json --dry-run=true | jq . >> $n2dir/eth_key.json
 $gravity $home3 eth_keys add --output=json --dry-run=true | jq . >> $n3dir/eth_key.json
+
+find testdata -name eth_key.json | xargs cat | jq -r '.private_key' > $CHAINDIR/validator-eth-keys
 
 echo "Copying ethereum genesis file"
 cp tests/assets/ETHGenesis.json $home_dir

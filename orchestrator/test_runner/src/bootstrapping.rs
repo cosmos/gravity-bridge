@@ -6,65 +6,44 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 
 pub fn parse_ethereum_keys() -> Vec<EthPrivateKey> {
-    let filename = "/testdata/validator-eth-keys"; // TODO thiss file needs to be created by start-testnet.sh
+    let filename = "/testdata/validator-eth-keys";
     let file = File::open(filename).expect("Failed to find eth keys");
     let reader = BufReader::new(file);
     let mut ret = Vec::new();
 
     for line in reader.lines() {
-        let key = line.expect("Error reading eth key file!");
-        if key.is_empty() || key.contains("public") || key.contains("address") {
-            continue;
-        }
-        let key = key.split(':').last().unwrap().trim();
-        ret.push(key.parse().unwrap());
+        let line = line.expect("Error reading eth-keys file!");
+        let key: EthPrivateKey = line.parse().unwrap();
+        ret.push(key);
     }
     ret
 }
 
 pub fn parse_validator_keys() -> Vec<CosmosPrivateKey> {
-    let filename = "/testdata/validator-keys"; // TODO thiss file needs to be created by start-testnet.sh
-    parse_cosmos_keys(filename)
+    let filename = "/testdata/validator-keys";
+    parse_phrases(filename)
 }
 
 /// Orchestrator private keys are generated via the gravity key add
 /// command just like the validator keys themselves and stored in a
 /// similar file /orchestrator-phrases
 pub fn parse_orchestrator_keys() -> Vec<CosmosPrivateKey> {
-    let filename = "/testdata/orchestrator-keys"; // TODO thiss file needs to be created by start-testnet.sh
-    parse_cosmos_keys(filename)
+    let filename = "/testdata/orchestrator-keys";
+    parse_phrases(filename)
 }
 
-fn parse_cosmos_keys(filename: &str) -> Vec<CosmosPrivateKey> {
-    let mut ret = Vec::new();
-    let file = File::open(filename).expect("Failed to find cosmose keys file");
+fn parse_phrases(filename: &str) -> Vec<CosmosPrivateKey> {
+    let file = File::open(filename).expect("Failed to find phrases");
     let reader = BufReader::new(file);
+    let mut ret = Vec::new();
+
     for line in reader.lines() {
-        let key = line.expect("Error reading cosmose keys file!");
-        let key: CosmosPrivateKey = key.parse().unwrap();
+        let phrase = line.expect("Error reading phrase file!");
+        let key = CosmosPrivateKey::from_phrase(&phrase, "").expect("Bad phrase!");
         ret.push(key);
     }
     ret
 }
-
-// fn parse_phrases(filename: &str) -> Vec<CosmosPrivateKey> {
-//     let file = File::open(filename).expect("Failed to find phrases");
-//     let reader = BufReader::new(file);
-//     let mut ret = Vec::new();
-
-//     for line in reader.lines() {
-//         let phrase = line.expect("Error reading phrase file!");
-//         if phrase.is_empty()
-//             || phrase.contains("write this mnemonic phrase")
-//             || phrase.contains("recover your account if")
-//         {
-//             continue;
-//         }
-//         let key = CosmosPrivateKey::from_phrase(&phrase, "").expect("Bad phrase!");
-//         ret.push(key);
-//     }
-//     ret
-// }
 
 pub fn get_keys() -> Vec<ValidatorKeys> {
     let cosmos_keys = parse_validator_keys();
