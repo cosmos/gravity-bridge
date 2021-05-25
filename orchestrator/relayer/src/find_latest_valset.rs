@@ -23,8 +23,16 @@ pub async fn find_latest_valset(
     let mut current_block: Uint256 = latest_block.clone();
     let latest_ethereum_valset =
         get_valset_nonce(gravity_contract_address, our_ethereum_address, web3).await?;
+    println!(
+        "DELETE THIS LOG: LATEST ETHEREUM VALSET NONCE: {}",
+        latest_ethereum_valset
+    );
     let cosmos_chain_valset =
         cosmos_gravity::query::get_valset(grpc_client, latest_ethereum_valset).await?;
+    println!(
+        "DELETE THIS LOG: COSMOS VALSET RETREIVED: {:#?}",
+        cosmos_chain_valset
+    );
 
     while current_block.clone() > 0u8.into() {
         trace!(
@@ -88,6 +96,10 @@ fn check_if_valsets_differ(cosmos_valset: Option<Valset>, ethereum_valset: &Vals
         return;
     }
     let cosmos_valset = cosmos_valset.unwrap();
+    info!(
+        "DELETE THIS LOG: COSMOS VALSET: {:#?}, ETHEREUM VALSET: {:#?}",
+        cosmos_valset, ethereum_valset
+    );
     if cosmos_valset != *ethereum_valset {
         if cosmos_valset.nonce != ethereum_valset.nonce {
             error!(

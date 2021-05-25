@@ -34,7 +34,7 @@ contract Gravity is ReentrancyGuard {
 	bytes32 public state_lastValsetCheckpoint;
 	mapping(address => uint256) public state_lastBatchNonces;
 	mapping(bytes32 => uint256) public state_invalidationMapping;
-	uint256 public state_lastValsetNonce = 0;
+	uint256 public state_lastValsetNonce = 1;
 	// event nonce zero is reserved by the Cosmos module as a special
 	// value indicating that no events have yet been submitted
 	uint256 public state_lastEventNonce = 1;
@@ -596,7 +596,6 @@ contract Gravity is ReentrancyGuard {
 
 		// LOGS
 
-		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit ValsetUpdatedEvent(0, _validators, _powers, state_lastEventNonce);
 	}
 }
