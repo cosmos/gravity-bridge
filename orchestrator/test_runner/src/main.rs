@@ -105,17 +105,20 @@ pub async fn main() {
     env_logger::init();
 
     info!("Staring Gravity test-runner");
+
     let contact = Contact::new(
         COSMOS_NODE_GRPC.as_str(),
         OPERATION_TIMEOUT,
         CosmosAddress::DEFAULT_PREFIX,
     )
     .unwrap();
-
+    info!("COSMOS_NODE_GRPC {}", COSMOS_NODE_GRPC.as_str());
     info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact, TOTAL_TIMEOUT).await;
 
-    let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC.as_str()).await.unwrap();
+    let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC.as_str())
+        .await
+        .unwrap();
     let web30 = web30::client::Web3::new(ETH_NODE.as_str(), OPERATION_TIMEOUT);
     let keys = get_keys();
 
