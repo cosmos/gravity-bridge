@@ -15,15 +15,11 @@ use crate::commands::keys::eth::EthKeysCmd;
 /// for a more comprehensive example:
 ///
 /// <https://docs.rs/gumdrop/>
-#[derive(Command, Debug, Options)]
+#[derive(Command, Debug, Options, Runnable)]
 pub enum KeysCmd {
+    #[options(name = "cosmos")]
     CosmosKeysCmd(CosmosKeysCmd),
-    EthKeysCmd(EthKeysCmd),
-}
 
-impl Runnable for KeysCmd {
-    /// Start the application.
-    fn run(&self) {
-        // Your code goes here
-    }
+    #[options(name = "eth")]
+    EthKeysCmd(EthKeysCmd),
 }

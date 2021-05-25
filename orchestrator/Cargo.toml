@@ -4,3 +4,5 @@ default-members = ["orchestrator"]
 
 
 [patch.crates-io]
+bip32 = { git = "https://github.com/iqlusioninc/crates.git", branch = "main" }
+signatory = { git = "https://github.com/iqlusioninc/signatory.git", branch = "main" }

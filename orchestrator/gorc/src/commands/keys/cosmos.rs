@@ -30,8 +30,3 @@ pub enum CosmosKeysCmd {
     Show(show::ShowCosmosKeyCmd),
 }
 
-impl CosmosKeysCmd {
-    //fn run(&self) {
-    // Your code goes here
-    //}
-}
