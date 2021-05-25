@@ -132,3 +132,5 @@ services:
     depends_on:
       - gravity0
       - ethereum
+    volumes:
+      - ./testdata:/testdata
