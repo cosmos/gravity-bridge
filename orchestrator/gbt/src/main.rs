@@ -71,7 +71,4 @@ async fn main() {
         SubCommand::Relayer(relayer_opts) => relayer(relayer_opts, address_prefix).await,
         SubCommand::Init(init_opts) => init_config(init_opts, home_dir),
     }
-
-    // this may be unreachable
-    panic!("No valid subcommand found!");
 }
