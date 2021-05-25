@@ -1,5 +1,6 @@
 //! `start` subcommand - example of how to write a subcommand
 
+use crate::{application::APP, prelude::*};
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{Command, Options, Runnable};
@@ -37,6 +38,11 @@ impl Runnable for Orchestrator {
         assert!(self.free.len() == 2);
         let contract_address = self.free[0].clone();
         let fee_denom = self.free[1].clone();
+
+        abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
+            status_err!("executor exited with error: {}", e);
+            std::process::exit(1);
+        });
     }
 }
 

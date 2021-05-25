@@ -1,11 +1,11 @@
 //! `cosmos subcommands` subcommand
 
+use crate::{application::APP, prelude::*};
 use abscissa_core::{Command, Options, Runnable};
-use crate::{prelude::*,application::APP};
-use regex::Regex;
 use clarity::Uint256;
 use deep_space::address::Address as CosmosAddress;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
+use regex::Regex;
 
 #[derive(Command, Debug, Options)]
 pub enum Cosmos {
@@ -89,14 +89,10 @@ impl Runnable for SendToEth {
 
         println!("Sending from Cosmos address {}", cosmos_address);
 
-        abscissa_tokio::run(&APP, async { unimplemented!()
-         }).unwrap_or_else(|e| {
+        abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
             status_err!("executor exited with error: {}", e);
             std::process::exit(1);
         });
-
-
-
     }
 }
 
@@ -116,5 +112,10 @@ impl Runnable for Send {
         let from_key = self.free[0].clone();
         let to_addr = self.free[1].clone();
         let coin_amount = self.free[2].clone();
+
+        abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
+            status_err!("executor exited with error: {}", e);
+            std::process::exit(1);
+        });
     }
 }
