@@ -1,6 +1,7 @@
 //! `cosmos subcommands` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
+use crate::{prelude::*,application::APP};
 use regex::Regex;
 use deep_space::address::Address as CosmosAddress;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
@@ -88,7 +89,11 @@ impl Runnable for SendToEth {
 
         println!("Sending from Cosmos address {}", cosmos_address);
 
-
+        abscissa_tokio::run(&APP, async { unimplemented!()
+         }).unwrap_or_else(|e| {
+            status_err!("executor exited with error: {}", e);
+            std::process::exit(1);
+        });
 
 
 

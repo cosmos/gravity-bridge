@@ -1,6 +1,8 @@
 //! `eth subcommands` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
+use crate::{prelude::*,application::APP};
+
 
 #[derive(Command, Debug, Options)]
 pub enum Eth{
@@ -26,6 +28,12 @@ pub struct SendToCosmos{
 
 impl Runnable for SendToCosmos{
     fn run(&self){
+
+        abscissa_tokio::run(&APP, async { unimplemented!()
+        }).unwrap_or_else(|e| {
+           status_err!("executor exited with error: {}", e);
+           std::process::exit(1);
+       });
 
     }
 }
