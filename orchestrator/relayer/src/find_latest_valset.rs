@@ -41,7 +41,7 @@ pub async fn find_latest_valset(
                 end_search.clone(),
                 Some(current_block.clone()),
                 vec![gravity_contract_address],
-                vec!["ValsetUpdatedEvent(uint256,address[],uint256[])"],
+                vec!["ValsetUpdatedEvent(uint256,address[],uint256[],uint256)"],
             )
             .await?;
         // by default the lowest found valset goes first, we want the highest.
@@ -55,7 +55,7 @@ pub async fn find_latest_valset(
             match ValsetUpdatedEvent::from_log(event) {
                 Ok(event) => {
                     let valset = Valset {
-                        nonce: event.nonce,
+                        nonce: event.event_nonce,
                         members: event.members,
                     };
                     check_if_valsets_differ(cosmos_chain_valset, &valset);

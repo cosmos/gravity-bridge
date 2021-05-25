@@ -1,17 +1,24 @@
-use std::unimplemented;
+//! This file parses the Gravity contract ethereum events. Note that there is no Ethereum ABI unpacking implementation. Instead each event
+//! is parsed directly from it's binary representation. This is technical debt within this implementation. It's quite easy to parse any
+//! individual event manually but a generic decoder can be quite challenging to implement. A proper implementation would probably closely
+//! mirror Serde and perhaps even become a serde crate for Ethereum ABI decoding
+//! For now reference the ABI encoding document here https://docs.soliditylang.org/en/v0.8.3/abi-spec.html
 
 use super::ValsetMember;
 use crate::error::GravityError;
 use clarity::Address as EthAddress;
+use deep_space::utils::bytes_to_hex_str;
 use deep_space::Address as CosmosAddress;
 use num256::Uint256;
+use std::unimplemented;
 use web30::types::Log;
 
 /// A parsed struct representing the Ethereum event fired by the Gravity contract
 /// when the validator set is updated.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ValsetUpdatedEvent {
-    pub nonce: u64,
+    pub valset_nonce: u64,
+    pub event_nonce: u64,
     pub members: Vec<ValsetMember>,
 }
 
@@ -19,24 +26,37 @@ impl ValsetUpdatedEvent {
     /// This function is not an abi compatible bytes parser, but it's actually
     /// not hard at all to extract data like this by hand.
     pub fn from_log(input: &Log) -> Result<ValsetUpdatedEvent, GravityError> {
-        // we have one indexed event so we should fine two indexes, one the event itself
+        // we have one indexed event so we should fined two indexes, one the event itself
         // and one the indexed nonce
         if input.topics.get(1).is_none() {
             return Err(GravityError::InvalidEventLogError(
                 "Too few topics".to_string(),
             ));
         }
-        let nonce_data = &input.topics[1];
-        let nonce = Uint256::from_bytes_be(nonce_data);
-        if nonce > u64::MAX.into() {
+        let valset_nonce_data = &input.topics[1];
+        let valset_nonce = Uint256::from_bytes_be(valset_nonce_data);
+        if valset_nonce > u64::MAX.into() {
             return Err(GravityError::InvalidEventLogError(
                 "Nonce overflow, probably incorrect parsing".to_string(),
             ));
         }
-        let nonce: u64 = nonce.to_string().parse().unwrap();
-        // first two indexes contain event info we don't care about, third index is
-        // the length of the eth addresses array
-        let index_start = 2 * 32;
+        let valset_nonce: u64 = valset_nonce.to_string().parse().unwrap();
+
+        // first index is the event nonce, following two have event data we don't
+        // care about, fourth index contains the length of the eth address array
+        let index_start = 0;
+        let index_end = index_start + 32;
+        let nonce_data = &input.data[index_start..index_end];
+        let event_nonce = Uint256::from_bytes_be(nonce_data);
+        if event_nonce > u64::MAX.into() {
+            return Err(GravityError::InvalidEventLogError(
+                "Nonce overflow, probably incorrect parsing".to_string(),
+            ));
+        }
+        let event_nonce: u64 = event_nonce.to_string().parse().unwrap();
+        // first index is the event nonce, following two have event data we don't
+        // care about, fourth index contains the length of the eth address array
+        let index_start = 3 * 32;
         let index_end = index_start + 32;
         let eth_addresses_offset = index_start + 32;
         let len_eth_addresses = Uint256::from_bytes_be(&input.data[index_start..index_end]);
@@ -46,7 +66,7 @@ impl ValsetUpdatedEvent {
             ));
         }
         let len_eth_addresses: usize = len_eth_addresses.to_string().parse().unwrap();
-        let index_start = (3 + len_eth_addresses) * 32;
+        let index_start = (4 + len_eth_addresses) * 32;
         let index_end = index_start + 32;
         let powers_offset = index_start + 32;
         let len_powers = Uint256::from_bytes_be(&input.data[index_start..index_end]);
@@ -97,7 +117,8 @@ impl ValsetUpdatedEvent {
         }
 
         Ok(ValsetUpdatedEvent {
-            nonce,
+            valset_nonce,
+            event_nonce,
             members: validators,
         })
     }
@@ -441,7 +462,7 @@ pub struct LogicCallExecutedEvent {
 
 impl LogicCallExecutedEvent {
     pub fn from_log(input: &Log) -> Result<LogicCallExecutedEvent, GravityError> {
-        unimplemented!()
+        unimplemented!("foo")
     }
     pub fn from_logs(input: &[Log]) -> Result<Vec<LogicCallExecutedEvent>, GravityError> {
         let mut res = Vec::new();
@@ -461,4 +482,15 @@ impl LogicCallExecutedEvent {
         }
         ret
     }
+}
+
+/// Function used for debug printing hex dumps
+/// of ethereum events
+fn _debug_print_data(input: &[u8]) {
+    let count = input.len() / 32;
+    println!("data hex dump");
+    for i in 0..count {
+        println!("0x{}", bytes_to_hex_str(&input[(i * 32)..((i * 32) + 32)]))
+    }
+    println!("end dump");
 }
