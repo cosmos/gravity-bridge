@@ -1,18 +1,12 @@
-use crate::{utils::ValidatorKeys};
+use crate::utils::ValidatorKeys;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
-use std::{fs::File};
-use std::{
-    io::{BufRead, BufReader, Read},
-};
+use std::fs::File;
+use std::io::{BufRead, BufReader, Read};
 
-/// Ethereum private keys for the validators are generated using the gravity eth_keys add command
-/// and dumped into a file /validator-eth-keys in the container, from there they are then used by
-/// the orchestrator on startup
 pub fn parse_ethereum_keys() -> Vec<EthPrivateKey> {
-    // TODO - grab this from the json files in /testdata instead
-    let filename = "/validator-eth-keys";
+    let filename = "/testdata/validator-eth-keys"; // TODO thiss file needs to be created by start-testnet.sh
     let file = File::open(filename).expect("Failed to find eth keys");
     let reader = BufReader::new(file);
     let mut ret = Vec::new();
@@ -28,49 +22,49 @@ pub fn parse_ethereum_keys() -> Vec<EthPrivateKey> {
     ret
 }
 
-/// Validator private keys are generated via the gravity key add
-/// command, from there they are used to create gentx's and start the
-/// chain, these keys change every time the container is restarted.
-/// The mnemonic phrases are dumped into a text file /validator-phrases
-/// the phrases are in increasing order, so validator 1 is the first key
-/// and so on. While validators may later fail to start it is guaranteed
-/// that we have one key for each validator in this file.
 pub fn parse_validator_keys() -> Vec<CosmosPrivateKey> {
-    // TODO - grab this from the json files in /testdata instead
-    // probably: find /testdata/testchain -name validator_key.json
-    let filename = "/validator-phrases";
-    parse_phrases(filename)
+    let filename = "/testdata/validator-keys"; // TODO thiss file needs to be created by start-testnet.sh
+    parse_cosmos_keys(filename)
 }
 
 /// Orchestrator private keys are generated via the gravity key add
 /// command just like the validator keys themselves and stored in a
 /// similar file /orchestrator-phrases
 pub fn parse_orchestrator_keys() -> Vec<CosmosPrivateKey> {
-    // TODO - grab this from the json files in /testdata instead
-    // probably: find /testdata/testchain -name orchestrator_key.json
-    let filename = "/orchestrator-phrases";
-    parse_phrases(filename)
+    let filename = "/testdata/orchestrator-keys"; // TODO thiss file needs to be created by start-testnet.sh
+    parse_cosmos_keys(filename)
 }
 
-/// Parses the output of the cosmoscli keys add command to import the private key
-fn parse_phrases(filename: &str) -> Vec<CosmosPrivateKey> {
-    let file = File::open(filename).expect("Failed to find phrases");
-    let reader = BufReader::new(file);
+fn parse_cosmos_keys(filename: &str) -> Vec<CosmosPrivateKey> {
     let mut ret = Vec::new();
-
+    let file = File::open(filename).expect("Failed to find cosmose keys file");
+    let reader = BufReader::new(file);
     for line in reader.lines() {
-        let phrase = line.expect("Error reading phrase file!");
-        if phrase.is_empty()
-            || phrase.contains("write this mnemonic phrase")
-            || phrase.contains("recover your account if")
-        {
-            continue;
-        }
-        let key = CosmosPrivateKey::from_phrase(&phrase, "").expect("Bad phrase!");
+        let key = line.expect("Error reading cosmose keys file!");
+        let key: CosmosPrivateKey = key.parse().unwrap();
         ret.push(key);
     }
     ret
 }
+
+// fn parse_phrases(filename: &str) -> Vec<CosmosPrivateKey> {
+//     let file = File::open(filename).expect("Failed to find phrases");
+//     let reader = BufReader::new(file);
+//     let mut ret = Vec::new();
+
+//     for line in reader.lines() {
+//         let phrase = line.expect("Error reading phrase file!");
+//         if phrase.is_empty()
+//             || phrase.contains("write this mnemonic phrase")
+//             || phrase.contains("recover your account if")
+//         {
+//             continue;
+//         }
+//         let key = CosmosPrivateKey::from_phrase(&phrase, "").expect("Bad phrase!");
+//         ret.push(key);
+//     }
+//     ret
+// }
 
 pub fn get_keys() -> Vec<ValidatorKeys> {
     let cosmos_keys = parse_validator_keys();
