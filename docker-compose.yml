@@ -132,5 +132,3 @@ services:
     depends_on:
       - gravity0
       - ethereum
-    environment:
-      - VALIDATOR="gravity0"
