@@ -240,6 +240,8 @@ then
 fi
 echo "Contract address: $contractAddress"
 
+docker-compose logs --no-color --no-log-prefix contract_deployer > $CHAINDIR/contracts
+
 echo "Gathering keys for orchestrators"
 echo VALIDATOR=$n0name >> $n0dir/orchestrator.env
 echo COSMOS_GRPC="http://$n0name:9090/" >> $n0dir/orchestrator.env

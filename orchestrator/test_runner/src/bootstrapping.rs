@@ -70,7 +70,7 @@ pub struct BootstrapContractAddresses {
 /// in deploy_contracts()
 pub fn parse_contract_addresses() -> BootstrapContractAddresses {
     let mut file =
-        File::open("/contracts").expect("Failed to find contracts! did they not deploy?");
+        File::open("/testdata/contracts").expect("Failed to find contracts! did they not deploy?");
     let mut output = String::new();
     file.read_to_string(&mut output).unwrap();
     let mut maybe_gravity_address = None;
