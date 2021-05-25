@@ -93,12 +93,12 @@ pub fn one_hundred_eth() -> Uint256 {
     (1000000000000000000u128 * 100).into()
 }
 
-pub fn should_deploy_contracts() -> bool {
-    match env::var("DEPLOY_CONTRACTS") {
-        Ok(s) => s == "1" || s.to_lowercase() == "yes" || s.to_lowercase() == "true",
-        _ => false,
-    }
-}
+// pub fn should_deploy_contracts() -> bool {
+//     match env::var("DEPLOY_CONTRACTS") {
+//         Ok(s) => s == "1" || s.to_lowercase() == "yes" || s.to_lowercase() == "true",
+//         _ => false,
+//     }
+// }
 
 #[actix_rt::main]
 pub async fn main() {
@@ -122,12 +122,12 @@ pub async fn main() {
     let web30 = web30::client::Web3::new(ETH_NODE.as_str(), OPERATION_TIMEOUT);
     let keys = get_keys();
 
-    // if we detect this env var we are only deploying contracts, do that then exit.
-    if should_deploy_contracts() {
-        info!("test-runner in contract deploying mode, deploying contracts, then exiting");
-        deploy_contracts(&contact).await;
-        return;
-    }
+    // // if we detect this env var we are only deploying contracts, do that then exit.
+    // if should_deploy_contracts() {
+    //     info!("test-runner in contract deploying mode, deploying contracts, then exiting");
+    //     deploy_contracts(&contact).await;
+    //     return;
+    // }
 
     let contracts = parse_contract_addresses();
     // the address of the deployed Gravity contract
