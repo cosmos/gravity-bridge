@@ -2,26 +2,10 @@
 
 use abscissa_core::{Command, Options, Runnable};
 
-/// `tests` subcommand
-///
-/// The `Options` proc macro generates an option parser based on the struct
-/// definition, and is defined in the `gumdrop` crate. See their documentation
-/// for a more comprehensive example:
-///
-/// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
-pub struct TestsCmd {
-    // Example `--foobar` (with short `-f` argument)
-    // #[options(short = "f", help = "foobar path"]
-    // foobar: Option<PathBuf>
-
-    // Example `--baz` argument with no short version
-    // #[options(no_short, help = "baz path")]
-    // baz: Option<PathBuf>
-
-    // "free" arguments don't have an associated flag
-    // #[options(free)]
-    // free_args: Vec<String>,
+pub enum TestsCmd {
+    #[options(help = "runner")]
+    Runner(Runner),
 }
 
 impl Runnable for TestsCmd {
@@ -29,4 +13,17 @@ impl Runnable for TestsCmd {
     fn run(&self) {
         // Your code goes here
     }
+}
+
+#[derive(Command, Debug, Options)]
+pub struct Runner {
+    #[options(free)]
+    free: Vec<String>,
+
+    #[options(help = "print help message")]
+    help: bool,
+}
+
+impl Runnable for Runner {
+    fn run(&self) {}
 }

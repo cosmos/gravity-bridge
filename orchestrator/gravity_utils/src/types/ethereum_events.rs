@@ -4,7 +4,6 @@ use super::ValsetMember;
 use crate::error::GravityError;
 use clarity::Address as EthAddress;
 use deep_space::Address as CosmosAddress;
-use gravity_proto::gravity;
 use num256::Uint256;
 use web30::types::Log;
 

@@ -3,7 +3,6 @@ use crate::error::GravityError;
 use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
 use deep_space::error::CosmosGrpcError;
-use deep_space::Address as CosmosAddress;
 use std::fmt::Debug;
 use std::{
     cmp::Ordering,
@@ -60,10 +59,10 @@ pub struct ValsetConfirmResponse {
 
 impl ValsetConfirmResponse {
     pub fn from_proto(
-        input: gravity_proto::gravity::UpdateSignerSetTxSignature,
+        input: gravity_proto::gravity::SignerSetTxSignature,
     ) -> Result<Self, GravityError> {
         Ok(ValsetConfirmResponse {
-            eth_signer: input.eth_signer.parse()?,
+            eth_signer: input.ethereum_signer.parse()?,
             nonce: input.nonce,
             eth_signature: EthSignature::from_bytes(&input.signature)?,
         })
@@ -323,8 +322,8 @@ impl Valset {
     }
 }
 
-impl From<gravity_proto::gravity::UpdateSignerSetTxResponse> for Valset {
-    fn from(input: gravity_proto::gravity::UpdateSignerSetTxResponse) -> Self {
+impl From<gravity_proto::gravity::SignerSetTxResponse> for Valset {
+    fn from(input: gravity_proto::gravity::SignerSetTxResponse) -> Self {
         Valset {
             nonce: input.signer_set.clone().unwrap().nonce,
             members: input
@@ -338,8 +337,17 @@ impl From<gravity_proto::gravity::UpdateSignerSetTxResponse> for Valset {
     }
 }
 
-impl From<&gravity_proto::gravity::UpdateSignerSetTxResponse> for Valset {
-    fn from(input: &gravity_proto::gravity::UpdateSignerSetTxResponse) -> Self {
+impl From<gravity_proto::gravity::SignerSetTx> for Valset {
+    fn from(input: gravity_proto::gravity::SignerSetTx) -> Self {
+        Valset {
+            nonce: input.clone().nonce,
+            members: input.signers.iter().map(|i| i.into()).collect(),
+        }
+    }
+}
+
+impl From<&gravity_proto::gravity::SignerSetTxResponse> for Valset {
+    fn from(input: &gravity_proto::gravity::SignerSetTxResponse) -> Self {
         Valset {
             nonce: input.signer_set.clone().unwrap().nonce,
             members: input
