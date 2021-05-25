@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -300,7 +301,7 @@ func (k Keeper) LastSubmittedEthereumEvent(c context.Context, req *types.LastSub
 	ctx := sdk.UnwrapSDKContext(c)
 	res := &types.LastSubmittedEthereumEventResponse{}
 
-	valAddr, err := sdk.ValAddressFromBech32(req.Address)
+	valAddr, err := k.getSignerValidator(ctx, req.Address)
 	if err != nil {
 		return nil, err
 	}

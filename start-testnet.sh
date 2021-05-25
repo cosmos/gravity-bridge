@@ -1,5 +1,5 @@
 #!/bin/bash
-# USAGE: ./two-node-net skip
+set -eu
 
 # Constants
 CURRENT_WORKING_DIR=$(pwd)
@@ -64,15 +64,6 @@ n3appCfg="$n3cfgDir/app.toml"
 # Common flags
 kbt="--keyring-backend test"
 cid="--chain-id $CHAINID"
-
-# Ensure user understands what will be deleted
-if [[ -d $SIGNER_DATA ]] && [[ ! "$1" == "skip" ]]; then
-  read -p "$0 will delete \$(pwd)/data folder. Do you wish to continue? (y/n): " -n 1 -r
-  echo
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-      exit 1
-  fi
-fi
 
 echo "Creating 4x $gravity validators with chain-id=$CHAINID..."
 echo "Initializing genesis files"
@@ -233,8 +224,7 @@ sleep 10
 echo "Applying contracts"
 docker-compose build contract_deployer
 contractAddress=$(docker-compose up contract_deployer | grep "Gravity deployed at Address" | grep -Eow '0x[0-9a-fA-F]{40}')
-if [[ ! $contractAddress ]]
-then
+if [[ ! $contractAddress ]]; then
   echo "contract failed to deploy."
   exit 1
 fi
