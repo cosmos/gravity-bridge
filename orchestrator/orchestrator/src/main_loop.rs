@@ -12,13 +12,16 @@ use cosmos_gravity::{
     },
     send::{send_batch_confirm, send_logic_call_confirm, send_valset_confirms},
 };
-use deep_space::client::ChainStatus;
+use deep_space::error::CosmosGrpcError;
 use deep_space::Contact;
+use deep_space::{client::ChainStatus, utils::FeeInfo};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_gravity::utils::get_gravity_id;
 use futures::future::join3;
+use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use relayer::main_loop::relayer_main_loop;
+use std::process::exit;
 use std::time::Duration;
 use std::time::Instant;
 use tokio::time::sleep as delay_for;
@@ -257,6 +260,7 @@ pub async fn eth_signer_main_loop(
                     )
                     .await;
                     trace!("Valset confirm result is {:?}", res);
+                    check_for_fee_error(res, &fee);
                 }
             }
             Err(e) => trace!(
@@ -290,6 +294,7 @@ pub async fn eth_signer_main_loop(
                 )
                 .await;
                 trace!("Batch confirm result is {:?}", res);
+                check_for_fee_error(res, &fee);
             }
             Ok(None) => trace!("No unsigned batches! Everything good!"),
             Err(e) => trace!(
@@ -321,6 +326,7 @@ pub async fn eth_signer_main_loop(
                 )
                 .await;
                 trace!("call confirm result is {:?}", res);
+                check_for_fee_error(res, &fee);
             }
             Ok(None) => trace!("No unsigned logic call! Everything good!"),
             Err(e) => info!(
@@ -335,6 +341,28 @@ pub async fn eth_signer_main_loop(
         let elapsed = Instant::now() - loop_start;
         if elapsed < ETH_SIGNER_LOOP_SPEED {
             delay_for(ETH_SIGNER_LOOP_SPEED - elapsed).await;
+        }
+    }
+}
+
+/// Checks for fee errors on our confirm submission transactions, a failure here
+/// can be fatal and cause slashing so we want to warn the user and exit. There is
+/// no point in running if we can't perform our most important function
+fn check_for_fee_error(res: Result<TxResponse, CosmosGrpcError>, fee: &Coin) {
+    if let Err(CosmosGrpcError::InsufficientFees { fee_info }) = res {
+        match fee_info {
+            FeeInfo::InsufficientFees { min_fees } => {
+                error!(
+                    "Your specified fee value {} is too small please use at least {}",
+                    fee,
+                    Coin::display_list(&min_fees)
+                );
+                error!("Correct fee argument immediately! You will be slashed within a few hours if you fail to do so");
+                exit(1);
+            }
+            FeeInfo::InsufficientGas { .. } => {
+                panic!("Hardcoded gas amounts insufficient!");
+            }
         }
     }
 }
