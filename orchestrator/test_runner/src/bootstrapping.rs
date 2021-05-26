@@ -20,7 +20,7 @@ pub fn parse_ethereum_keys() -> Vec<EthPrivateKey> {
 }
 
 pub fn parse_validator_keys() -> Vec<CosmosPrivateKey> {
-    let filename = "/testdata/validator-keys";
+    let filename = "/testdata/validator-phrases";
     parse_phrases(filename)
 }
 
@@ -28,7 +28,7 @@ pub fn parse_validator_keys() -> Vec<CosmosPrivateKey> {
 /// command just like the validator keys themselves and stored in a
 /// similar file /orchestrator-phrases
 pub fn parse_orchestrator_keys() -> Vec<CosmosPrivateKey> {
-    let filename = "/testdata/orchestrator-keys";
+    let filename = "/testdata/orchestrator-phrases";
     parse_phrases(filename)
 }
 

@@ -81,7 +81,7 @@ $gravity $home2 keys add val $kbt --output json | jq . >> $n2dir/validator_key.j
 $gravity $home3 $cid init n3 &>/dev/null
 $gravity $home3 keys add val $kbt --output json | jq . >> $n3dir/validator_key.json
 
-find $home_dir -name validator_key.json | xargs cat | jq -r '.mnemonic' > $CHAINDIR/validator-keys
+find $home_dir -name validator_key.json | xargs cat | jq -r '.mnemonic' > $CHAINDIR/validator-phrases
 
 echo "Adding validator addresses to genesis files"
 $gravity $home0 add-genesis-account $($gravity $home0 keys show val -a $kbt) $coins &>/dev/null
@@ -99,7 +99,7 @@ $gravity $home1 keys add --dry-run=true --output=json orch | jq . >> $n1dir/orch
 $gravity $home2 keys add --dry-run=true --output=json orch | jq . >> $n2dir/orchestrator_key.json
 $gravity $home3 keys add --dry-run=true --output=json orch | jq . >> $n3dir/orchestrator_key.json
 
-find $home_dir -name orchestrator_key.json | xargs cat | jq -r '.mnemonic' > $CHAINDIR/orchestrator-keys
+find $home_dir -name orchestrator_key.json | xargs cat | jq -r '.mnemonic' > $CHAINDIR/orchestrator-phrases
 
 echo "Adding orchestrator keys to genesis"
 n0orchKey="$(jq .address $n0dir/orchestrator_key.json)"
