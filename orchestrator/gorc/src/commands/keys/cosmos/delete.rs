@@ -6,9 +6,9 @@ pub struct DeleteCosmosKeyCmd {
     pub name: String,
 }
 
-/// The `gork keys cosmos add [name] ` subcommand: delete private key
+/// The `gork keys cosmos delete [name] ` subcommand: delete the given key
 impl Runnable for DeleteCosmosKeyCmd {
     fn run(&self) {
-        // todo(shella): glue with signatory crate to rm key from fs
+        // todo: delete fn in signatory
     }
 }

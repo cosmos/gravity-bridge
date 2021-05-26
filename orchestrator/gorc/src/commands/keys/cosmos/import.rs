@@ -26,7 +26,7 @@ impl Runnable for ImportCosmosKeyCmd {
     fn run(&self) {
         let phrase = rpassword::read_password_from_tty(Some("Mnemonic: ")).unwrap();
         let mnemonic = Mnemonic::new(phrase.trim_end(), Default::default()).unwrap();
-        let seed = mnemonic.to_seed("TREZOR"); // TODO: password argument
+        let seed = mnemonic.to_seed("TREZOR"); // todo: password argument
         let xprv = XPrv::new(&seed).unwrap();
         let private_key_der = k256::SecretKey::from(xprv.private_key()).to_pkcs8_der();
 

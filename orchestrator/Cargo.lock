@@ -1513,6 +1513,7 @@ dependencies = [
  "k256",
  "once_cell",
  "pkcs8",
+ "rand_core 0.5.1",
  "regex",
  "rpassword",
  "serde",
