@@ -39,7 +39,7 @@ pub async fn find_latest_valset(
             .await?;
         // by default the lowest found valset goes first, we want the highest.
         all_valset_events.reverse();
-        println!("ALL VALSET EVENTS: {:#?}", all_valset_events);
+
         trace!("Found events {:?}", all_valset_events);
 
         // we take only the first event if we find any at all.
