@@ -92,8 +92,13 @@ pub async fn estimate_valset_cost(
             gas: Some(gas_limit.into()),
             value: Some(zero.into()),
             data: Some(
-                encode_valset_payload(new_valset.clone(), old_valset.clone(), confirms, gravity_id)?
-                    .into(),
+                encode_valset_payload(
+                    new_valset.clone(),
+                    old_valset.clone(),
+                    confirms,
+                    gravity_id,
+                )?
+                .into(),
             ),
         })
         .await?;
