@@ -63,7 +63,7 @@ impl ValsetConfirmResponse {
     ) -> Result<Self, GravityError> {
         Ok(ValsetConfirmResponse {
             eth_signer: input.ethereum_signer.parse()?,
-            nonce: input.nonce,
+            nonce: input.signer_set_nonce,
             eth_signature: EthSignature::from_bytes(&input.signature)?,
         })
     }

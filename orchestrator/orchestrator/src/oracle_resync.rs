@@ -13,8 +13,8 @@ use crate::get_with_retry::get_block_number_with_retry;
 use crate::get_with_retry::get_last_event_nonce_with_retry;
 use crate::get_with_retry::RETRY_TIME;
 
-/// This function retrieves the last event nonce this oracle has relayed to Cosmos
-/// it then uses the Ethereum indexes to determine what block the last entry
+/// This function retrieves the last event nonce that we have relayed to Cosmos
+/// it then uses the Ethereum indexes to find what block the last event we relayed is in
 pub async fn get_last_checked_block(
     grpc_client: GravityQueryClient<Channel>,
     our_cosmos_address: CosmosAddress,

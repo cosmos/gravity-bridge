@@ -288,8 +288,7 @@ const decode = (str: string): string =>
 
 async function getLatestValset(): Promise<SignerSetTx> {
   let queryService = await getQueryService();
-  const req = { nonce: Long.fromInt(0) };
-  const res = await queryService.SignerSetTx(req);
+  const res = await queryService.LatestSignerSetTx({});
   if (!res.signerSet) {
     console.log("Could not retrieve signer set");
     exit(1);

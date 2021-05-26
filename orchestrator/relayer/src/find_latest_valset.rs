@@ -1,6 +1,4 @@
-use clarity::Address as EthAddress;
 use clarity::{Address, Uint256};
-use ethereum_gravity::utils::get_valset_nonce;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::ValsetUpdatedEvent;
 use gravity_utils::{error::GravityError, types::Valset};
@@ -14,25 +12,12 @@ use web30::client::Web3;
 /// this will take longer.
 pub async fn find_latest_valset(
     grpc_client: &mut GravityQueryClient<Channel>,
-    our_ethereum_address: EthAddress,
     gravity_contract_address: Address,
     web3: &Web3,
 ) -> Result<Valset, GravityError> {
     const BLOCKS_TO_SEARCH: u128 = 5_000u128;
     let latest_block = web3.eth_block_number().await?;
     let mut current_block: Uint256 = latest_block.clone();
-    let latest_ethereum_valset =
-        get_valset_nonce(gravity_contract_address, our_ethereum_address, web3).await?;
-    println!(
-        "DELETE THIS LOG: LATEST ETHEREUM VALSET NONCE: {}",
-        latest_ethereum_valset
-    );
-    let cosmos_chain_valset =
-        cosmos_gravity::query::get_valset(grpc_client, latest_ethereum_valset).await?;
-    println!(
-        "DELETE THIS LOG: COSMOS VALSET RETREIVED: {:#?}",
-        cosmos_chain_valset
-    );
 
     while current_block.clone() > 0u8.into() {
         trace!(
@@ -54,7 +39,7 @@ pub async fn find_latest_valset(
             .await?;
         // by default the lowest found valset goes first, we want the highest.
         all_valset_events.reverse();
-
+        println!("ALL VALSET EVENTS: {:#?}", all_valset_events);
         trace!("Found events {:?}", all_valset_events);
 
         // we take only the first event if we find any at all.
@@ -62,12 +47,15 @@ pub async fn find_latest_valset(
             let event = &all_valset_events[0];
             match ValsetUpdatedEvent::from_log(event) {
                 Ok(event) => {
-                    let valset = Valset {
-                        nonce: event.event_nonce,
+                    let latest_eth_valset = Valset {
+                        nonce: event.valset_nonce,
                         members: event.members,
                     };
-                    check_if_valsets_differ(cosmos_chain_valset, &valset);
-                    return Ok(valset);
+                    let cosmos_chain_valset =
+                        cosmos_gravity::query::get_valset(grpc_client, latest_eth_valset.nonce)
+                            .await?;
+                    check_if_valsets_differ(cosmos_chain_valset, &&latest_eth_valset);
+                    return Ok(latest_eth_valset);
                 }
                 Err(e) => error!("Got valset event that we can't parse {}", e),
             }
@@ -88,6 +76,10 @@ pub async fn find_latest_valset(
 /// funds from the Gravity contract and have submitted a highjacking update. If slashing for off Cosmos chain
 /// Ethereum signatures is implemented you would put that handler here.
 fn check_if_valsets_differ(cosmos_valset: Option<Valset>, ethereum_valset: &Valset) {
+    println!(
+        "COSMOS VALSET {:#?}, ETHEREUM VALSET {:#?}",
+        cosmos_valset, ethereum_valset
+    );
     if cosmos_valset.is_none() && ethereum_valset.nonce == 0 {
         // bootstrapping case
         return;
@@ -96,18 +88,11 @@ fn check_if_valsets_differ(cosmos_valset: Option<Valset>, ethereum_valset: &Vals
         return;
     }
     let cosmos_valset = cosmos_valset.unwrap();
-    info!(
-        "DELETE THIS LOG: COSMOS VALSET: {:#?}, ETHEREUM VALSET: {:#?}",
-        cosmos_valset, ethereum_valset
-    );
     if cosmos_valset != *ethereum_valset {
-        if cosmos_valset.nonce != ethereum_valset.nonce {
-            error!(
-                "Cosmos has the wrong validator set for nonce {}. Possible bridge highjacking!",
-                ethereum_valset.nonce
-            );
-            return;
-        }
+        // if this is not true then we have a logic error on the Cosmos chain
+        // or with our Ethereum search
+        assert_eq!(cosmos_valset.nonce, ethereum_valset.nonce);
+
         let mut c_valset = cosmos_valset.members;
         let mut e_valset = ethereum_valset.members.clone();
         c_valset.sort();

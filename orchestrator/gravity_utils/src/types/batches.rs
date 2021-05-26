@@ -108,7 +108,7 @@ impl BatchConfirmResponse {
         input: gravity_proto::gravity::BatchTxSignature,
     ) -> Result<Self, GravityError> {
         Ok(BatchConfirmResponse {
-            nonce: input.nonce,
+            nonce: input.batch_nonce,
             token_contract: input.token_contract.parse()?,
             ethereum_signer: input.ethereum_signer.parse()?,
             eth_signature: EthSignature::from_bytes(&input.signature)?,

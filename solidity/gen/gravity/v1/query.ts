@@ -30,9 +30,10 @@ export interface ParamsResponse {
 
 /** rpc SignerSetTx */
 export interface SignerSetTxRequest {
-  /** NOTE: if nonce is zero then return the current */
-  nonce: Long;
+  signerSetNonce: Long;
 }
+
+export interface LatestSignerSetTxRequest {}
 
 export interface SignerSetTxResponse {
   signerSet?: SignerSetTx;
@@ -40,13 +41,8 @@ export interface SignerSetTxResponse {
 
 /** rpc BatchTx */
 export interface BatchTxRequest {
-  /** NOTE: if nonce is zero then return the current / last batch */
-  contractAddress: string;
-  /**
-   * TODO(levi) propose rename to 'token_contract' since that's what
-   * BatchTx uses or rename BatchTx.token_contract to contract_address
-   */
-  nonce: Long;
+  tokenContract: string;
+  batchNonce: Long;
 }
 
 export interface BatchTxResponse {
@@ -65,13 +61,7 @@ export interface ContractCallTxResponse {
 
 /** rpc SignerSetTxEthereumSignatures */
 export interface SignerSetTxEthereumSignaturesRequest {
-  /** NOTE: if address is passed, return only the signature from that validator */
-  nonce: Long;
-  /**
-   * NOTE: this address can be either a validator or an orchestrator address to
-   * filter by
-   */
-  address: string;
+  signerSetNonce: Long;
 }
 
 export interface SignerSetTxEthereumSignaturesResponse {
@@ -152,11 +142,6 @@ export interface BatchTxFeesResponse {
 export interface ContractCallTxEthereumSignaturesRequest {
   invalidationScope: Uint8Array;
   invalidationNonce: Long;
-  /**
-   * NOTE: this is an sdk.AccAddress and can represent either the
-   * orchestartor address or the cooresponding validator address
-   */
-  address: string;
 }
 
 export interface ContractCallTxEthereumSignaturesResponse {
@@ -164,13 +149,8 @@ export interface ContractCallTxEthereumSignaturesResponse {
 }
 
 export interface BatchTxEthereumSignaturesRequest {
-  nonce: Long;
-  contractAddress: string;
-  /**
-   * note if this address is empty return all sigs for a given batch.
-   * if not return only the signature for the give validator or orchestrator key
-   */
-  address: string;
+  batchNonce: Long;
+  tokenContract: string;
 }
 
 export interface BatchTxEthereumSignaturesResponse {
@@ -354,15 +334,15 @@ export const ParamsResponse = {
   },
 };
 
-const baseSignerSetTxRequest: object = { nonce: Long.UZERO };
+const baseSignerSetTxRequest: object = { signerSetNonce: Long.UZERO };
 
 export const SignerSetTxRequest = {
   encode(
     message: SignerSetTxRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (!message.nonce.isZero()) {
-      writer.uint32(8).uint64(message.nonce);
+    if (!message.signerSetNonce.isZero()) {
+      writer.uint32(8).uint64(message.signerSetNonce);
     }
     return writer;
   },
@@ -375,7 +355,7 @@ export const SignerSetTxRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.nonce = reader.uint64() as Long;
+          message.signerSetNonce = reader.uint64() as Long;
           break;
         default:
           reader.skipType(tag & 7);
@@ -387,28 +367,80 @@ export const SignerSetTxRequest = {
 
   fromJSON(object: any): SignerSetTxRequest {
     const message = { ...baseSignerSetTxRequest } as SignerSetTxRequest;
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = Long.fromString(object.nonce);
+    if (object.signerSetNonce !== undefined && object.signerSetNonce !== null) {
+      message.signerSetNonce = Long.fromString(object.signerSetNonce);
     } else {
-      message.nonce = Long.UZERO;
+      message.signerSetNonce = Long.UZERO;
     }
     return message;
   },
 
   toJSON(message: SignerSetTxRequest): unknown {
     const obj: any = {};
-    message.nonce !== undefined &&
-      (obj.nonce = (message.nonce || Long.UZERO).toString());
+    message.signerSetNonce !== undefined &&
+      (obj.signerSetNonce = (message.signerSetNonce || Long.UZERO).toString());
     return obj;
   },
 
   fromPartial(object: DeepPartial<SignerSetTxRequest>): SignerSetTxRequest {
     const message = { ...baseSignerSetTxRequest } as SignerSetTxRequest;
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = object.nonce as Long;
+    if (object.signerSetNonce !== undefined && object.signerSetNonce !== null) {
+      message.signerSetNonce = object.signerSetNonce as Long;
     } else {
-      message.nonce = Long.UZERO;
+      message.signerSetNonce = Long.UZERO;
     }
+    return message;
+  },
+};
+
+const baseLatestSignerSetTxRequest: object = {};
+
+export const LatestSignerSetTxRequest = {
+  encode(
+    _: LatestSignerSetTxRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): LatestSignerSetTxRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseLatestSignerSetTxRequest,
+    } as LatestSignerSetTxRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): LatestSignerSetTxRequest {
+    const message = {
+      ...baseLatestSignerSetTxRequest,
+    } as LatestSignerSetTxRequest;
+    return message;
+  },
+
+  toJSON(_: LatestSignerSetTxRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(
+    _: DeepPartial<LatestSignerSetTxRequest>
+  ): LatestSignerSetTxRequest {
+    const message = {
+      ...baseLatestSignerSetTxRequest,
+    } as LatestSignerSetTxRequest;
     return message;
   },
 };
@@ -474,18 +506,21 @@ export const SignerSetTxResponse = {
   },
 };
 
-const baseBatchTxRequest: object = { contractAddress: "", nonce: Long.UZERO };
+const baseBatchTxRequest: object = {
+  tokenContract: "",
+  batchNonce: Long.UZERO,
+};
 
 export const BatchTxRequest = {
   encode(
     message: BatchTxRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.contractAddress !== "") {
-      writer.uint32(10).string(message.contractAddress);
+    if (message.tokenContract !== "") {
+      writer.uint32(10).string(message.tokenContract);
     }
-    if (!message.nonce.isZero()) {
-      writer.uint32(16).uint64(message.nonce);
+    if (!message.batchNonce.isZero()) {
+      writer.uint32(16).uint64(message.batchNonce);
     }
     return writer;
   },
@@ -498,10 +533,10 @@ export const BatchTxRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.contractAddress = reader.string();
+          message.tokenContract = reader.string();
           break;
         case 2:
-          message.nonce = reader.uint64() as Long;
+          message.batchNonce = reader.uint64() as Long;
           break;
         default:
           reader.skipType(tag & 7);
@@ -513,45 +548,39 @@ export const BatchTxRequest = {
 
   fromJSON(object: any): BatchTxRequest {
     const message = { ...baseBatchTxRequest } as BatchTxRequest;
-    if (
-      object.contractAddress !== undefined &&
-      object.contractAddress !== null
-    ) {
-      message.contractAddress = String(object.contractAddress);
+    if (object.tokenContract !== undefined && object.tokenContract !== null) {
+      message.tokenContract = String(object.tokenContract);
     } else {
-      message.contractAddress = "";
+      message.tokenContract = "";
     }
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = Long.fromString(object.nonce);
+    if (object.batchNonce !== undefined && object.batchNonce !== null) {
+      message.batchNonce = Long.fromString(object.batchNonce);
     } else {
-      message.nonce = Long.UZERO;
+      message.batchNonce = Long.UZERO;
     }
     return message;
   },
 
   toJSON(message: BatchTxRequest): unknown {
     const obj: any = {};
-    message.contractAddress !== undefined &&
-      (obj.contractAddress = message.contractAddress);
-    message.nonce !== undefined &&
-      (obj.nonce = (message.nonce || Long.UZERO).toString());
+    message.tokenContract !== undefined &&
+      (obj.tokenContract = message.tokenContract);
+    message.batchNonce !== undefined &&
+      (obj.batchNonce = (message.batchNonce || Long.UZERO).toString());
     return obj;
   },
 
   fromPartial(object: DeepPartial<BatchTxRequest>): BatchTxRequest {
     const message = { ...baseBatchTxRequest } as BatchTxRequest;
-    if (
-      object.contractAddress !== undefined &&
-      object.contractAddress !== null
-    ) {
-      message.contractAddress = object.contractAddress;
+    if (object.tokenContract !== undefined && object.tokenContract !== null) {
+      message.tokenContract = object.tokenContract;
     } else {
-      message.contractAddress = "";
+      message.tokenContract = "";
     }
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = object.nonce as Long;
+    if (object.batchNonce !== undefined && object.batchNonce !== null) {
+      message.batchNonce = object.batchNonce as Long;
     } else {
-      message.nonce = Long.UZERO;
+      message.batchNonce = Long.UZERO;
     }
     return message;
   },
@@ -786,8 +815,7 @@ export const ContractCallTxResponse = {
 };
 
 const baseSignerSetTxEthereumSignaturesRequest: object = {
-  nonce: Long.UZERO,
-  address: "",
+  signerSetNonce: Long.UZERO,
 };
 
 export const SignerSetTxEthereumSignaturesRequest = {
@@ -795,11 +823,8 @@ export const SignerSetTxEthereumSignaturesRequest = {
     message: SignerSetTxEthereumSignaturesRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (!message.nonce.isZero()) {
-      writer.uint32(8).uint64(message.nonce);
-    }
-    if (message.address !== "") {
-      writer.uint32(18).string(message.address);
+    if (!message.signerSetNonce.isZero()) {
+      writer.uint32(8).uint64(message.signerSetNonce);
     }
     return writer;
   },
@@ -817,10 +842,7 @@ export const SignerSetTxEthereumSignaturesRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.nonce = reader.uint64() as Long;
-          break;
-        case 2:
-          message.address = reader.string();
+          message.signerSetNonce = reader.uint64() as Long;
           break;
         default:
           reader.skipType(tag & 7);
@@ -834,24 +856,18 @@ export const SignerSetTxEthereumSignaturesRequest = {
     const message = {
       ...baseSignerSetTxEthereumSignaturesRequest,
     } as SignerSetTxEthereumSignaturesRequest;
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = Long.fromString(object.nonce);
+    if (object.signerSetNonce !== undefined && object.signerSetNonce !== null) {
+      message.signerSetNonce = Long.fromString(object.signerSetNonce);
     } else {
-      message.nonce = Long.UZERO;
-    }
-    if (object.address !== undefined && object.address !== null) {
-      message.address = String(object.address);
-    } else {
-      message.address = "";
+      message.signerSetNonce = Long.UZERO;
     }
     return message;
   },
 
   toJSON(message: SignerSetTxEthereumSignaturesRequest): unknown {
     const obj: any = {};
-    message.nonce !== undefined &&
-      (obj.nonce = (message.nonce || Long.UZERO).toString());
-    message.address !== undefined && (obj.address = message.address);
+    message.signerSetNonce !== undefined &&
+      (obj.signerSetNonce = (message.signerSetNonce || Long.UZERO).toString());
     return obj;
   },
 
@@ -861,15 +877,10 @@ export const SignerSetTxEthereumSignaturesRequest = {
     const message = {
       ...baseSignerSetTxEthereumSignaturesRequest,
     } as SignerSetTxEthereumSignaturesRequest;
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = object.nonce as Long;
+    if (object.signerSetNonce !== undefined && object.signerSetNonce !== null) {
+      message.signerSetNonce = object.signerSetNonce as Long;
     } else {
-      message.nonce = Long.UZERO;
-    }
-    if (object.address !== undefined && object.address !== null) {
-      message.address = object.address;
-    } else {
-      message.address = "";
+      message.signerSetNonce = Long.UZERO;
     }
     return message;
   },
@@ -1978,7 +1989,6 @@ export const BatchTxFeesResponse = {
 
 const baseContractCallTxEthereumSignaturesRequest: object = {
   invalidationNonce: Long.UZERO,
-  address: "",
 };
 
 export const ContractCallTxEthereumSignaturesRequest = {
@@ -1991,9 +2001,6 @@ export const ContractCallTxEthereumSignaturesRequest = {
     }
     if (!message.invalidationNonce.isZero()) {
       writer.uint32(16).uint64(message.invalidationNonce);
-    }
-    if (message.address !== "") {
-      writer.uint32(26).string(message.address);
     }
     return writer;
   },
@@ -2016,9 +2023,6 @@ export const ContractCallTxEthereumSignaturesRequest = {
           break;
         case 2:
           message.invalidationNonce = reader.uint64() as Long;
-          break;
-        case 3:
-          message.address = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -2047,11 +2051,6 @@ export const ContractCallTxEthereumSignaturesRequest = {
     } else {
       message.invalidationNonce = Long.UZERO;
     }
-    if (object.address !== undefined && object.address !== null) {
-      message.address = String(object.address);
-    } else {
-      message.address = "";
-    }
     return message;
   },
 
@@ -2067,7 +2066,6 @@ export const ContractCallTxEthereumSignaturesRequest = {
       (obj.invalidationNonce = (
         message.invalidationNonce || Long.UZERO
       ).toString());
-    message.address !== undefined && (obj.address = message.address);
     return obj;
   },
 
@@ -2092,11 +2090,6 @@ export const ContractCallTxEthereumSignaturesRequest = {
       message.invalidationNonce = object.invalidationNonce as Long;
     } else {
       message.invalidationNonce = Long.UZERO;
-    }
-    if (object.address !== undefined && object.address !== null) {
-      message.address = object.address;
-    } else {
-      message.address = "";
     }
     return message;
   },
@@ -2183,9 +2176,8 @@ export const ContractCallTxEthereumSignaturesResponse = {
 };
 
 const baseBatchTxEthereumSignaturesRequest: object = {
-  nonce: Long.UZERO,
-  contractAddress: "",
-  address: "",
+  batchNonce: Long.UZERO,
+  tokenContract: "",
 };
 
 export const BatchTxEthereumSignaturesRequest = {
@@ -2193,14 +2185,11 @@ export const BatchTxEthereumSignaturesRequest = {
     message: BatchTxEthereumSignaturesRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (!message.nonce.isZero()) {
-      writer.uint32(8).uint64(message.nonce);
+    if (!message.batchNonce.isZero()) {
+      writer.uint32(8).uint64(message.batchNonce);
     }
-    if (message.contractAddress !== "") {
-      writer.uint32(18).string(message.contractAddress);
-    }
-    if (message.address !== "") {
-      writer.uint32(26).string(message.address);
+    if (message.tokenContract !== "") {
+      writer.uint32(18).string(message.tokenContract);
     }
     return writer;
   },
@@ -2218,13 +2207,10 @@ export const BatchTxEthereumSignaturesRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.nonce = reader.uint64() as Long;
+          message.batchNonce = reader.uint64() as Long;
           break;
         case 2:
-          message.contractAddress = reader.string();
-          break;
-        case 3:
-          message.address = reader.string();
+          message.tokenContract = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -2238,34 +2224,25 @@ export const BatchTxEthereumSignaturesRequest = {
     const message = {
       ...baseBatchTxEthereumSignaturesRequest,
     } as BatchTxEthereumSignaturesRequest;
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = Long.fromString(object.nonce);
+    if (object.batchNonce !== undefined && object.batchNonce !== null) {
+      message.batchNonce = Long.fromString(object.batchNonce);
     } else {
-      message.nonce = Long.UZERO;
+      message.batchNonce = Long.UZERO;
     }
-    if (
-      object.contractAddress !== undefined &&
-      object.contractAddress !== null
-    ) {
-      message.contractAddress = String(object.contractAddress);
+    if (object.tokenContract !== undefined && object.tokenContract !== null) {
+      message.tokenContract = String(object.tokenContract);
     } else {
-      message.contractAddress = "";
-    }
-    if (object.address !== undefined && object.address !== null) {
-      message.address = String(object.address);
-    } else {
-      message.address = "";
+      message.tokenContract = "";
     }
     return message;
   },
 
   toJSON(message: BatchTxEthereumSignaturesRequest): unknown {
     const obj: any = {};
-    message.nonce !== undefined &&
-      (obj.nonce = (message.nonce || Long.UZERO).toString());
-    message.contractAddress !== undefined &&
-      (obj.contractAddress = message.contractAddress);
-    message.address !== undefined && (obj.address = message.address);
+    message.batchNonce !== undefined &&
+      (obj.batchNonce = (message.batchNonce || Long.UZERO).toString());
+    message.tokenContract !== undefined &&
+      (obj.tokenContract = message.tokenContract);
     return obj;
   },
 
@@ -2275,23 +2252,15 @@ export const BatchTxEthereumSignaturesRequest = {
     const message = {
       ...baseBatchTxEthereumSignaturesRequest,
     } as BatchTxEthereumSignaturesRequest;
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = object.nonce as Long;
+    if (object.batchNonce !== undefined && object.batchNonce !== null) {
+      message.batchNonce = object.batchNonce as Long;
     } else {
-      message.nonce = Long.UZERO;
+      message.batchNonce = Long.UZERO;
     }
-    if (
-      object.contractAddress !== undefined &&
-      object.contractAddress !== null
-    ) {
-      message.contractAddress = object.contractAddress;
+    if (object.tokenContract !== undefined && object.tokenContract !== null) {
+      message.tokenContract = object.tokenContract;
     } else {
-      message.contractAddress = "";
-    }
-    if (object.address !== undefined && object.address !== null) {
-      message.address = object.address;
-    } else {
-      message.address = "";
+      message.tokenContract = "";
     }
     return message;
   },
@@ -3685,6 +3654,9 @@ export interface Query {
   Params(request: ParamsRequest): Promise<ParamsResponse>;
   /** get info on individual outgoing data */
   SignerSetTx(request: SignerSetTxRequest): Promise<SignerSetTxResponse>;
+  LatestSignerSetTx(
+    request: LatestSignerSetTxRequest
+  ): Promise<SignerSetTxResponse>;
   BatchTx(request: BatchTxRequest): Promise<BatchTxResponse>;
   ContractCallTx(
     request: ContractCallTxRequest
@@ -3757,6 +3729,7 @@ export class QueryClientImpl implements Query {
     this.rpc = rpc;
     this.Params = this.Params.bind(this);
     this.SignerSetTx = this.SignerSetTx.bind(this);
+    this.LatestSignerSetTx = this.LatestSignerSetTx.bind(this);
     this.BatchTx = this.BatchTx.bind(this);
     this.ContractCallTx = this.ContractCallTx.bind(this);
     this.SignerSetTxs = this.SignerSetTxs.bind(this);
@@ -3803,6 +3776,20 @@ export class QueryClientImpl implements Query {
   SignerSetTx(request: SignerSetTxRequest): Promise<SignerSetTxResponse> {
     const data = SignerSetTxRequest.encode(request).finish();
     const promise = this.rpc.request("gravity.v1.Query", "SignerSetTx", data);
+    return promise.then((data) =>
+      SignerSetTxResponse.decode(new _m0.Reader(data))
+    );
+  }
+
+  LatestSignerSetTx(
+    request: LatestSignerSetTxRequest
+  ): Promise<SignerSetTxResponse> {
+    const data = LatestSignerSetTxRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "gravity.v1.Query",
+      "LatestSignerSetTx",
+      data
+    );
     return promise.then((data) =>
       SignerSetTxResponse.decode(new _m0.Reader(data))
     );

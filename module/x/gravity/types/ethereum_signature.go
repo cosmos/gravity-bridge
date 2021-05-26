@@ -34,11 +34,11 @@ func (u *BatchTxSignature) GetSigner() common.Address {
 ///////////////////
 
 func (sstx *SignerSetTxSignature) GetStoreIndex() []byte {
-	return MakeSignerSetTxKey(sstx.Nonce)
+	return MakeSignerSetTxKey(sstx.SignerSetNonce)
 }
 
 func (btx *BatchTxSignature) GetStoreIndex() []byte {
-	return MakeBatchTxKey(common.HexToAddress(btx.TokenContract), btx.Nonce)
+	return MakeBatchTxKey(common.HexToAddress(btx.TokenContract), btx.BatchNonce)
 }
 
 func (cctx *ContractCallTxSignature) GetStoreIndex() []byte {
@@ -50,7 +50,7 @@ func (cctx *ContractCallTxSignature) GetStoreIndex() []byte {
 //////////////
 
 func (u *SignerSetTxSignature) Validate() error {
-	if u.Nonce == 0 {
+	if u.SignerSetNonce == 0 {
 		return fmt.Errorf("nonce must be set")
 	}
 	if !common.IsHexAddress(u.EthereumSigner) {
@@ -79,7 +79,7 @@ func (u *ContractCallTxSignature) Validate() error {
 }
 
 func (u *BatchTxSignature) Validate() error {
-	if u.Nonce == 0 {
+	if u.BatchNonce == 0 {
 		return fmt.Errorf("nonce must be set")
 	}
 	if !common.IsHexAddress(u.TokenContract) {

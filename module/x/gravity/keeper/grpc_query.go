@@ -3,11 +3,11 @@ package keeper
 import (
 	"context"
 
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -24,86 +24,67 @@ func (k Keeper) Params(c context.Context, req *types.ParamsRequest) (*types.Para
 	return &types.ParamsResponse{Params: params}, nil
 }
 
-func (k Keeper) SignerSetTx(c context.Context, req *types.SignerSetTxRequest) (*types.SignerSetTxResponse, error) {
+func (k Keeper) LatestSignerSetTx(c context.Context, req *types.LatestSignerSetTxRequest) (*types.SignerSetTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// TODO: audit once we finalize storage
 	var otx types.OutgoingTx
 
-	// given a 0 nonce, we will retrieve the latest by retrieving the last value off of
-	// the reverse iterator for signer sets. As nonces only increase, this should result in the latest signer set.
-	if req.Nonce == 0 {
-		store := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.OutgoingTxKey}, types.SignerSetTxPrefixByte))
-		iter := store.ReverseIterator(nil, nil)
-		defer iter.Close()
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.OutgoingTxKey}, types.SignerSetTxPrefixByte))
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
 
-		var any cdctypes.Any
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &any)
+	var any cdctypes.Any
+	k.cdc.MustUnmarshalBinaryBare(iter.Value(), &any)
 
-		if err := k.cdc.UnpackAny(&any, &otx); err != nil {
-			return nil, err
-		}
-	} else {
-		storeIndex := sdk.Uint64ToBigEndian(req.Nonce)
-		otx = k.GetOutgoingTx(sdk.UnwrapSDKContext(c), types.MakeOutgoingTxKey(storeIndex))
-		if otx == nil {
-			return nil, status.Errorf(codes.InvalidArgument, "no signer set found for %d", req.Nonce)
-		}
+	if err := k.cdc.UnpackAny(&any, &otx); err != nil {
+		return nil, err
 	}
 
 	ss, ok := otx.(*types.SignerSetTx)
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "couldn't cast to signer set for %d", req.Nonce)
+		return nil, status.Errorf(codes.InvalidArgument, "couldn't cast to signer set for latest")
 	}
 
-	// TODO: ensure that latest signer set tx nonce index is set properly
+	return &types.SignerSetTxResponse{SignerSet: ss}, nil
+}
+
+func (k Keeper) SignerSetTx(c context.Context, req *types.SignerSetTxRequest) (*types.SignerSetTxResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	var otx types.OutgoingTx
+
+	storeIndex := sdk.Uint64ToBigEndian(req.SignerSetNonce)
+	otx = k.GetOutgoingTx(ctx, types.MakeOutgoingTxKey(storeIndex))
+	if otx == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no signer set found for %d", req.SignerSetNonce)
+	}
+
+	ss, ok := otx.(*types.SignerSetTx)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "couldn't cast to signer set for %d", req.SignerSetNonce)
+	}
 
 	return &types.SignerSetTxResponse{SignerSet: ss}, nil
 }
 
 func (k Keeper) BatchTx(c context.Context, req *types.BatchTxRequest) (*types.BatchTxResponse, error) {
-	if !common.IsHexAddress(req.ContractAddress) {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid hex address %s", req.ContractAddress)
+	if !common.IsHexAddress(req.TokenContract) {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid hex address %s", req.TokenContract)
 	}
-	ctx := sdk.UnwrapSDKContext(c)
+
 	res := &types.BatchTxResponse{}
 
-	if req.Nonce == 0 {
-		// given a 0 nonce, we will retrieve the latest by iterating through batch txs in reverse,
-		// as nonces should be increasing over time. We must iterator through potentially multiple
-		// batch txs because we must compare the contract address
-		store := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.OutgoingTxKey}, types.BatchTxPrefixByte))
-		iter := store.ReverseIterator(nil, nil)
-		defer iter.Close()
-		for ; iter.Valid(); iter.Next() {
-			var any cdctypes.Any
-			k.cdc.MustUnmarshalBinaryBare(iter.Value(), &any)
-			var otx types.OutgoingTx
-			if err := k.cdc.UnpackAny(&any, &otx); err != nil {
-				panic(err)
-			}
-			batch, ok := otx.(*types.BatchTx)
-			if !ok {
-				return nil, status.Errorf(codes.InvalidArgument, "couldn't cast to batch tx for %d %s", req.Nonce, req.ContractAddress)
-			}
-			if batch.TokenContract == req.ContractAddress {
-				res.Batch = batch
-				break
-			}
-		}
-	} else {
-		// TODO: audit once we finalize storage
-		storeIndex := append(sdk.Uint64ToBigEndian(req.Nonce), common.Hex2Bytes(req.ContractAddress)...)
-		otx := k.GetOutgoingTx(sdk.UnwrapSDKContext(c), types.MakeOutgoingTxKey(storeIndex))
-		if otx == nil {
-			return nil, status.Errorf(codes.InvalidArgument, "no batch tx found for %d %s", req.Nonce, req.ContractAddress)
-		}
-		batch, ok := otx.(*types.BatchTx)
-		if !ok {
-			return nil, status.Errorf(codes.InvalidArgument, "couldn't cast to batch tx for %d %s", req.Nonce, req.ContractAddress)
-		}
-		res.Batch = batch
+	storeIndex := append(sdk.Uint64ToBigEndian(req.BatchNonce), common.Hex2Bytes(req.TokenContract)...)
+	otx := k.GetOutgoingTx(sdk.UnwrapSDKContext(c), types.MakeOutgoingTxKey(storeIndex))
+	if otx == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no batch tx found for %d %s", req.BatchNonce, req.TokenContract)
 	}
+	batch, ok := otx.(*types.BatchTx)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "couldn't cast to batch tx for %d %s", req.BatchNonce, req.TokenContract)
+	}
+	res.Batch = batch
 
 	return res, nil
 }
@@ -119,8 +100,6 @@ func (k Keeper) ContractCallTx(c context.Context, req *types.ContractCallTxReque
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "couldn't cast to contract call for %d %s", req.InvalidationNonce, req.InvalidationScope)
 	}
-
-	// TODO: figure out how to call latest
 
 	return &types.ContractCallTxResponse{LogicCall: cctx}, nil
 }
@@ -179,59 +158,52 @@ func (k Keeper) ContractCallTxs(c context.Context, req *types.ContractCallTxsReq
 
 func (k Keeper) SignerSetTxEthereumSignatures(c context.Context, req *types.SignerSetTxEthereumSignaturesRequest) (*types.SignerSetTxEthereumSignaturesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	key := types.MakeSignerSetTxKey(req.Nonce)
-	if req.Address != "" {
-		val, err := k.getSignerValidator(ctx, req.Address)
-		if err != nil {
-			return nil, err
-		}
-		return &types.SignerSetTxEthereumSignaturesResponse{Signature: []hexutil.Bytes{k.getEthereumSignature(ctx, key, val)}}, nil
-	}
+	key := types.MakeSignerSetTxKey(req.SignerSetNonce)
 
-	var out []hexutil.Bytes
-	k.iterateEthereumSignatures(ctx, key, func(_ sdk.ValAddress, sig hexutil.Bytes) bool {
-		out = append(out, sig)
+	var out []*types.SignerSetTxSignature
+	k.iterateEthereumSignatures(ctx, key, func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+		out = append(out, &types.SignerSetTxSignature{
+			SignerSetNonce: req.SignerSetNonce,
+			EthereumSigner: k.GetValidatorEthereumAddress(ctx, val).Hex(),
+			Signature:      sig,
+		})
 		return false
 	})
-	return &types.SignerSetTxEthereumSignaturesResponse{Signature: out}, nil
+	return &types.SignerSetTxEthereumSignaturesResponse{Signatures: out}, nil
 }
 
 func (k Keeper) BatchTxEthereumSignatures(c context.Context, req *types.BatchTxEthereumSignaturesRequest) (*types.BatchTxEthereumSignaturesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	key := types.MakeBatchTxKey(common.HexToAddress(req.ContractAddress), req.Nonce)
-	if req.Address != "" {
-		val, err := k.getSignerValidator(ctx, req.Address)
-		if err != nil {
-			return nil, err
-		}
-		return &types.BatchTxEthereumSignaturesResponse{Signature: [][]byte{k.getEthereumSignature(ctx, key, val)}}, nil
-	}
+	key := types.MakeBatchTxKey(common.HexToAddress(req.TokenContract), req.BatchNonce)
 
-	var out [][]byte
-	k.iterateEthereumSignatures(ctx, key, func(_ sdk.ValAddress, sig hexutil.Bytes) bool {
-		out = append(out, sig)
+	var out []*types.BatchTxSignature
+	k.iterateEthereumSignatures(ctx, key, func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+		out = append(out, &types.BatchTxSignature{
+			TokenContract:  req.TokenContract,
+			BatchNonce:     req.BatchNonce,
+			EthereumSigner: k.GetValidatorEthereumAddress(ctx, val).Hex(),
+			Signature:      sig,
+		})
 		return false
 	})
-	return &types.BatchTxEthereumSignaturesResponse{Signature: out}, nil
+	return &types.BatchTxEthereumSignaturesResponse{Signatures: out}, nil
 }
 
 func (k Keeper) ContractCallTxEthereumSignatures(c context.Context, req *types.ContractCallTxEthereumSignaturesRequest) (*types.ContractCallTxEthereumSignaturesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	key := types.MakeContractCallTxKey(req.InvalidationScope, req.InvalidationNonce)
-	if req.Address != "" {
-		val, err := k.getSignerValidator(ctx, req.Address)
-		if err != nil {
-			return nil, err
-		}
-		return &types.ContractCallTxEthereumSignaturesResponse{Signature: [][]byte{k.getEthereumSignature(ctx, key, val)}}, nil
-	}
 
-	var out [][]byte
-	k.iterateEthereumSignatures(ctx, key, func(_ sdk.ValAddress, sig hexutil.Bytes) bool {
-		out = append(out, sig)
+	var out []*types.ContractCallTxSignature
+	k.iterateEthereumSignatures(ctx, key, func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+		out = append(out, &types.ContractCallTxSignature{
+			InvalidationScope: req.InvalidationScope,
+			InvalidationNonce: req.InvalidationNonce,
+			EthereumSigner:    k.GetValidatorEthereumAddress(ctx, val).Hex(),
+			Signature:         sig,
+		})
 		return false
 	})
-	return &types.ContractCallTxEthereumSignaturesResponse{Signature: out}, nil
+	return &types.ContractCallTxEthereumSignaturesResponse{Signatures: out}, nil
 }
 
 func (k Keeper) PendingSignerSetTxEthereumSignatures(c context.Context, req *types.PendingSignerSetTxEthereumSignaturesRequest) (*types.PendingSignerSetTxEthereumSignaturesResponse, error) {

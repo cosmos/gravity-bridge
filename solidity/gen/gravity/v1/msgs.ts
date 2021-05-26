@@ -75,7 +75,7 @@ export interface ContractCallTxSignature {
 /** BatchTxSignature is a signature on behalf of a validator for a BatchTx. */
 export interface BatchTxSignature {
   tokenContract: string;
-  nonce: Long;
+  batchNonce: Long;
   ethereumSigner: string;
   signature: Uint8Array;
 }
@@ -85,7 +85,7 @@ export interface BatchTxSignature {
  * SignerSetTx
  */
 export interface SignerSetTxSignature {
-  nonce: Long;
+  signerSetNonce: Long;
   ethereumSigner: string;
   signature: Uint8Array;
 }
@@ -868,7 +868,7 @@ export const ContractCallTxSignature = {
 
 const baseBatchTxSignature: object = {
   tokenContract: "",
-  nonce: Long.UZERO,
+  batchNonce: Long.UZERO,
   ethereumSigner: "",
 };
 
@@ -880,8 +880,8 @@ export const BatchTxSignature = {
     if (message.tokenContract !== "") {
       writer.uint32(10).string(message.tokenContract);
     }
-    if (!message.nonce.isZero()) {
-      writer.uint32(16).uint64(message.nonce);
+    if (!message.batchNonce.isZero()) {
+      writer.uint32(16).uint64(message.batchNonce);
     }
     if (message.ethereumSigner !== "") {
       writer.uint32(26).string(message.ethereumSigner);
@@ -904,7 +904,7 @@ export const BatchTxSignature = {
           message.tokenContract = reader.string();
           break;
         case 2:
-          message.nonce = reader.uint64() as Long;
+          message.batchNonce = reader.uint64() as Long;
           break;
         case 3:
           message.ethereumSigner = reader.string();
@@ -928,10 +928,10 @@ export const BatchTxSignature = {
     } else {
       message.tokenContract = "";
     }
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = Long.fromString(object.nonce);
+    if (object.batchNonce !== undefined && object.batchNonce !== null) {
+      message.batchNonce = Long.fromString(object.batchNonce);
     } else {
-      message.nonce = Long.UZERO;
+      message.batchNonce = Long.UZERO;
     }
     if (object.ethereumSigner !== undefined && object.ethereumSigner !== null) {
       message.ethereumSigner = String(object.ethereumSigner);
@@ -948,8 +948,8 @@ export const BatchTxSignature = {
     const obj: any = {};
     message.tokenContract !== undefined &&
       (obj.tokenContract = message.tokenContract);
-    message.nonce !== undefined &&
-      (obj.nonce = (message.nonce || Long.UZERO).toString());
+    message.batchNonce !== undefined &&
+      (obj.batchNonce = (message.batchNonce || Long.UZERO).toString());
     message.ethereumSigner !== undefined &&
       (obj.ethereumSigner = message.ethereumSigner);
     message.signature !== undefined &&
@@ -966,10 +966,10 @@ export const BatchTxSignature = {
     } else {
       message.tokenContract = "";
     }
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = object.nonce as Long;
+    if (object.batchNonce !== undefined && object.batchNonce !== null) {
+      message.batchNonce = object.batchNonce as Long;
     } else {
-      message.nonce = Long.UZERO;
+      message.batchNonce = Long.UZERO;
     }
     if (object.ethereumSigner !== undefined && object.ethereumSigner !== null) {
       message.ethereumSigner = object.ethereumSigner;
@@ -986,7 +986,7 @@ export const BatchTxSignature = {
 };
 
 const baseSignerSetTxSignature: object = {
-  nonce: Long.UZERO,
+  signerSetNonce: Long.UZERO,
   ethereumSigner: "",
 };
 
@@ -995,8 +995,8 @@ export const SignerSetTxSignature = {
     message: SignerSetTxSignature,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (!message.nonce.isZero()) {
-      writer.uint32(8).uint64(message.nonce);
+    if (!message.signerSetNonce.isZero()) {
+      writer.uint32(8).uint64(message.signerSetNonce);
     }
     if (message.ethereumSigner !== "") {
       writer.uint32(18).string(message.ethereumSigner);
@@ -1019,7 +1019,7 @@ export const SignerSetTxSignature = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.nonce = reader.uint64() as Long;
+          message.signerSetNonce = reader.uint64() as Long;
           break;
         case 2:
           message.ethereumSigner = reader.string();
@@ -1038,10 +1038,10 @@ export const SignerSetTxSignature = {
   fromJSON(object: any): SignerSetTxSignature {
     const message = { ...baseSignerSetTxSignature } as SignerSetTxSignature;
     message.signature = new Uint8Array();
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = Long.fromString(object.nonce);
+    if (object.signerSetNonce !== undefined && object.signerSetNonce !== null) {
+      message.signerSetNonce = Long.fromString(object.signerSetNonce);
     } else {
-      message.nonce = Long.UZERO;
+      message.signerSetNonce = Long.UZERO;
     }
     if (object.ethereumSigner !== undefined && object.ethereumSigner !== null) {
       message.ethereumSigner = String(object.ethereumSigner);
@@ -1056,8 +1056,8 @@ export const SignerSetTxSignature = {
 
   toJSON(message: SignerSetTxSignature): unknown {
     const obj: any = {};
-    message.nonce !== undefined &&
-      (obj.nonce = (message.nonce || Long.UZERO).toString());
+    message.signerSetNonce !== undefined &&
+      (obj.signerSetNonce = (message.signerSetNonce || Long.UZERO).toString());
     message.ethereumSigner !== undefined &&
       (obj.ethereumSigner = message.ethereumSigner);
     message.signature !== undefined &&
@@ -1069,10 +1069,10 @@ export const SignerSetTxSignature = {
 
   fromPartial(object: DeepPartial<SignerSetTxSignature>): SignerSetTxSignature {
     const message = { ...baseSignerSetTxSignature } as SignerSetTxSignature;
-    if (object.nonce !== undefined && object.nonce !== null) {
-      message.nonce = object.nonce as Long;
+    if (object.signerSetNonce !== undefined && object.signerSetNonce !== null) {
+      message.signerSetNonce = object.signerSetNonce as Long;
     } else {
-      message.nonce = Long.UZERO;
+      message.signerSetNonce = Long.UZERO;
     }
     if (object.ethereumSigner !== undefined && object.ethereumSigner !== null) {
       message.ethereumSigner = object.ethereumSigner;

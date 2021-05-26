@@ -115,7 +115,7 @@ pub async fn send_valset_confirms(
         );
         let confirm = proto::SignerSetTxSignature {
             ethereum_signer: our_eth_address.to_string(),
-            nonce: valset.nonce,
+            signer_set_nonce: valset.nonce,
             signature: eth_signature.to_bytes().to_vec(),
         };
 
@@ -173,7 +173,7 @@ pub async fn send_batch_confirm(
         );
         let confirm = proto::BatchTxSignature {
             token_contract: batch.token_contract.to_string(),
-            nonce: batch.nonce,
+            batch_nonce: batch.nonce,
             ethereum_signer: our_eth_address.to_string(),
             signature: bytes_to_hex_str(&eth_signature.to_bytes())
                 .as_bytes()

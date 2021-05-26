@@ -179,7 +179,7 @@ pub struct BatchTxSignature {
     #[prost(string, tag = "1")]
     pub token_contract: ::prost::alloc::string::String,
     #[prost(uint64, tag = "2")]
-    pub nonce: u64,
+    pub batch_nonce: u64,
     #[prost(string, tag = "3")]
     pub ethereum_signer: ::prost::alloc::string::String,
     #[prost(bytes = "vec", tag = "4")]
@@ -190,7 +190,7 @@ pub struct BatchTxSignature {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignerSetTxSignature {
     #[prost(uint64, tag = "1")]
-    pub nonce: u64,
+    pub signer_set_nonce: u64,
     #[prost(string, tag = "2")]
     pub ethereum_signer: ::prost::alloc::string::String,
     #[prost(bytes = "vec", tag = "3")]
@@ -573,10 +573,11 @@ pub struct ParamsResponse {
 ///  rpc SignerSetTx
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignerSetTxRequest {
-    /// NOTE: if nonce is zero then return the current
     #[prost(uint64, tag = "1")]
-    pub nonce: u64,
+    pub signer_set_nonce: u64,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LatestSignerSetTxRequest {}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignerSetTxResponse {
     #[prost(message, optional, tag = "1")]
@@ -585,13 +586,10 @@ pub struct SignerSetTxResponse {
 ///  rpc BatchTx
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchTxRequest {
-    /// NOTE: if nonce is zero then return the current / last batch
     #[prost(string, tag = "1")]
-    pub contract_address: ::prost::alloc::string::String,
-    /// TODO(levi) propose rename to 'token_contract' since that's what
-    /// BatchTx uses or rename BatchTx.token_contract to contract_address
+    pub token_contract: ::prost::alloc::string::String,
     #[prost(uint64, tag = "2")]
-    pub nonce: u64,
+    pub batch_nonce: u64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchTxResponse {
@@ -614,13 +612,8 @@ pub struct ContractCallTxResponse {
 /// rpc SignerSetTxEthereumSignatures
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignerSetTxEthereumSignaturesRequest {
-    /// NOTE: if address is passed, return only the signature from that validator
     #[prost(uint64, tag = "1")]
-    pub nonce: u64,
-    /// NOTE: this address can be either a validator or an orchestrator address to
-    /// filter by
-    #[prost(string, tag = "2")]
-    pub address: ::prost::alloc::string::String,
+    pub signer_set_nonce: u64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignerSetTxEthereumSignaturesResponse {
@@ -726,10 +719,6 @@ pub struct ContractCallTxEthereumSignaturesRequest {
     pub invalidation_scope: ::prost::alloc::vec::Vec<u8>,
     #[prost(uint64, tag = "2")]
     pub invalidation_nonce: u64,
-    /// NOTE: this is an sdk.AccAddress and can represent either the
-    /// orchestartor address or the cooresponding validator address
-    #[prost(string, tag = "3")]
-    pub address: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ContractCallTxEthereumSignaturesResponse {
@@ -739,13 +728,9 @@ pub struct ContractCallTxEthereumSignaturesResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchTxEthereumSignaturesRequest {
     #[prost(uint64, tag = "1")]
-    pub nonce: u64,
+    pub batch_nonce: u64,
     #[prost(string, tag = "2")]
-    pub contract_address: ::prost::alloc::string::String,
-    /// note if this address is empty return all sigs for a given batch.
-    /// if not return only the signature for the give validator or orchestrator key
-    #[prost(string, tag = "3")]
-    pub address: ::prost::alloc::string::String,
+    pub token_contract: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchTxEthereumSignaturesResponse {
@@ -914,6 +899,20 @@ pub mod query_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/SignerSetTx");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn latest_signer_set_tx(
+            &mut self,
+            request: impl tonic::IntoRequest<super::LatestSignerSetTxRequest>,
+        ) -> Result<tonic::Response<super::SignerSetTxResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/LatestSignerSetTx");
             self.inner.unary(request.into_request(), path, codec).await
         }
         pub async fn batch_tx(

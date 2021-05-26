@@ -191,7 +191,7 @@ func TestBatchSlashing(t *testing.T) {
 			continue
 		}
 		gravity.SetEthereumSignature(ctx, &types.BatchTxSignature{
-			Nonce:          batch.BatchNonce,
+			BatchNonce:     batch.BatchNonce,
 			TokenContract:  keeper.TokenContractAddrs[0],
 			EthereumSigner: keeper.EthAddrs[i].String(),
 			Signature:      []byte("dummysig"),

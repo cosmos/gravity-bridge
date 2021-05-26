@@ -96,7 +96,7 @@ message ContractCallTxSignature {
 // BatchTxSignature is a signature on behalf of a validator for a BatchTx.
 message BatchTxSignature {
   string token_contract = 1;
-  uint64 nonce = 2;
+  uint64 batch_nonce = 2;
   string ethereum_signer = 3;
   bytes signature = 4
       [ (gogoproto.casttype) =
@@ -106,7 +106,7 @@ message BatchTxSignature {
 // SignerSetTxSignature is a signature on behalf of a validator for a
 // SignerSetTx
 message SignerSetTxSignature {
-  uint64 nonce = 1;
+  uint64 signer_set_nonce = 1;
   string ethereum_signer = 2;
   bytes signature = 3
       [ (gogoproto.casttype) =

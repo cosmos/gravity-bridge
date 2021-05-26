@@ -13,7 +13,11 @@ pub async fn get_valset(
     client: &mut GravityQueryClient<Channel>,
     nonce: u64,
 ) -> Result<Option<Valset>, GravityError> {
-    let request = client.signer_set_tx(SignerSetTxRequest { nonce }).await?;
+    let request = client
+        .signer_set_tx(SignerSetTxRequest {
+            signer_set_nonce: nonce,
+        })
+        .await?;
     let valset = request.into_inner().signer_set;
     let valset = match valset {
         Some(v) => Some(v.into()),
@@ -27,22 +31,22 @@ pub async fn get_valset(
 /// that transaction got in. Without that consensus point everyone trying
 /// to sign the 'current' valset would run into slight differences and fail
 /// to produce a viable update.
-pub async fn get_current_valset(
-    client: &mut GravityQueryClient<Channel>,
-) -> Result<Valset, GravityError> {
-    let request = client
-        .signer_set_tx(SignerSetTxRequest { nonce: 0 })
-        .await?;
-    let valset = request.into_inner().signer_set;
-    if let Some(valset) = valset {
-        Ok(valset.into())
-    } else {
-        error!("Current valset returned None? This should be impossible");
-        Err(GravityError::InvalidBridgeStateError(
-            "Must have a current valset!".to_string(),
-        ))
-    }
-}
+// pub async fn get_current_valset(
+//     client: &mut GravityQueryClient<Channel>,
+// ) -> Result<Valset, GravityError> {
+//     let request = client
+//         .signer_set_tx(SignerSetTxRequest { nonce: 0 })
+//         .await?;
+//     let valset = request.into_inner().signer_set;
+//     if let Some(valset) = valset {
+//         Ok(valset.into())
+//     } else {
+//         error!("Current valset returned None? This should be impossible");
+//         Err(GravityError::InvalidBridgeStateError(
+//             "Must have a current valset!".to_string(),
+//         ))
+//     }
+// }
 
 /// This hits the /pending_valset_requests endpoint and will provide
 /// an array of validator sets we have not already signed
@@ -88,8 +92,7 @@ pub async fn get_all_valset_confirms(
 ) -> Result<Vec<ValsetConfirmResponse>, GravityError> {
     let request = client
         .signer_set_tx_ethereum_signatures(SignerSetTxEthereumSignaturesRequest {
-            nonce,
-            address: "".into(),
+            signer_set_nonce: nonce,
         })
         .await?;
     let confirms = request.into_inner().signatures;
@@ -142,9 +145,8 @@ pub async fn get_transaction_batch_signatures(
 ) -> Result<Vec<BatchConfirmResponse>, GravityError> {
     let request = client
         .batch_tx_ethereum_signatures(BatchTxEthereumSignaturesRequest {
-            nonce,
-            contract_address: contract_address.to_string(),
-            address: String::from(""),
+            batch_nonce: nonce,
+            token_contract: contract_address.to_string(),
         })
         .await?;
     let batch_confirms = request.into_inner().signatures;
@@ -193,7 +195,6 @@ pub async fn get_logic_call_signatures(
         .contract_call_tx_ethereum_signatures(ContractCallTxEthereumSignaturesRequest {
             invalidation_scope,
             invalidation_nonce,
-            address: String::from(""),
         })
         .await?;
     let call_confirms = request.into_inner().signatures;
