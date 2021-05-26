@@ -1,5 +1,8 @@
 use abscissa_core::{Command, Options, Runnable};
 use bip32::{Mnemonic, XPrv};
+use pkcs8::ToPrivateKey;
+use signatory::keystore::FsKeyStore;
+use std::path::Path;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct ImportCosmosKeyCmd {
@@ -22,15 +25,18 @@ pub struct ImportCosmosKeyCmd {
 impl Runnable for ImportCosmosKeyCmd {
     fn run(&self) {
         let phrase = rpassword::read_password_from_tty(Some("Mnemonic: ")).unwrap();
-
         let mnemonic = Mnemonic::new(phrase.trim_end(), Default::default()).unwrap();
-        dbg!{mnemonic.phrase()};
-
         let seed = mnemonic.to_seed("TREZOR"); // TODO: password argument
-        let root_key = XPrv::new(&seed).unwrap();
-        let expected_key: XPrv = "xprv9s21ZrQH143K3Y1sd2XVu9wtqxJRvybCfAetjUrMMco6r3v9qZTBeXiBZkS8JxWbcGJZyio8TrZtm6pkbzG8SYt1sxwNLh3Wx7to5pgiVFU".parse().unwrap();
-        assert_eq!(root_key.secret_key().to_bytes(), expected_key.secret_key().to_bytes());
-        println!("OK!")
+        let xprv = XPrv::new(&seed).unwrap();
+        let private_key_der = k256::SecretKey::from(xprv.private_key()).to_pkcs8_der();
+
+        // todo: where the keys go? load from config? for now use /tmp for testing
+        let keystore_path = Path::new("/tmp/keystore");
+        if !keystore_path.exists() {
+            FsKeyStore::create(keystore_path).unwrap();
+        }
+        let keystore = FsKeyStore::open(keystore_path).unwrap();
+        keystore.store(&self.name, &private_key_der).unwrap();
     }
 }
 

@@ -19,6 +19,8 @@ clarity = "0.4"
 actix-rt = "2.2"
 rpassword = "5"
 bip32 = "0"
+k256 = { version = "0.7", features = ["pem"] }
+pkcs8 = { version = "0.3", features = ["pem"] }
 signatory = "0.23.0-pre"
 
 
