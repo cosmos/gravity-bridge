@@ -128,7 +128,7 @@ services:
   test_runner:
     build:
       context: ./orchestrator
-      dockerfile: ./Dockerfile_testnet
+      dockerfile: testnet.Dockerfile
     depends_on:
       - gravity0
       - ethereum

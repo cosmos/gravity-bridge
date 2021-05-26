@@ -1,1 +1,7 @@
-target/
+target
+
+.git
+.gitignore
+.dockerignore
+Dockerfile
+testnet.Dockerfile

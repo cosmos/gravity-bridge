@@ -24,10 +24,10 @@ COPY . .
 # Copy over the cached dependencies
 COPY --from=cacher /app/target target
 COPY --from=cacher /usr/local/cargo /usr/local/cargo
-RUN cargo build --release --bin orchestrator
+RUN cargo build --manifest-path=test_runner/Cargo.toml --release --bin test_runner
 
 FROM cargo-chef-rust as runtime
 WORKDIR app
-COPY startup.sh startup.sh
-COPY --from=builder /app/target/release/orchestrator /usr/local/bin
+COPY test_runner/startup.sh startup.sh
+COPY --from=builder /app/target/release/test_runner /usr/local/bin
 CMD sh startup.sh

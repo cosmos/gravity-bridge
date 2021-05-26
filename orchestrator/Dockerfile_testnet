@@ -1,6 +1,0 @@
-FROM rust:1.50
-
-COPY . .
-RUN cargo build --manifest-path=test_runner/Cargo.toml --bin test_runner
-
-CMD sh test_runner/startup.sh
