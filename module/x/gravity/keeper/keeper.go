@@ -370,7 +370,10 @@ func (k Keeper) SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx) {
 	if err != nil {
 		panic(err)
 	}
-	ctx.KVStore(k.storeKey).Set(types.MakeOutgoingTxKey(outgoing.GetStoreIndex()), k.cdc.MustMarshalBinaryBare(any))
+	ctx.KVStore(k.storeKey).Set(
+		types.MakeOutgoingTxKey(outgoing.GetStoreIndex()),
+		k.cdc.MustMarshalBinaryBare(any),
+	)
 }
 
 // DeleteOutgoingTx deletes a given outgoingtx

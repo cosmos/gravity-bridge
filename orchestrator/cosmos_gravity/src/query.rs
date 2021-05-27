@@ -13,12 +13,12 @@ pub async fn get_valset(
     client: &mut GravityQueryClient<Channel>,
     nonce: u64,
 ) -> Result<Option<Valset>, GravityError> {
-    let request = client
+    let response = client
         .signer_set_tx(SignerSetTxRequest {
             signer_set_nonce: nonce,
         })
         .await?;
-    let valset = request.into_inner().signer_set;
+    let valset = response.into_inner().signer_set;
     let valset = match valset {
         Some(v) => Some(v.into()),
         None => None,

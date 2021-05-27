@@ -52,10 +52,8 @@ func (k Keeper) LatestSignerSetTx(c context.Context, req *types.LatestSignerSetT
 func (k Keeper) SignerSetTx(c context.Context, req *types.SignerSetTxRequest) (*types.SignerSetTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	var otx types.OutgoingTx
-
-	storeIndex := sdk.Uint64ToBigEndian(req.SignerSetNonce)
-	otx = k.GetOutgoingTx(ctx, types.MakeOutgoingTxKey(storeIndex))
+	key := types.MakeSignerSetTxKey(req.SignerSetNonce)
+	otx := k.GetOutgoingTx(ctx, key)
 	if otx == nil {
 		return &types.SignerSetTxResponse{}, nil
 	}
@@ -75,8 +73,8 @@ func (k Keeper) BatchTx(c context.Context, req *types.BatchTxRequest) (*types.Ba
 
 	res := &types.BatchTxResponse{}
 
-	storeIndex := append(sdk.Uint64ToBigEndian(req.BatchNonce), common.Hex2Bytes(req.TokenContract)...)
-	otx := k.GetOutgoingTx(sdk.UnwrapSDKContext(c), types.MakeOutgoingTxKey(storeIndex))
+	key := types.MakeBatchTxKey(common.HexToAddress(req.TokenContract), req.BatchNonce)
+	otx := k.GetOutgoingTx(sdk.UnwrapSDKContext(c), key)
 	if otx == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no batch tx found for %d %s", req.BatchNonce, req.TokenContract)
 	}
@@ -90,8 +88,8 @@ func (k Keeper) BatchTx(c context.Context, req *types.BatchTxRequest) (*types.Ba
 }
 
 func (k Keeper) ContractCallTx(c context.Context, req *types.ContractCallTxRequest) (*types.ContractCallTxResponse, error) {
-	storeIndex := append(sdk.Uint64ToBigEndian(req.InvalidationNonce), req.InvalidationScope...)
-	otx := k.GetOutgoingTx(sdk.UnwrapSDKContext(c), types.MakeOutgoingTxKey(storeIndex))
+	key := types.MakeContractCallTxKey(req.InvalidationScope, req.InvalidationNonce)
+	otx := k.GetOutgoingTx(sdk.UnwrapSDKContext(c), key)
 	if otx == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no contract call found for %d %s", req.InvalidationNonce, req.InvalidationScope)
 	}

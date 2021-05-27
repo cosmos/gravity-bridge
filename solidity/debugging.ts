@@ -3,6 +3,7 @@ import { Tendermint34Client } from "@cosmjs/tendermint-rpc";
 import {
   Query,
   QueryClientImpl,
+  SignerSetTxEthereumSignaturesResponse,
   SignerSetTxsRequest,
 } from "./gen/gravity/v1/query";
 import { SignerSetTx } from "./gen/gravity/v1/gravity";
@@ -27,10 +28,29 @@ async function getParams() {
   return res.params;
 }
 
+async function getValset(signerSetNonce: Long): Promise<SignerSetTx> {
+  let queryService = await getQueryService();
+  const res = await queryService.SignerSetTx({ signerSetNonce });
+  if (!res.signerSet) {
+    console.log("Could not retrieve signer set", res);
+    exit(1);
+  }
+  return res.signerSet;
+}
+
+async function getSignerSetTxEthereumSignatures(signerSetNonce: Long): Promise<SignerSetTxEthereumSignaturesResponse> {
+  let queryService = await getQueryService();
+  const res = await queryService.SignerSetTxEthereumSignatures({ signerSetNonce });
+  if (!res.signatures) {
+    console.log("Could not retrieve signatures", res);
+    exit(1);
+  }
+  return res;
+}
+
 async function getLatestValset(): Promise<SignerSetTx> {
   let queryService = await getQueryService();
-  const req = { nonce: Long.fromInt(0) };
-  const res = await queryService.SignerSetTx(req);
+  const res = await queryService.LatestSignerSetTx({});
   if (!res.signerSet) {
     console.log("Could not retrieve signer set");
     exit(1);
@@ -55,5 +75,7 @@ async function getDelegateKeys() {
 
 (async function () {
   //   console.log(await getDelegateKeys());
-  console.log(JSON.stringify(await getAllValsets()));
+  // console.log(JSON.stringify(await getAllValsets()));
+  const res = await getValset(Long.fromInt(1))
+  console.log(JSON.stringify(res));
 })();

@@ -176,7 +176,7 @@ pub async fn wait_for_nonzero_valset(web30: &Web3, gravity_address: EthAddress) 
         .expect("Failed to get current eth valset");
 
     while 0 == current_eth_valset_nonce {
-        info!("Validator set is not yet updated to 0>, waiting",);
+        info!("Validator set is not yet updated to >0, waiting");
         current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
             .await
             .expect("Failed to get current eth valset");
