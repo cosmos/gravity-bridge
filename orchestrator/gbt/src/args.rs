@@ -7,6 +7,7 @@ use clap::AppSettings;
 use clap::Clap;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
+use deep_space::PrivateKey as CosmosPrivateKey;
 use deep_space::{address::Address as CosmosAddress, Coin};
 
 /// Gravity Bridge tools (gbt) provides tools for interacting with the Althea Gravity bridge for Cosmos based blockchains.
@@ -47,12 +48,12 @@ pub enum SubCommand {
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct OrchestratorOpts {
     /// Cosmos mnemonic phrase containing the tokens you would like to send
-    #[clap(short, long)]
-    pub cosmos_phrase: String,
+    #[clap(short, long, parse(try_from_str))]
+    pub cosmos_phrase: Option<CosmosPrivateKey>,
     /// An Ethereum private key containing ETH to pay for fees, this will also hold the relayers earnings
     /// in the near future it will be possible to disable the Orchestrators integrated relayer
     #[clap(short, long, parse(try_from_str))]
-    pub ethereum_key: EthPrivateKey,
+    pub ethereum_key: Option<EthPrivateKey>,
     /// (Optional) The Cosmos gRPC server that will be used
     #[clap(long, default_value = "http://localhost:9090")]
     pub cosmos_grpc: String,
@@ -75,7 +76,7 @@ pub struct OrchestratorOpts {
 pub struct RelayerOpts {
     /// An Ethereum private key containing ETH to pay for fees, this will also hold the relayers earnings
     #[clap(short, long, parse(try_from_str))]
-    pub ethereum_key: EthPrivateKey,
+    pub ethereum_key: Option<EthPrivateKey>,
     /// The address fo the Gravity contract on Ethereum
     #[clap(short, long, parse(try_from_str))]
     pub gravity_contract_address: EthAddress,
@@ -107,8 +108,8 @@ pub enum ClientSubcommand {
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct CosmosToEthOpts {
     /// Cosmos mnemonic phrase containing the tokens you would like to send
-    #[clap(short, long)]
-    pub cosmos_phrase: String,
+    #[clap(short, long, parse(try_from_str))]
+    pub cosmos_phrase: CosmosPrivateKey,
     /// (Optional) The Cosmos gRPC server that will be used to submit the transaction
     #[clap(long, default_value = "http://localhost:9090")]
     pub cosmos_grpc: String,
@@ -131,7 +132,7 @@ pub struct CosmosToEthOpts {
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct EthToCosmosOpts {
-    /// The Ethereum private key to register, will be generated if not provided
+    /// The Ethereum private key to use for sending tokens
     #[clap(long, parse(try_from_str))]
     pub ethereum_key: EthPrivateKey,
     /// (Optional) The Ethereum RPC server that will be used to submit the transaction
@@ -192,7 +193,10 @@ pub struct KeyOpts {
 
 #[derive(Clap)]
 pub enum KeysSubcommand {
-    SetOrchestratorAddress(SetOrchestratorAddressOpts),
+    RegisterOrchestratorAddress(RegisterOrchestratorAddressOpts),
+    SetEthereumKey(SetEthereumKeyOpts),
+    SetOrchestratorKey(SetOrchestratorKeyOpts),
+    Show,
 }
 
 /// Register delegate keys for the Gravity Orchestrator.
@@ -200,10 +204,10 @@ pub enum KeysSubcommand {
 /// If you would like sign using a ledger see `cosmos tx gravity set-orchestrator-address` instead
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
-pub struct SetOrchestratorAddressOpts {
+pub struct RegisterOrchestratorAddressOpts {
     /// The Cosmos private key of the validator
     #[clap(short, long, parse(try_from_str))]
-    pub validator_phrase: String,
+    pub validator_phrase: CosmosPrivateKey,
     /// (Optional) The Ethereum private key to register, will be generated if not provided
     #[clap(short, long, parse(try_from_str))]
     pub ethereum_key: Option<EthPrivateKey>,
@@ -216,6 +220,26 @@ pub struct SetOrchestratorAddressOpts {
     /// The Cosmos Denom and amount to pay Cosmos chain fees
     #[clap(short, long, parse(try_from_str))]
     pub fees: Coin,
+    /// Do not save keys to disk for later use with `orchestrator start`
+    #[clap(long)]
+    pub no_save: bool,
+}
+
+/// Add an Ethereum private key for use with either the Relayer or the Orchestrator
+#[derive(Clap)]
+#[clap(setting = AppSettings::ColoredHelp)]
+pub struct SetEthereumKeyOpts {
+    ///
+    #[clap(short, long, parse(try_from_str))]
+    pub key: EthPrivateKey,
+}
+
+/// Add a Cosmos private key to use as the Orchestrator address
+#[derive(Clap)]
+#[clap(setting = AppSettings::ColoredHelp)]
+pub struct SetOrchestratorKeyOpts {
+    #[clap(short, long)]
+    pub phrase: String,
 }
 
 /// Initialize configuration
