@@ -57,7 +57,7 @@ func (k Keeper) SignerSetTx(c context.Context, req *types.SignerSetTxRequest) (*
 	storeIndex := sdk.Uint64ToBigEndian(req.SignerSetNonce)
 	otx = k.GetOutgoingTx(ctx, types.MakeOutgoingTxKey(storeIndex))
 	if otx == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no signer set found for %d", req.SignerSetNonce)
+		return &types.SignerSetTxResponse{}, nil
 	}
 
 	ss, ok := otx.(*types.SignerSetTx)

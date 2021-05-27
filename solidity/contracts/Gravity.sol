@@ -72,9 +72,9 @@ contract Gravity is ReentrancyGuard {
 	);
 	event ValsetUpdatedEvent(
 		uint256 indexed _newValsetNonce,
+		uint256 _eventNonce,
 		address[] _validators,
-		uint256[] _powers,
-		uint256 _eventNonce
+		uint256[] _powers
 	);
 	event LogicCallEvent(
 		bytes32 _invalidationId,
@@ -277,7 +277,7 @@ contract Gravity is ReentrancyGuard {
 
 		// LOGS
 		state_lastEventNonce = state_lastEventNonce.add(1);
-		emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers, state_lastEventNonce);
+		emit ValsetUpdatedEvent(_newValsetNonce, state_lastEventNonce, _newValidators, _newPowers);
 	}
 
 	// submitBatch processes a batch of Cosmos -> Ethereum transactions by sending the tokens in the transactions
@@ -596,6 +596,6 @@ contract Gravity is ReentrancyGuard {
 
 		// LOGS
 
-		emit ValsetUpdatedEvent(state_lastValsetNonce, _validators, _powers, state_lastEventNonce);
+		emit ValsetUpdatedEvent(state_lastValsetNonce, state_lastEventNonce, _validators, _powers);
 	}
 }

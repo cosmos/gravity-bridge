@@ -58,7 +58,7 @@ pub async fn check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
             vec![gravity_contract_address],
-            vec!["ValsetUpdatedEvent(uint256,address[],uint256[],uint256)"],
+            vec!["ValsetUpdatedEvent(uint256,uint256,address[],uint256[])"],
         )
         .await;
     trace!("Valsets {:?}", valsets);
