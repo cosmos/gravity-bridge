@@ -34,13 +34,14 @@ pub async fn find_latest_valset(
                 end_search.clone(),
                 Some(current_block.clone()),
                 vec![gravity_contract_address],
-                vec!["ValsetUpdatedEvent(uint256,address[],uint256[],uint256)"],
+                vec!["ValsetUpdatedEvent(uint256,uint256,address[],uint256[])"],
             )
             .await?;
         // by default the lowest found valset goes first, we want the highest.
         all_valset_events.reverse();
 
         trace!("Found events {:?}", all_valset_events);
+        info!("Found events {:?}", all_valset_events);
 
         // we take only the first event if we find any at all.
         if !all_valset_events.is_empty() {
@@ -76,10 +77,6 @@ pub async fn find_latest_valset(
 /// funds from the Gravity contract and have submitted a highjacking update. If slashing for off Cosmos chain
 /// Ethereum signatures is implemented you would put that handler here.
 fn check_if_valsets_differ(cosmos_valset: Option<Valset>, ethereum_valset: &Valset) {
-    println!(
-        "COSMOS VALSET {:#?}, ETHEREUM VALSET {:#?}",
-        cosmos_valset, ethereum_valset
-    );
     if cosmos_valset.is_none() && ethereum_valset.nonce == 0 {
         // bootstrapping case
         return;

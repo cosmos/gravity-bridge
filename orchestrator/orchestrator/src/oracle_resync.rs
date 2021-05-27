@@ -93,7 +93,7 @@ pub async fn get_last_checked_block(
                 end_search.clone(),
                 Some(current_block.clone()),
                 vec![gravity_contract_address],
-                vec!["ValsetUpdatedEvent(uint256,address[],uint256[],uint256)"],
+                vec!["ValsetUpdatedEvent(uint256,uint256,address[],uint256[])"],
             )
             .await;
         if batch_events.is_err()
@@ -162,6 +162,10 @@ pub async fn get_last_checked_block(
                     // if we've found this event it is the first possible event from the contract
                     // no other events can come before it, therefore either there's been a parsing error
                     // or no events have been submitted on this chain yet.
+                    println!(
+                        "HERE I AM. VALSET: {:#?}, LAST EVENT NONCE: {:#?}",
+                        valset, last_event_nonce
+                    );
                     if valset.event_nonce == 0 && last_event_nonce == 1u8.into() {
                         return latest_block;
                     }
