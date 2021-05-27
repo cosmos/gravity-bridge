@@ -1,10 +1,6 @@
-use crate::get_test_token_name;
-use crate::COSMOS_NODE_GRPC;
-use crate::ETH_NODE;
 use crate::TOTAL_TIMEOUT;
 use crate::{one_eth, MINER_PRIVATE_KEY};
 use crate::{MINER_ADDRESS, OPERATION_TIMEOUT};
-use actix::System;
 use clarity::{Address as EthAddress, Uint256};
 use clarity::{PrivateKey as EthPrivateKey, Transaction};
 use deep_space::address::Address as CosmosAddress;
@@ -12,10 +8,7 @@ use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use deep_space::Contact;
 use futures::future::join_all;
-use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use orchestrator::main_loop::orchestrator_main_loop;
 use rand::Rng;
-use std::thread;
 use web30::{client::Web3, types::SendTxOption};
 
 /// This overly complex function primarily exists to parallelize the sending of Eth to the
@@ -227,60 +220,4 @@ pub struct ValidatorKeys {
     pub orch_key: CosmosPrivateKey,
     /// The validator key used by this validator to actually sign and produce blocks
     pub validator_key: CosmosPrivateKey,
-}
-
-/// This function pays the piper for the strange concurrency model that we use for the tests
-/// we launch a thread, create an actix executor and then start the orchestrator within that scope
-/// previously we could just throw around futures to spawn despite not having 'send' newer versions
-/// of Actix rightly forbid this and we have to take the time to handle it here.
-pub async fn start_orchestrators(
-    keys: Vec<ValidatorKeys>,
-    gravity_address: EthAddress,
-    validator_out: bool,
-) {
-    // used to break out of the loop early to simulate one validator
-    // not running an Orchestrator
-    let num_validators = keys.len();
-    let mut count = 0;
-
-    #[allow(clippy::explicit_counter_loop)]
-    for k in keys {
-        info!(
-            "Spawning Orchestrator with delegate keys {} {} and validator key {}",
-            k.eth_key.to_public_key().unwrap(),
-            k.orch_key
-                .to_address(CosmosAddress::DEFAULT_PREFIX)
-                .unwrap(),
-            k.validator_key.to_address("cosmosvaloper").unwrap()
-        );
-        let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC.as_str()).await.unwrap();
-        // we have only one actual futures executor thread (see the actix runtime tag on our main function)
-        // but that will execute all the orchestrators in our test in parallel
-        thread::spawn(move || {
-            let web30 = web30::client::Web3::new(ETH_NODE.as_str(), OPERATION_TIMEOUT);
-            let contact = Contact::new(
-                COSMOS_NODE_GRPC.as_str(),
-                OPERATION_TIMEOUT,
-                CosmosAddress::DEFAULT_PREFIX,
-            )
-            .unwrap();
-            let fut = orchestrator_main_loop(
-                k.orch_key,
-                k.eth_key,
-                web30,
-                contact,
-                grpc_client,
-                gravity_address,
-                get_test_token_name(),
-            );
-            let system = System::new();
-            system.block_on(fut);
-        });
-        // used to break out of the loop early to simulate one validator
-        // not running an orchestrator
-        count += 1;
-        if validator_out && count == num_validators - 1 {
-            break;
-        }
-    }
 }

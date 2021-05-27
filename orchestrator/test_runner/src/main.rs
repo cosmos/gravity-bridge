@@ -189,11 +189,11 @@ pub async fn main() {
             return;
         } else if test_type == "V2_HAPPY_PATH" {
             info!("Starting happy path for Gravity v2");
-            happy_path_test_v2(&web30, grpc_client, &contact, keys, gravity_address, false).await;
+            happy_path_test_v2(&web30, grpc_client, &contact, keys, gravity_address).await;
             return;
         } else if test_type == "ARBITRARY_LOGIC" {
             info!("Starting arbitrary logic tests!");
-            arbitrary_logic_test(&web30, grpc_client, &contact, keys, gravity_address).await;
+            arbitrary_logic_test(&web30, grpc_client, &contact).await;
             return;
         } else if test_type == "ORCHESTRATOR_KEYS" {
             info!("Starting orchestrator key update tests!");
