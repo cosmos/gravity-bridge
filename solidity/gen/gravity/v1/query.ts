@@ -98,8 +98,8 @@ export interface ContractCallTxsResponse {
   pagination?: PageResponse;
 }
 
-/** rpc PendingSignerSetTxEthereumSignatures */
-export interface PendingSignerSetTxEthereumSignaturesRequest {
+/** rpc UnsignedSignerSetTxs */
+export interface UnsignedSignerSetTxsRequest {
   /**
    * NOTE: this is an sdk.AccAddress and can represent either the
    * orchestartor address or the cooresponding validator address
@@ -107,11 +107,11 @@ export interface PendingSignerSetTxEthereumSignaturesRequest {
   address: string;
 }
 
-export interface PendingSignerSetTxEthereumSignaturesResponse {
+export interface UnsignedSignerSetTxsResponse {
   signerSets: SignerSetTx[];
 }
 
-export interface PendingBatchTxEthereumSignaturesRequest {
+export interface UnsignedBatchTxsRequest {
   /**
    * NOTE: this is an sdk.AccAddress and can represent either the
    * orchestrator address or the cooresponding validator address
@@ -119,17 +119,17 @@ export interface PendingBatchTxEthereumSignaturesRequest {
   address: string;
 }
 
-export interface PendingBatchTxEthereumSignaturesResponse {
+export interface UnsignedBatchTxsResponse {
   /** Note these are returned with the signature empty */
   batches: BatchTx[];
 }
 
-/** rpc PendingContractCallTxEthereumSignatures */
-export interface PendingContractCallTxEthereumSignaturesRequest {
+/** rpc UnsignedContractCallTxs */
+export interface UnsignedContractCallTxsRequest {
   address: string;
 }
 
-export interface PendingContractCallTxEthereumSignaturesResponse {
+export interface UnsignedContractCallTxsResponse {
   calls: ContractCallTx[];
 }
 
@@ -1438,11 +1438,11 @@ export const ContractCallTxsResponse = {
   },
 };
 
-const basePendingSignerSetTxEthereumSignaturesRequest: object = { address: "" };
+const baseUnsignedSignerSetTxsRequest: object = { address: "" };
 
-export const PendingSignerSetTxEthereumSignaturesRequest = {
+export const UnsignedSignerSetTxsRequest = {
   encode(
-    message: PendingSignerSetTxEthereumSignaturesRequest,
+    message: UnsignedSignerSetTxsRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.address !== "") {
@@ -1454,12 +1454,12 @@ export const PendingSignerSetTxEthereumSignaturesRequest = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): PendingSignerSetTxEthereumSignaturesRequest {
+  ): UnsignedSignerSetTxsRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
-      ...basePendingSignerSetTxEthereumSignaturesRequest,
-    } as PendingSignerSetTxEthereumSignaturesRequest;
+      ...baseUnsignedSignerSetTxsRequest,
+    } as UnsignedSignerSetTxsRequest;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1474,10 +1474,10 @@ export const PendingSignerSetTxEthereumSignaturesRequest = {
     return message;
   },
 
-  fromJSON(object: any): PendingSignerSetTxEthereumSignaturesRequest {
+  fromJSON(object: any): UnsignedSignerSetTxsRequest {
     const message = {
-      ...basePendingSignerSetTxEthereumSignaturesRequest,
-    } as PendingSignerSetTxEthereumSignaturesRequest;
+      ...baseUnsignedSignerSetTxsRequest,
+    } as UnsignedSignerSetTxsRequest;
     if (object.address !== undefined && object.address !== null) {
       message.address = String(object.address);
     } else {
@@ -1486,18 +1486,18 @@ export const PendingSignerSetTxEthereumSignaturesRequest = {
     return message;
   },
 
-  toJSON(message: PendingSignerSetTxEthereumSignaturesRequest): unknown {
+  toJSON(message: UnsignedSignerSetTxsRequest): unknown {
     const obj: any = {};
     message.address !== undefined && (obj.address = message.address);
     return obj;
   },
 
   fromPartial(
-    object: DeepPartial<PendingSignerSetTxEthereumSignaturesRequest>
-  ): PendingSignerSetTxEthereumSignaturesRequest {
+    object: DeepPartial<UnsignedSignerSetTxsRequest>
+  ): UnsignedSignerSetTxsRequest {
     const message = {
-      ...basePendingSignerSetTxEthereumSignaturesRequest,
-    } as PendingSignerSetTxEthereumSignaturesRequest;
+      ...baseUnsignedSignerSetTxsRequest,
+    } as UnsignedSignerSetTxsRequest;
     if (object.address !== undefined && object.address !== null) {
       message.address = object.address;
     } else {
@@ -1507,11 +1507,11 @@ export const PendingSignerSetTxEthereumSignaturesRequest = {
   },
 };
 
-const basePendingSignerSetTxEthereumSignaturesResponse: object = {};
+const baseUnsignedSignerSetTxsResponse: object = {};
 
-export const PendingSignerSetTxEthereumSignaturesResponse = {
+export const UnsignedSignerSetTxsResponse = {
   encode(
-    message: PendingSignerSetTxEthereumSignaturesResponse,
+    message: UnsignedSignerSetTxsResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     for (const v of message.signerSets) {
@@ -1523,12 +1523,12 @@ export const PendingSignerSetTxEthereumSignaturesResponse = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): PendingSignerSetTxEthereumSignaturesResponse {
+  ): UnsignedSignerSetTxsResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
-      ...basePendingSignerSetTxEthereumSignaturesResponse,
-    } as PendingSignerSetTxEthereumSignaturesResponse;
+      ...baseUnsignedSignerSetTxsResponse,
+    } as UnsignedSignerSetTxsResponse;
     message.signerSets = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
@@ -1544,10 +1544,10 @@ export const PendingSignerSetTxEthereumSignaturesResponse = {
     return message;
   },
 
-  fromJSON(object: any): PendingSignerSetTxEthereumSignaturesResponse {
+  fromJSON(object: any): UnsignedSignerSetTxsResponse {
     const message = {
-      ...basePendingSignerSetTxEthereumSignaturesResponse,
-    } as PendingSignerSetTxEthereumSignaturesResponse;
+      ...baseUnsignedSignerSetTxsResponse,
+    } as UnsignedSignerSetTxsResponse;
     message.signerSets = [];
     if (object.signerSets !== undefined && object.signerSets !== null) {
       for (const e of object.signerSets) {
@@ -1557,7 +1557,7 @@ export const PendingSignerSetTxEthereumSignaturesResponse = {
     return message;
   },
 
-  toJSON(message: PendingSignerSetTxEthereumSignaturesResponse): unknown {
+  toJSON(message: UnsignedSignerSetTxsResponse): unknown {
     const obj: any = {};
     if (message.signerSets) {
       obj.signerSets = message.signerSets.map((e) =>
@@ -1570,11 +1570,11 @@ export const PendingSignerSetTxEthereumSignaturesResponse = {
   },
 
   fromPartial(
-    object: DeepPartial<PendingSignerSetTxEthereumSignaturesResponse>
-  ): PendingSignerSetTxEthereumSignaturesResponse {
+    object: DeepPartial<UnsignedSignerSetTxsResponse>
+  ): UnsignedSignerSetTxsResponse {
     const message = {
-      ...basePendingSignerSetTxEthereumSignaturesResponse,
-    } as PendingSignerSetTxEthereumSignaturesResponse;
+      ...baseUnsignedSignerSetTxsResponse,
+    } as UnsignedSignerSetTxsResponse;
     message.signerSets = [];
     if (object.signerSets !== undefined && object.signerSets !== null) {
       for (const e of object.signerSets) {
@@ -1585,11 +1585,11 @@ export const PendingSignerSetTxEthereumSignaturesResponse = {
   },
 };
 
-const basePendingBatchTxEthereumSignaturesRequest: object = { address: "" };
+const baseUnsignedBatchTxsRequest: object = { address: "" };
 
-export const PendingBatchTxEthereumSignaturesRequest = {
+export const UnsignedBatchTxsRequest = {
   encode(
-    message: PendingBatchTxEthereumSignaturesRequest,
+    message: UnsignedBatchTxsRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.address !== "") {
@@ -1601,12 +1601,12 @@ export const PendingBatchTxEthereumSignaturesRequest = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): PendingBatchTxEthereumSignaturesRequest {
+  ): UnsignedBatchTxsRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
-      ...basePendingBatchTxEthereumSignaturesRequest,
-    } as PendingBatchTxEthereumSignaturesRequest;
+      ...baseUnsignedBatchTxsRequest,
+    } as UnsignedBatchTxsRequest;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1621,10 +1621,10 @@ export const PendingBatchTxEthereumSignaturesRequest = {
     return message;
   },
 
-  fromJSON(object: any): PendingBatchTxEthereumSignaturesRequest {
+  fromJSON(object: any): UnsignedBatchTxsRequest {
     const message = {
-      ...basePendingBatchTxEthereumSignaturesRequest,
-    } as PendingBatchTxEthereumSignaturesRequest;
+      ...baseUnsignedBatchTxsRequest,
+    } as UnsignedBatchTxsRequest;
     if (object.address !== undefined && object.address !== null) {
       message.address = String(object.address);
     } else {
@@ -1633,18 +1633,18 @@ export const PendingBatchTxEthereumSignaturesRequest = {
     return message;
   },
 
-  toJSON(message: PendingBatchTxEthereumSignaturesRequest): unknown {
+  toJSON(message: UnsignedBatchTxsRequest): unknown {
     const obj: any = {};
     message.address !== undefined && (obj.address = message.address);
     return obj;
   },
 
   fromPartial(
-    object: DeepPartial<PendingBatchTxEthereumSignaturesRequest>
-  ): PendingBatchTxEthereumSignaturesRequest {
+    object: DeepPartial<UnsignedBatchTxsRequest>
+  ): UnsignedBatchTxsRequest {
     const message = {
-      ...basePendingBatchTxEthereumSignaturesRequest,
-    } as PendingBatchTxEthereumSignaturesRequest;
+      ...baseUnsignedBatchTxsRequest,
+    } as UnsignedBatchTxsRequest;
     if (object.address !== undefined && object.address !== null) {
       message.address = object.address;
     } else {
@@ -1654,11 +1654,11 @@ export const PendingBatchTxEthereumSignaturesRequest = {
   },
 };
 
-const basePendingBatchTxEthereumSignaturesResponse: object = {};
+const baseUnsignedBatchTxsResponse: object = {};
 
-export const PendingBatchTxEthereumSignaturesResponse = {
+export const UnsignedBatchTxsResponse = {
   encode(
-    message: PendingBatchTxEthereumSignaturesResponse,
+    message: UnsignedBatchTxsResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     for (const v of message.batches) {
@@ -1670,12 +1670,12 @@ export const PendingBatchTxEthereumSignaturesResponse = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): PendingBatchTxEthereumSignaturesResponse {
+  ): UnsignedBatchTxsResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
-      ...basePendingBatchTxEthereumSignaturesResponse,
-    } as PendingBatchTxEthereumSignaturesResponse;
+      ...baseUnsignedBatchTxsResponse,
+    } as UnsignedBatchTxsResponse;
     message.batches = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
@@ -1691,10 +1691,10 @@ export const PendingBatchTxEthereumSignaturesResponse = {
     return message;
   },
 
-  fromJSON(object: any): PendingBatchTxEthereumSignaturesResponse {
+  fromJSON(object: any): UnsignedBatchTxsResponse {
     const message = {
-      ...basePendingBatchTxEthereumSignaturesResponse,
-    } as PendingBatchTxEthereumSignaturesResponse;
+      ...baseUnsignedBatchTxsResponse,
+    } as UnsignedBatchTxsResponse;
     message.batches = [];
     if (object.batches !== undefined && object.batches !== null) {
       for (const e of object.batches) {
@@ -1704,7 +1704,7 @@ export const PendingBatchTxEthereumSignaturesResponse = {
     return message;
   },
 
-  toJSON(message: PendingBatchTxEthereumSignaturesResponse): unknown {
+  toJSON(message: UnsignedBatchTxsResponse): unknown {
     const obj: any = {};
     if (message.batches) {
       obj.batches = message.batches.map((e) =>
@@ -1717,11 +1717,11 @@ export const PendingBatchTxEthereumSignaturesResponse = {
   },
 
   fromPartial(
-    object: DeepPartial<PendingBatchTxEthereumSignaturesResponse>
-  ): PendingBatchTxEthereumSignaturesResponse {
+    object: DeepPartial<UnsignedBatchTxsResponse>
+  ): UnsignedBatchTxsResponse {
     const message = {
-      ...basePendingBatchTxEthereumSignaturesResponse,
-    } as PendingBatchTxEthereumSignaturesResponse;
+      ...baseUnsignedBatchTxsResponse,
+    } as UnsignedBatchTxsResponse;
     message.batches = [];
     if (object.batches !== undefined && object.batches !== null) {
       for (const e of object.batches) {
@@ -1732,13 +1732,11 @@ export const PendingBatchTxEthereumSignaturesResponse = {
   },
 };
 
-const basePendingContractCallTxEthereumSignaturesRequest: object = {
-  address: "",
-};
+const baseUnsignedContractCallTxsRequest: object = { address: "" };
 
-export const PendingContractCallTxEthereumSignaturesRequest = {
+export const UnsignedContractCallTxsRequest = {
   encode(
-    message: PendingContractCallTxEthereumSignaturesRequest,
+    message: UnsignedContractCallTxsRequest,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.address !== "") {
@@ -1750,12 +1748,12 @@ export const PendingContractCallTxEthereumSignaturesRequest = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): PendingContractCallTxEthereumSignaturesRequest {
+  ): UnsignedContractCallTxsRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
-      ...basePendingContractCallTxEthereumSignaturesRequest,
-    } as PendingContractCallTxEthereumSignaturesRequest;
+      ...baseUnsignedContractCallTxsRequest,
+    } as UnsignedContractCallTxsRequest;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1770,10 +1768,10 @@ export const PendingContractCallTxEthereumSignaturesRequest = {
     return message;
   },
 
-  fromJSON(object: any): PendingContractCallTxEthereumSignaturesRequest {
+  fromJSON(object: any): UnsignedContractCallTxsRequest {
     const message = {
-      ...basePendingContractCallTxEthereumSignaturesRequest,
-    } as PendingContractCallTxEthereumSignaturesRequest;
+      ...baseUnsignedContractCallTxsRequest,
+    } as UnsignedContractCallTxsRequest;
     if (object.address !== undefined && object.address !== null) {
       message.address = String(object.address);
     } else {
@@ -1782,18 +1780,18 @@ export const PendingContractCallTxEthereumSignaturesRequest = {
     return message;
   },
 
-  toJSON(message: PendingContractCallTxEthereumSignaturesRequest): unknown {
+  toJSON(message: UnsignedContractCallTxsRequest): unknown {
     const obj: any = {};
     message.address !== undefined && (obj.address = message.address);
     return obj;
   },
 
   fromPartial(
-    object: DeepPartial<PendingContractCallTxEthereumSignaturesRequest>
-  ): PendingContractCallTxEthereumSignaturesRequest {
+    object: DeepPartial<UnsignedContractCallTxsRequest>
+  ): UnsignedContractCallTxsRequest {
     const message = {
-      ...basePendingContractCallTxEthereumSignaturesRequest,
-    } as PendingContractCallTxEthereumSignaturesRequest;
+      ...baseUnsignedContractCallTxsRequest,
+    } as UnsignedContractCallTxsRequest;
     if (object.address !== undefined && object.address !== null) {
       message.address = object.address;
     } else {
@@ -1803,11 +1801,11 @@ export const PendingContractCallTxEthereumSignaturesRequest = {
   },
 };
 
-const basePendingContractCallTxEthereumSignaturesResponse: object = {};
+const baseUnsignedContractCallTxsResponse: object = {};
 
-export const PendingContractCallTxEthereumSignaturesResponse = {
+export const UnsignedContractCallTxsResponse = {
   encode(
-    message: PendingContractCallTxEthereumSignaturesResponse,
+    message: UnsignedContractCallTxsResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     for (const v of message.calls) {
@@ -1819,12 +1817,12 @@ export const PendingContractCallTxEthereumSignaturesResponse = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): PendingContractCallTxEthereumSignaturesResponse {
+  ): UnsignedContractCallTxsResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
-      ...basePendingContractCallTxEthereumSignaturesResponse,
-    } as PendingContractCallTxEthereumSignaturesResponse;
+      ...baseUnsignedContractCallTxsResponse,
+    } as UnsignedContractCallTxsResponse;
     message.calls = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
@@ -1840,10 +1838,10 @@ export const PendingContractCallTxEthereumSignaturesResponse = {
     return message;
   },
 
-  fromJSON(object: any): PendingContractCallTxEthereumSignaturesResponse {
+  fromJSON(object: any): UnsignedContractCallTxsResponse {
     const message = {
-      ...basePendingContractCallTxEthereumSignaturesResponse,
-    } as PendingContractCallTxEthereumSignaturesResponse;
+      ...baseUnsignedContractCallTxsResponse,
+    } as UnsignedContractCallTxsResponse;
     message.calls = [];
     if (object.calls !== undefined && object.calls !== null) {
       for (const e of object.calls) {
@@ -1853,7 +1851,7 @@ export const PendingContractCallTxEthereumSignaturesResponse = {
     return message;
   },
 
-  toJSON(message: PendingContractCallTxEthereumSignaturesResponse): unknown {
+  toJSON(message: UnsignedContractCallTxsResponse): unknown {
     const obj: any = {};
     if (message.calls) {
       obj.calls = message.calls.map((e) =>
@@ -1866,11 +1864,11 @@ export const PendingContractCallTxEthereumSignaturesResponse = {
   },
 
   fromPartial(
-    object: DeepPartial<PendingContractCallTxEthereumSignaturesResponse>
-  ): PendingContractCallTxEthereumSignaturesResponse {
+    object: DeepPartial<UnsignedContractCallTxsResponse>
+  ): UnsignedContractCallTxsResponse {
     const message = {
-      ...basePendingContractCallTxEthereumSignaturesResponse,
-    } as PendingContractCallTxEthereumSignaturesResponse;
+      ...baseUnsignedContractCallTxsResponse,
+    } as UnsignedContractCallTxsResponse;
     message.calls = [];
     if (object.calls !== undefined && object.calls !== null) {
       for (const e of object.calls) {
@@ -3682,15 +3680,15 @@ export interface Query {
    * signatures they are missing
    * TODO: can/should we group this into one endpoint?
    */
-  PendingSignerSetTxEthereumSignatures(
-    request: PendingSignerSetTxEthereumSignaturesRequest
-  ): Promise<PendingSignerSetTxEthereumSignaturesResponse>;
-  PendingBatchTxEthereumSignatures(
-    request: PendingBatchTxEthereumSignaturesRequest
-  ): Promise<PendingBatchTxEthereumSignaturesResponse>;
-  PendingContractCallTxEthereumSignatures(
-    request: PendingContractCallTxEthereumSignaturesRequest
-  ): Promise<PendingContractCallTxEthereumSignaturesResponse>;
+  UnsignedSignerSetTxs(
+    request: UnsignedSignerSetTxsRequest
+  ): Promise<UnsignedSignerSetTxsResponse>;
+  UnsignedBatchTxs(
+    request: UnsignedBatchTxsRequest
+  ): Promise<UnsignedBatchTxsResponse>;
+  UnsignedContractCallTxs(
+    request: UnsignedContractCallTxsRequest
+  ): Promise<UnsignedContractCallTxsResponse>;
   LastSubmittedEthereumEvent(
     request: LastSubmittedEthereumEventRequest
   ): Promise<LastSubmittedEthereumEventResponse>;
@@ -3742,15 +3740,9 @@ export class QueryClientImpl implements Query {
     this.ContractCallTxEthereumSignatures = this.ContractCallTxEthereumSignatures.bind(
       this
     );
-    this.PendingSignerSetTxEthereumSignatures = this.PendingSignerSetTxEthereumSignatures.bind(
-      this
-    );
-    this.PendingBatchTxEthereumSignatures = this.PendingBatchTxEthereumSignatures.bind(
-      this
-    );
-    this.PendingContractCallTxEthereumSignatures = this.PendingContractCallTxEthereumSignatures.bind(
-      this
-    );
+    this.UnsignedSignerSetTxs = this.UnsignedSignerSetTxs.bind(this);
+    this.UnsignedBatchTxs = this.UnsignedBatchTxs.bind(this);
+    this.UnsignedContractCallTxs = this.UnsignedContractCallTxs.bind(this);
     this.LastSubmittedEthereumEvent = this.LastSubmittedEthereumEvent.bind(
       this
     );
@@ -3889,53 +3881,45 @@ export class QueryClientImpl implements Query {
     );
   }
 
-  PendingSignerSetTxEthereumSignatures(
-    request: PendingSignerSetTxEthereumSignaturesRequest
-  ): Promise<PendingSignerSetTxEthereumSignaturesResponse> {
-    const data = PendingSignerSetTxEthereumSignaturesRequest.encode(
-      request
-    ).finish();
+  UnsignedSignerSetTxs(
+    request: UnsignedSignerSetTxsRequest
+  ): Promise<UnsignedSignerSetTxsResponse> {
+    const data = UnsignedSignerSetTxsRequest.encode(request).finish();
     const promise = this.rpc.request(
       "gravity.v1.Query",
-      "PendingSignerSetTxEthereumSignatures",
+      "UnsignedSignerSetTxs",
       data
     );
     return promise.then((data) =>
-      PendingSignerSetTxEthereumSignaturesResponse.decode(new _m0.Reader(data))
+      UnsignedSignerSetTxsResponse.decode(new _m0.Reader(data))
     );
   }
 
-  PendingBatchTxEthereumSignatures(
-    request: PendingBatchTxEthereumSignaturesRequest
-  ): Promise<PendingBatchTxEthereumSignaturesResponse> {
-    const data = PendingBatchTxEthereumSignaturesRequest.encode(
-      request
-    ).finish();
+  UnsignedBatchTxs(
+    request: UnsignedBatchTxsRequest
+  ): Promise<UnsignedBatchTxsResponse> {
+    const data = UnsignedBatchTxsRequest.encode(request).finish();
     const promise = this.rpc.request(
       "gravity.v1.Query",
-      "PendingBatchTxEthereumSignatures",
+      "UnsignedBatchTxs",
       data
     );
     return promise.then((data) =>
-      PendingBatchTxEthereumSignaturesResponse.decode(new _m0.Reader(data))
+      UnsignedBatchTxsResponse.decode(new _m0.Reader(data))
     );
   }
 
-  PendingContractCallTxEthereumSignatures(
-    request: PendingContractCallTxEthereumSignaturesRequest
-  ): Promise<PendingContractCallTxEthereumSignaturesResponse> {
-    const data = PendingContractCallTxEthereumSignaturesRequest.encode(
-      request
-    ).finish();
+  UnsignedContractCallTxs(
+    request: UnsignedContractCallTxsRequest
+  ): Promise<UnsignedContractCallTxsResponse> {
+    const data = UnsignedContractCallTxsRequest.encode(request).finish();
     const promise = this.rpc.request(
       "gravity.v1.Query",
-      "PendingContractCallTxEthereumSignatures",
+      "UnsignedContractCallTxs",
       data
     );
     return promise.then((data) =>
-      PendingContractCallTxEthereumSignaturesResponse.decode(
-        new _m0.Reader(data)
-      )
+      UnsignedContractCallTxsResponse.decode(new _m0.Reader(data))
     );
   }
 

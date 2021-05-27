@@ -30,9 +30,9 @@ func GetQueryCmd() *cobra.Command {
 		CmdSignerSetTxEthereumSignatures(),
 		CmdBatchTxEthereumSignatures(),
 		CmdContractCallTxEthereumSignatures(),
-		CmdPendingSignerSetTxEthereumSignatures(),
-		CmdPendingBatchTxEthereumSignatures(),
-		CmdPendingContractCallTxEthereumSignatures(),
+		CmdUnsignedSignerSetTxs(),
+		CmdUnsignedBatchTxs(),
+		CmdUnsignedContractCallTxs(),
 		CmdLastSubmittedEthereumEvent(),
 		CmdBatchTxFees(),
 		CmdERC20ToDenom(),
@@ -382,7 +382,7 @@ func CmdContractCallTxEthereumSignatures() *cobra.Command {
 	return cmd
 }
 
-func CmdPendingSignerSetTxEthereumSignatures() *cobra.Command {
+func CmdUnsignedSignerSetTxs() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pending-signer-set-tx-ethereum-signatures [validator-or-orchestrator-address]",
 		Args:  cobra.ExactArgs(1),
@@ -397,11 +397,11 @@ func CmdPendingSignerSetTxEthereumSignatures() *cobra.Command {
 				address string // TODO(levi) init and validate from args[0]
 			)
 
-			req := types.PendingSignerSetTxEthereumSignaturesRequest{
+			req := types.UnsignedSignerSetTxsRequest{
 				Address: address,
 			}
 
-			res, err := queryClient.PendingSignerSetTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.UnsignedSignerSetTxs(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
@@ -414,7 +414,7 @@ func CmdPendingSignerSetTxEthereumSignatures() *cobra.Command {
 	return cmd
 }
 
-func CmdPendingBatchTxEthereumSignatures() *cobra.Command {
+func CmdUnsignedBatchTxs() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pending-batch-tx-ethereum-signatures [address]",
 		Args:  cobra.ExactArgs(1),
@@ -429,11 +429,11 @@ func CmdPendingBatchTxEthereumSignatures() *cobra.Command {
 				address string // TODO(levi) init and validate from args[0]
 			)
 
-			req := types.PendingBatchTxEthereumSignaturesRequest{
+			req := types.UnsignedBatchTxsRequest{
 				Address: address,
 			}
 
-			res, err := queryClient.PendingBatchTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.UnsignedBatchTxs(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
@@ -446,7 +446,7 @@ func CmdPendingBatchTxEthereumSignatures() *cobra.Command {
 	return cmd
 }
 
-func CmdPendingContractCallTxEthereumSignatures() *cobra.Command {
+func CmdUnsignedContractCallTxs() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pending-contract-call-tx-ethereum-signatures [address]",
 		Args:  cobra.ExactArgs(1),
@@ -461,11 +461,11 @@ func CmdPendingContractCallTxEthereumSignatures() *cobra.Command {
 				address string // TODO(levi) init and validate from args[0]
 			)
 
-			req := types.PendingContractCallTxEthereumSignaturesRequest{
+			req := types.UnsignedContractCallTxsRequest{
 				Address: address,
 			}
 
-			res, err := queryClient.PendingContractCallTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.UnsignedContractCallTxs(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}

@@ -239,6 +239,10 @@ pub async fn eth_signer_main_loop(
         // sign the last unsigned valsets
         match get_oldest_unsigned_valsets(&mut grpc_client, our_cosmos_address).await {
             Ok(valsets) => {
+                println!(
+                    "%%%%%%% IN get_oldest_unsigned_valsets valsets: {:#?}",
+                    valsets,
+                );
                 if valsets.is_empty() {
                     trace!("No validator sets to sign, node is caught up!")
                 } else {

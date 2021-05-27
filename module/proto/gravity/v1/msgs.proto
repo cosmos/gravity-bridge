@@ -13,25 +13,25 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 // Msg defines the state transitions possible within gravity
 service Msg {
   rpc SendToEthereum(MsgSendToEthereum) returns (MsgSendToEthereumResponse) {
-    option (google.api.http).post = "/gravity/v1/send_to_ethereum";
+    // option (google.api.http).post = "/gravity/v1/send_to_ethereum";
   }
   rpc CancelSendToEthereum(MsgCancelSendToEthereum)
       returns (MsgCancelSendToEthereumResponse) {
-    option (google.api.http).post = "/gravity/v1/send_to_ethereum/cancel";
+    // option (google.api.http).post = "/gravity/v1/send_to_ethereum/cancel";
   }
   rpc RequestBatchTx(MsgRequestBatchTx) returns (MsgRequestBatchTxResponse) {
-    option (google.api.http).post = "/gravity/v1/batchtx/request";
+    // option (google.api.http).post = "/gravity/v1/batchtx/request";
   }
   rpc SubmitEthereumSignature(MsgSubmitEthereumSignature)
       returns (MsgSubmitEthereumSignatureResponse) {
-    option (google.api.http).post = "/gravity/v1/ethereum_signature";
+    // option (google.api.http).post = "/gravity/v1/ethereum_signature";
   }
   rpc SubmitEthereumEvent(MsgSubmitEthereumEvent)
       returns (MsgSubmitEthereumEventResponse) {
-    option (google.api.http).post = "/gravity/v1/ethereum_event";
+    // option (google.api.http).post = "/gravity/v1/ethereum_event";
   }
   rpc SetDelegateKeys(MsgDelegateKeys) returns (MsgDelegateKeysResponse) {
-    option (google.api.http).post = "/gravity/v1/delegate_keys";
+    // option (google.api.http).post = "/gravity/v1/delegate_keys";
   }
 }
 

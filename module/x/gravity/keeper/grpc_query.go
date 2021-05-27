@@ -204,7 +204,7 @@ func (k Keeper) ContractCallTxEthereumSignatures(c context.Context, req *types.C
 	return &types.ContractCallTxEthereumSignaturesResponse{Signatures: out}, nil
 }
 
-func (k Keeper) PendingSignerSetTxEthereumSignatures(c context.Context, req *types.PendingSignerSetTxEthereumSignaturesRequest) (*types.PendingSignerSetTxEthereumSignaturesResponse, error) {
+func (k Keeper) UnsignedSignerSetTxs(c context.Context, req *types.UnsignedSignerSetTxsRequest) (*types.UnsignedSignerSetTxsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	val, err := k.getSignerValidator(ctx, req.Address)
 	if err != nil {
@@ -222,10 +222,10 @@ func (k Keeper) PendingSignerSetTxEthereumSignatures(c context.Context, req *typ
 		}
 		return false
 	})
-	return &types.PendingSignerSetTxEthereumSignaturesResponse{SignerSets: signerSets}, nil
+	return &types.UnsignedSignerSetTxsResponse{SignerSets: signerSets}, nil
 }
 
-func (k Keeper) PendingBatchTxEthereumSignatures(c context.Context, req *types.PendingBatchTxEthereumSignaturesRequest) (*types.PendingBatchTxEthereumSignaturesResponse, error) {
+func (k Keeper) UnsignedBatchTxs(c context.Context, req *types.UnsignedBatchTxsRequest) (*types.UnsignedBatchTxsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	val, err := k.getSignerValidator(ctx, req.Address)
 	if err != nil {
@@ -243,10 +243,10 @@ func (k Keeper) PendingBatchTxEthereumSignatures(c context.Context, req *types.P
 		}
 		return false
 	})
-	return &types.PendingBatchTxEthereumSignaturesResponse{Batches: batches}, nil
+	return &types.UnsignedBatchTxsResponse{Batches: batches}, nil
 }
 
-func (k Keeper) PendingContractCallTxEthereumSignatures(c context.Context, req *types.PendingContractCallTxEthereumSignaturesRequest) (*types.PendingContractCallTxEthereumSignaturesResponse, error) {
+func (k Keeper) UnsignedContractCallTxs(c context.Context, req *types.UnsignedContractCallTxsRequest) (*types.UnsignedContractCallTxsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	val, err := k.getSignerValidator(ctx, req.Address)
 	if err != nil {
@@ -264,7 +264,7 @@ func (k Keeper) PendingContractCallTxEthereumSignatures(c context.Context, req *
 		}
 		return false
 	})
-	return &types.PendingContractCallTxEthereumSignaturesResponse{Calls: calls}, nil
+	return &types.UnsignedContractCallTxsResponse{Calls: calls}, nil
 }
 
 func (k Keeper) LastSubmittedEthereumEvent(c context.Context, req *types.LastSubmittedEthereumEventRequest) (*types.LastSubmittedEthereumEventResponse, error) {

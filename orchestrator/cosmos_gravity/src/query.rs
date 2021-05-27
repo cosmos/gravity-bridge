@@ -55,7 +55,7 @@ pub async fn get_oldest_unsigned_valsets(
     address: Address,
 ) -> Result<Vec<Valset>, GravityError> {
     let request = client
-        .pending_signer_set_tx_ethereum_signatures(PendingSignerSetTxEthereumSignaturesRequest {
+        .unsigned_signer_set_txs(UnsignedSignerSetTxsRequest {
             address: address.to_string(),
         })
         .await?;
@@ -108,7 +108,7 @@ pub async fn get_oldest_unsigned_transaction_batch(
     address: Address,
 ) -> Result<Option<TransactionBatch>, GravityError> {
     let request = client
-        .pending_batch_tx_ethereum_signatures(PendingBatchTxEthereumSignaturesRequest {
+        .unsigned_batch_txs(UnsignedBatchTxsRequest {
             address: address.to_string(),
         })
         .await?;
@@ -210,11 +210,9 @@ pub async fn get_oldest_unsigned_logic_call(
     address: Address,
 ) -> Result<Vec<LogicCall>, GravityError> {
     let request = client
-        .pending_contract_call_tx_ethereum_signatures(
-            PendingContractCallTxEthereumSignaturesRequest {
-                address: address.to_string(),
-            },
-        )
+        .unsigned_contract_call_txs(UnsignedContractCallTxsRequest {
+            address: address.to_string(),
+        })
         .await?;
     let calls = request.into_inner().calls;
     let mut out = Vec::new();
