@@ -1,6 +1,7 @@
 use crate::args::OrchestratorOpts;
 use crate::config::config_exists;
 use crate::config::load_keys;
+use cosmos_gravity::query::get_gravity_params;
 use deep_space::PrivateKey as CosmosPrivateKey;
 use gravity_utils::connection_prep::{
     check_delegate_addresses, check_for_eth, wait_for_cosmos_node_ready,
@@ -19,7 +20,6 @@ pub async fn orchestrator(args: OrchestratorOpts, address_prefix: String, home_d
     let ethereum_rpc = args.ethereum_rpc;
     let ethereum_key = args.ethereum_key;
     let cosmos_key = args.cosmos_phrase;
-    let contract_address = args.gravity_contract_address;
 
     let cosmos_key = if let Some(k) = cosmos_key {
         k
@@ -106,6 +106,19 @@ pub async fn orchestrator(args: OrchestratorOpts, address_prefix: String, home_d
     // check if we actually have the promised balance of tokens to pay fees
     check_for_fee(&fee, public_cosmos_key, &contact).await;
     check_for_eth(public_eth_key, &web3).await;
+
+    // get the gravity contract address, if not provided
+    let contract_address = if let Some(c) = args.gravity_contract_address {
+        c
+    } else {
+        let params = get_gravity_params(&mut grpc).await.unwrap();
+        let c = params.bridge_ethereum_address.parse();
+        if c.is_err() {
+            error!("The Gravity address is not yet set as a chain parameter! You must specify --gravity-contract-address");
+            exit(1);
+        }
+        c.unwrap()
+    };
 
     orchestrator_main_loop(
         cosmos_key,

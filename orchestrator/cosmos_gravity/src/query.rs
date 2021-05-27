@@ -1,6 +1,7 @@
 use clarity::Address as EthAddress;
 use deep_space::address::Address;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_proto::gravity::Params;
 use gravity_proto::gravity::QueryBatchConfirmsRequest;
 use gravity_proto::gravity::QueryCurrentValsetRequest;
 use gravity_proto::gravity::QueryLastEventNonceByAddrRequest;
@@ -11,11 +12,20 @@ use gravity_proto::gravity::QueryLastValsetRequestsRequest;
 use gravity_proto::gravity::QueryLogicConfirmsRequest;
 use gravity_proto::gravity::QueryOutgoingLogicCallsRequest;
 use gravity_proto::gravity::QueryOutgoingTxBatchesRequest;
+use gravity_proto::gravity::QueryParamsRequest;
 use gravity_proto::gravity::QueryValsetConfirmsByNonceRequest;
 use gravity_proto::gravity::QueryValsetRequestRequest;
 use gravity_utils::error::GravityError;
 use gravity_utils::types::*;
 use tonic::transport::Channel;
+
+/// Gets the Gravity module parameters from the Gravity module
+pub async fn get_gravity_params(
+    client: &mut GravityQueryClient<Channel>,
+) -> Result<Params, GravityError> {
+    let request = client.params(QueryParamsRequest {}).await?.into_inner();
+    Ok(request.params.unwrap())
+}
 
 /// get the valset for a given nonce (block) height
 pub async fn get_valset(

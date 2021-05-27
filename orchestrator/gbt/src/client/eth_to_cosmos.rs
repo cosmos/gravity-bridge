@@ -7,8 +7,8 @@ use ethereum_gravity::send_to_cosmos::send_to_cosmos;
 use gravity_utils::connection_prep::{check_for_eth, create_rpc_connections};
 
 pub async fn eth_to_cosmos(args: EthToCosmosOpts, prefix: String) {
-    let erc20_address = args.token_contract_address;
     let gravity_address = args.gravity_contract_address;
+    let erc20_address = args.token_contract_address;
     let cosmos_dest = args.destination;
     let ethereum_key = args.ethereum_key;
     let ethereum_public_key = ethereum_key.to_public_key().unwrap();
@@ -35,7 +35,7 @@ pub async fn eth_to_cosmos(args: EthToCosmosOpts, prefix: String) {
     if erc20_balance == 0u8.into() {
         error!(
             "You have zero {} tokens, please double check your sender and erc20 addresses!",
-            gravity_address
+            erc20_address
         );
         exit(1);
     } else if amount.clone() > erc20_balance {

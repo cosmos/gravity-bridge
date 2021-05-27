@@ -65,7 +65,7 @@ pub struct OrchestratorOpts {
     pub fees: Coin,
     /// The address fo the Gravity contract on Ethereum
     #[clap(short, long, parse(try_from_str))]
-    pub gravity_contract_address: EthAddress,
+    pub gravity_contract_address: Option<EthAddress>,
 }
 
 /// The Gravity Bridge Relayer is an unpermissioned role that takes data from the Cosmos blockchain
@@ -79,7 +79,7 @@ pub struct RelayerOpts {
     pub ethereum_key: Option<EthPrivateKey>,
     /// The address fo the Gravity contract on Ethereum
     #[clap(short, long, parse(try_from_str))]
-    pub gravity_contract_address: EthAddress,
+    pub gravity_contract_address: Option<EthAddress>,
     /// (Optional) The Ethereum RPC server that will be used
     #[clap(long, default_value = "http://localhost:8545")]
     pub ethereum_rpc: String,
@@ -171,7 +171,7 @@ pub struct DeployErc20RepresentationOpts {
     pub ethereum_key: EthPrivateKey,
     /// The address fo the Gravity contract on Ethereum
     #[clap(short, long, parse(try_from_str))]
-    pub gravity_contract_address: EthAddress,
+    pub gravity_contract_address: Option<EthAddress>,
     /// The name value for the ERC20 contract, must mach Cosmos denom metadata in order to be adopted
     #[clap(long)]
     pub erc20_name: String,

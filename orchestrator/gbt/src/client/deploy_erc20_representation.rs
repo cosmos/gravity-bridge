@@ -1,4 +1,5 @@
 use crate::{args::DeployErc20RepresentationOpts, utils::TIMEOUT};
+use cosmos_gravity::query::get_gravity_params;
 use ethereum_gravity::deploy_erc20::deploy_erc20;
 use gravity_proto::gravity::QueryDenomToErc20Request;
 use gravity_utils::connection_prep::{check_for_eth, create_rpc_connections};
@@ -17,14 +18,27 @@ pub async fn deploy_erc20_representation(
     let ethereum_rpc = args.ethereum_rpc;
     let ethereum_key = args.ethereum_key;
     let denom = args.cosmos_denom;
-    let contract_address = args.gravity_contract_address;
 
     let connections =
         create_rpc_connections(address_prefix, Some(grpc_url), Some(ethereum_rpc), TIMEOUT).await;
     let web3 = connections.web3.unwrap();
+
     let mut grpc = connections.grpc.unwrap();
+
     let ethereum_public_key = ethereum_key.to_public_key().unwrap();
     check_for_eth(ethereum_public_key, &web3).await;
+
+    let contract_address = if let Some(c) = args.gravity_contract_address {
+        c
+    } else {
+        let params = get_gravity_params(&mut grpc).await.unwrap();
+        let c = params.bridge_ethereum_address.parse();
+        if c.is_err() {
+            error!("The Gravity address is not yet set as a chain parameter! You must specify --gravity-contract-address");
+            exit(1);
+        }
+        c.unwrap()
+    };
 
     let res = grpc
         .denom_to_erc20(QueryDenomToErc20Request {
