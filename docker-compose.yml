@@ -134,3 +134,7 @@ services:
       - ethereum
     volumes:
       - ./testdata:/testdata
+    environment:
+      - RUST_BACKTRACE=full
+      - RUST_LOG=INFO
+      - TEST_TYPE
