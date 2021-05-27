@@ -45,6 +45,8 @@ pub async fn orchestrator_main_loop(
     gravity_contract_address: EthAddress,
     pay_fees_in: String,
 ) {
+    println!("entering orchestrator_mainloop; eth_key {}; ", ethereum_key);
+
     let fee = Coin {
         denom: pay_fees_in.clone(),
         amount: 1u32.into(),
@@ -181,6 +183,8 @@ pub async fn eth_signer_main_loop(
     gravity_contract_address: EthAddress,
     fee: Coin,
 ) {
+    println!("entering eth_signer_main_loop; eth_key {};", ethereum_key);
+
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
     let mut grpc_client = grpc_client;
