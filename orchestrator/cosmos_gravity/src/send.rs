@@ -20,6 +20,10 @@ use gravity_utils::message_signatures::{
 use gravity_utils::types::*;
 use std::{collections::HashMap, time::Duration};
 
+use bytes::BytesMut;
+use prost::Message;
+use prost_types::Any;
+
 pub const MEMO: &str = "Sent using Althea Orchestrator";
 pub const TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -113,13 +117,27 @@ pub async fn send_valset_confirms(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
+        println!("&&&&&&&&&& send valset signature {:#?}", valset);
         let confirm = proto::SignerSetTxSignature {
             ethereum_signer: our_eth_address.to_string(),
             signer_set_nonce: valset.nonce,
             signature: eth_signature.to_bytes().to_vec(),
         };
 
-        let msg = Msg::new("/gravity.v1.MsgValsetConfirm", confirm);
+        let size = Message::encoded_len(&confirm);
+        let mut buf = BytesMut::with_capacity(size);
+        // encoding should never fail so long as the buffer is big enough
+        Message::encode(&confirm, &mut buf).expect("Failed to encode!");
+
+        let wrapper = proto::MsgSubmitEthereumSignature {
+            signature: Some(Any {
+                type_url: "/gravity.v1.SignerSetTxSignature".into(),
+                value: buf.to_vec(),
+            }),
+            signer: "".into(),
+        };
+
+        let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumSignature", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;

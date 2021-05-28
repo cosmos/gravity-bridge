@@ -54,12 +54,13 @@ pub async fn get_oldest_unsigned_valsets(
     client: &mut GravityQueryClient<Channel>,
     address: Address,
 ) -> Result<Vec<Valset>, GravityError> {
-    let request = client
+    let response = client
         .unsigned_signer_set_txs(UnsignedSignerSetTxsRequest {
             address: address.to_string(),
         })
         .await?;
-    let valsets = request.into_inner().signer_sets;
+    println!("%%%%% got unsigned signer sets response: {:#?}", response);
+    let valsets = response.into_inner().signer_sets;
     // convert from proto valset type to rust valset type
     let valsets = valsets.iter().map(|v| v.clone().into()).collect();
     Ok(valsets)

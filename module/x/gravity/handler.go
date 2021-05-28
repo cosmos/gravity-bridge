@@ -16,6 +16,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
+		fmt.Printf("&&&&&&&& got a message %s", msg)
 		switch msg := msg.(type) {
 		case *types.MsgSendToEthereum:
 			res, err := msgServer.SendToEthereum(sdk.WrapSDKContext(ctx), msg)
