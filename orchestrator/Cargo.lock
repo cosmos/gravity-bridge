@@ -1416,6 +1416,7 @@ dependencies = [
  "regex",
  "serde",
  "thiserror",
+ "web30",
 ]
 
 [[package]]
