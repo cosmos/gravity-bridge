@@ -888,9 +888,9 @@ dependencies = [
 
 [[package]]
 name = "deep_space"
-version = "2.3.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9afbd333a274cdfdaf2ed93bceeab7b01ea28a735c9a2eab11fb010187cbb40"
+checksum = "3355d9ddb6b40a882b95fe024edc34ed8dea2b09b4eb68c91022531d962716c6"
 dependencies = [
  "base64",
  "bech32",
@@ -1218,7 +1218,7 @@ dependencies = [
 
 [[package]]
 name = "gbt"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "actix-rt 2.2.0",
  "clap",
