@@ -117,26 +117,21 @@ pub async fn send_valset_confirms(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        println!("&&&&&&&&&& send valset signature {:#?}", valset);
         let confirm = proto::SignerSetTxSignature {
             ethereum_signer: our_eth_address.to_string(),
             signer_set_nonce: valset.nonce,
             signature: eth_signature.to_bytes().to_vec(),
         };
-
         let size = Message::encoded_len(&confirm);
         let mut buf = BytesMut::with_capacity(size);
-        // encoding should never fail so long as the buffer is big enough
-        Message::encode(&confirm, &mut buf).expect("Failed to encode!");
-
+        Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
         let wrapper = proto::MsgSubmitEthereumSignature {
+            signer: our_address.to_string(),
             signature: Some(Any {
                 type_url: "/gravity.v1.SignerSetTxSignature".into(),
                 value: buf.to_vec(),
             }),
-            signer: our_address.to_string(),
         };
-
         let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumSignature", wrapper);
         messages.push(msg);
     }
@@ -257,7 +252,17 @@ pub async fn send_logic_call_confirm(
             invalidation_scope: bytes_to_hex_str(&call.invalidation_id).as_bytes().to_vec(),
             invalidation_nonce: call.invalidation_nonce,
         };
-        let msg = Msg::new("/gravity.v1.MsgConfirmLogicCall", confirm);
+        let size = Message::encoded_len(&confirm);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumSignature {
+            signer: our_address.to_string(),
+            signature: Some(Any {
+                type_url: "/gravity.v1.ContractCallTxSignature".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumSignature", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
