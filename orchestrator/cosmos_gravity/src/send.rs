@@ -134,7 +134,7 @@ pub async fn send_valset_confirms(
                 type_url: "/gravity.v1.SignerSetTxSignature".into(),
                 value: buf.to_vec(),
             }),
-            signer: "".into(),
+            signer: our_address.to_string(),
         };
 
         let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumSignature", wrapper);

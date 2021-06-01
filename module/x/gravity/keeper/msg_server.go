@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -61,8 +60,6 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 
 // SubmitEthereumSignature handles MsgSubmitEthereumSignature
 func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubmitEthereumSignature) (*types.MsgSubmitEthereumSignatureResponse, error) {
-	log.Printf(">> SubmitEthereumSignature %s", msg)
-
 	ctx := sdk.UnwrapSDKContext(c)
 
 	signature, err := types.UnpackSignature(msg.Signature)
