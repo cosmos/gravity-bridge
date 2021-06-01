@@ -41,7 +41,6 @@ pub async fn find_latest_valset(
         all_valset_events.reverse();
 
         trace!("Found events {:?}", all_valset_events);
-        info!("Found events {:?}", all_valset_events);
 
         // we take only the first event if we find any at all.
         if !all_valset_events.is_empty() {
