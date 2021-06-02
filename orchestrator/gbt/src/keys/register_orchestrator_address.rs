@@ -80,7 +80,7 @@ pub async fn register_orchestrator_address(
 
     let ethereum_address = ethereum_key.to_public_key().unwrap();
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
-    update_gravity_delegate_addresses(
+    let res = update_gravity_delegate_addresses(
         &contact,
         ethereum_address,
         cosmos_address,
@@ -89,6 +89,12 @@ pub async fn register_orchestrator_address(
     )
     .await
     .expect("Failed to update Eth address");
+    let res = contact.wait_for_tx(res, TIMEOUT).await;
+
+    if let Err(e) = res {
+        error!("Failed trying to register delegate addresses error {:?}, correct the error and try again", e);
+        exit(1);
+    }
 
     if let Some(phrase) = generated_cosmos.clone() {
         info!(
