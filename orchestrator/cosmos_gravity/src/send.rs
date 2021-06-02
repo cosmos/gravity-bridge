@@ -118,11 +118,7 @@ pub async fn send_valset_confirms(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        println!(
-            ":==: Sending valset update with address {} and sig {:#?}",
-            our_eth_address,
-            &eth_signature.to_bytes()
-        );
+
         let confirm = proto::SignerSetTxConfirmation {
             ethereum_signer: our_eth_address.to_string(),
             signer_set_nonce: valset.nonce,
