@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"log"
 
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -114,8 +113,6 @@ func (msg *MsgSubmitEthereumTxConfirmation) Type() string { return "submit_ether
 
 // ValidateBasic performs stateless checks
 func (msg *MsgSubmitEthereumTxConfirmation) ValidateBasic() (err error) {
-	log.Println(":==: MsgSubmitEthereumTxConfirmation.ValidateBasic")
-
 	if _, err = sdk.AccAddressFromBech32(msg.Signer); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Signer)
 	}
