@@ -111,7 +111,7 @@ pub async fn register_orchestrator_address(
         eth_address, cosmos_address
     );
     if !args.no_save {
-        info!("Keys saved! You can now run `gbt orchestrator start`");
+        info!("Keys saved! You can now run `gbt orchestrator --fees <your fee value>`");
         let phrase = match (generated_cosmos, cosmos_phrase) {
             (Some(v), None) => v.to_string(),
             (None, Some(s)) => s,
