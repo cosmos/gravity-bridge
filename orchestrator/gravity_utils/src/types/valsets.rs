@@ -152,13 +152,11 @@ impl Valset {
                 if let Some(sig) = signatures_hashmap.get(&eth_address) {
                     assert_eq!(sig.get_eth_address(), eth_address);
                     assert!(sig.get_signature().is_valid());
-
-                    println!(":==: get_signature_status: sig {:?}", sig);
                     println!(
-                        ":==: get_signature_status: signed_message {:?}",
-                        signed_message
+                        ":==: IN GET SIGNATURE STATUS, sig: {:#?}, sig.get_signature(): {:#?}",
+                        sig,
+                        sig.get_signature()
                     );
-
                     let recover_key = sig.get_signature().recover(signed_message).unwrap();
                     if recover_key == sig.get_eth_address() {
                         out.push(GravitySignature {
