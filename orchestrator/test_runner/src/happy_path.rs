@@ -225,7 +225,7 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
 
     while starting_eth_valset_nonce == current_eth_valset_nonce {
         info!(
-            "Validator set is not yet updated to {}>, waiting",
+            "Validator set is not yet updated to >{}, waiting",
             starting_eth_valset_nonce
         );
         current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
@@ -434,17 +434,17 @@ async fn submit_duplicate_erc20_send(
         .await
         .expect("Did not find coins!");
 
-        let ethereum_sender = "0x912fd21d7a69678227fe6d08c64222db41477ba0"
+    let ethereum_sender = "0x912fd21d7a69678227fe6d08c64222db41477ba0"
         .parse()
         .unwrap();
-        let event = SendToCosmosEvent {
-            event_nonce: nonce,
-            block_height: 500u16.into(),
-            erc20: erc20_address,
-            sender: ethereum_sender,
-            destination: receiver,
-            amount,
-        };
+    let event = SendToCosmosEvent {
+        event_nonce: nonce,
+        block_height: 500u16.into(),
+        erc20: erc20_address,
+        sender: ethereum_sender,
+        destination: receiver,
+        amount,
+    };
 
     // iterate through all validators and try to send an event with duplicate nonce
     for k in keys.iter() {
