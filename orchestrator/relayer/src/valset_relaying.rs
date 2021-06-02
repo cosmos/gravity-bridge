@@ -60,6 +60,7 @@ pub async fn relay_valsets(
             assert_eq!(valset.nonce, latest_nonce);
             let confirms = get_all_valset_confirms(grpc_client, latest_nonce).await;
             if let Ok(confirms) = confirms {
+                println!(":==: confirms {:#?}", confirms);
                 for confirm in confirms.iter() {
                     assert_eq!(valset.nonce, confirm.nonce);
                 }
@@ -75,12 +76,13 @@ pub async fn relay_valsets(
                     break;
                 } else if let Err(e) = res {
                     last_error = Some(e);
-                    println!(">> last_error {:#?}; nonce: {}", last_error, latest_nonce);
+                    println!(":==: last_error {:#?}; nonce: {}", last_error, latest_nonce);
                     // TODO(levi) break or return??
                 }
             }
             // TODO(levi) this isn't handling errors
         }
+        // TODO(levi) this isn't handling errors
 
         latest_nonce -= 1
     }

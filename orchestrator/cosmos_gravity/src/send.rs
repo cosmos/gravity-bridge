@@ -110,10 +110,16 @@ pub async fn send_valset_confirms(
 
     for valset in valsets {
         trace!("Submitting signature for valset {:?}", valset);
+        println!(":==: Submitting signature for valset {:?}", valset);
         let message = encode_valset_confirm(gravity_id.clone(), valset.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
         trace!(
             "Sending valset update with address {} and sig {}",
+            our_eth_address,
+            bytes_to_hex_str(&eth_signature.to_bytes())
+        );
+        println!(
+            ":==: Sending valset update with address {} and sig {}",
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );

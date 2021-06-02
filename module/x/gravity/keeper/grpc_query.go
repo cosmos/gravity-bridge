@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"log"
 
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -167,6 +168,9 @@ func (k Keeper) SignerSetTxEthereumSignatures(c context.Context, req *types.Sign
 		})
 		return false
 	})
+
+	log.Printf(":==: keeper.SignerSetTxEthereumSignatures %v %v", out, req.SignerSetNonce)
+
 	return &types.SignerSetTxEthereumSignaturesResponse{Signatures: out}, nil
 }
 
