@@ -52,28 +52,28 @@ export interface MsgRequestBatchTx {
 export interface MsgRequestBatchTxResponse {}
 
 /**
- * MsgSubmitEthereumSignature submits an ethereum signature for a given
+ * MsgSubmitEthereumTxConfirmation submits an ethereum signature for a given
  * validator
  */
-export interface MsgSubmitEthereumSignature {
+export interface MsgSubmitEthereumTxConfirmation {
   /** TODO: can we make this take an array? */
-  signature?: Any;
+  confirmation?: Any;
   signer: string;
 }
 
 /**
- * ContractCallTxSignature is a signature on behalf of a validator for a
+ * ContractCallTxConfirmation is a signature on behalf of a validator for a
  * ContractCallTx.
  */
-export interface ContractCallTxSignature {
+export interface ContractCallTxConfirmation {
   invalidationScope: Uint8Array;
   invalidationNonce: Long;
   ethereumSigner: string;
   signature: Uint8Array;
 }
 
-/** BatchTxSignature is a signature on behalf of a validator for a BatchTx. */
-export interface BatchTxSignature {
+/** BatchTxConfirmation is a signature on behalf of a validator for a BatchTx. */
+export interface BatchTxConfirmation {
   tokenContract: string;
   batchNonce: Long;
   ethereumSigner: string;
@@ -81,16 +81,16 @@ export interface BatchTxSignature {
 }
 
 /**
- * SignerSetTxSignature is a signature on behalf of a validator for a
+ * SignerSetTxConfirmation is a signature on behalf of a validator for a
  * SignerSetTx
  */
-export interface SignerSetTxSignature {
+export interface SignerSetTxConfirmation {
   signerSetNonce: Long;
   ethereumSigner: string;
   signature: Uint8Array;
 }
 
-export interface MsgSubmitEthereumSignatureResponse {}
+export interface MsgSubmitEthereumTxConfirmationResponse {}
 
 /** MsgSubmitEthereumEvent */
 export interface MsgSubmitEthereumEvent {
@@ -630,15 +630,15 @@ export const MsgRequestBatchTxResponse = {
   },
 };
 
-const baseMsgSubmitEthereumSignature: object = { signer: "" };
+const baseMsgSubmitEthereumTxConfirmation: object = { signer: "" };
 
-export const MsgSubmitEthereumSignature = {
+export const MsgSubmitEthereumTxConfirmation = {
   encode(
-    message: MsgSubmitEthereumSignature,
+    message: MsgSubmitEthereumTxConfirmation,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.signature !== undefined) {
-      Any.encode(message.signature, writer.uint32(10).fork()).ldelim();
+    if (message.confirmation !== undefined) {
+      Any.encode(message.confirmation, writer.uint32(10).fork()).ldelim();
     }
     if (message.signer !== "") {
       writer.uint32(18).string(message.signer);
@@ -649,17 +649,17 @@ export const MsgSubmitEthereumSignature = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): MsgSubmitEthereumSignature {
+  ): MsgSubmitEthereumTxConfirmation {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
-      ...baseMsgSubmitEthereumSignature,
-    } as MsgSubmitEthereumSignature;
+      ...baseMsgSubmitEthereumTxConfirmation,
+    } as MsgSubmitEthereumTxConfirmation;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.signature = Any.decode(reader, reader.uint32());
+          message.confirmation = Any.decode(reader, reader.uint32());
           break;
         case 2:
           message.signer = reader.string();
@@ -672,14 +672,14 @@ export const MsgSubmitEthereumSignature = {
     return message;
   },
 
-  fromJSON(object: any): MsgSubmitEthereumSignature {
+  fromJSON(object: any): MsgSubmitEthereumTxConfirmation {
     const message = {
-      ...baseMsgSubmitEthereumSignature,
-    } as MsgSubmitEthereumSignature;
-    if (object.signature !== undefined && object.signature !== null) {
-      message.signature = Any.fromJSON(object.signature);
+      ...baseMsgSubmitEthereumTxConfirmation,
+    } as MsgSubmitEthereumTxConfirmation;
+    if (object.confirmation !== undefined && object.confirmation !== null) {
+      message.confirmation = Any.fromJSON(object.confirmation);
     } else {
-      message.signature = undefined;
+      message.confirmation = undefined;
     }
     if (object.signer !== undefined && object.signer !== null) {
       message.signer = String(object.signer);
@@ -689,26 +689,26 @@ export const MsgSubmitEthereumSignature = {
     return message;
   },
 
-  toJSON(message: MsgSubmitEthereumSignature): unknown {
+  toJSON(message: MsgSubmitEthereumTxConfirmation): unknown {
     const obj: any = {};
-    message.signature !== undefined &&
-      (obj.signature = message.signature
-        ? Any.toJSON(message.signature)
+    message.confirmation !== undefined &&
+      (obj.confirmation = message.confirmation
+        ? Any.toJSON(message.confirmation)
         : undefined);
     message.signer !== undefined && (obj.signer = message.signer);
     return obj;
   },
 
   fromPartial(
-    object: DeepPartial<MsgSubmitEthereumSignature>
-  ): MsgSubmitEthereumSignature {
+    object: DeepPartial<MsgSubmitEthereumTxConfirmation>
+  ): MsgSubmitEthereumTxConfirmation {
     const message = {
-      ...baseMsgSubmitEthereumSignature,
-    } as MsgSubmitEthereumSignature;
-    if (object.signature !== undefined && object.signature !== null) {
-      message.signature = Any.fromPartial(object.signature);
+      ...baseMsgSubmitEthereumTxConfirmation,
+    } as MsgSubmitEthereumTxConfirmation;
+    if (object.confirmation !== undefined && object.confirmation !== null) {
+      message.confirmation = Any.fromPartial(object.confirmation);
     } else {
-      message.signature = undefined;
+      message.confirmation = undefined;
     }
     if (object.signer !== undefined && object.signer !== null) {
       message.signer = object.signer;
@@ -719,14 +719,14 @@ export const MsgSubmitEthereumSignature = {
   },
 };
 
-const baseContractCallTxSignature: object = {
+const baseContractCallTxConfirmation: object = {
   invalidationNonce: Long.UZERO,
   ethereumSigner: "",
 };
 
-export const ContractCallTxSignature = {
+export const ContractCallTxConfirmation = {
   encode(
-    message: ContractCallTxSignature,
+    message: ContractCallTxConfirmation,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.invalidationScope.length !== 0) {
@@ -747,12 +747,12 @@ export const ContractCallTxSignature = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): ContractCallTxSignature {
+  ): ContractCallTxConfirmation {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
-      ...baseContractCallTxSignature,
-    } as ContractCallTxSignature;
+      ...baseContractCallTxConfirmation,
+    } as ContractCallTxConfirmation;
     message.invalidationScope = new Uint8Array();
     message.signature = new Uint8Array();
     while (reader.pos < end) {
@@ -778,10 +778,10 @@ export const ContractCallTxSignature = {
     return message;
   },
 
-  fromJSON(object: any): ContractCallTxSignature {
+  fromJSON(object: any): ContractCallTxConfirmation {
     const message = {
-      ...baseContractCallTxSignature,
-    } as ContractCallTxSignature;
+      ...baseContractCallTxConfirmation,
+    } as ContractCallTxConfirmation;
     message.invalidationScope = new Uint8Array();
     message.signature = new Uint8Array();
     if (
@@ -809,7 +809,7 @@ export const ContractCallTxSignature = {
     return message;
   },
 
-  toJSON(message: ContractCallTxSignature): unknown {
+  toJSON(message: ContractCallTxConfirmation): unknown {
     const obj: any = {};
     message.invalidationScope !== undefined &&
       (obj.invalidationScope = base64FromBytes(
@@ -831,11 +831,11 @@ export const ContractCallTxSignature = {
   },
 
   fromPartial(
-    object: DeepPartial<ContractCallTxSignature>
-  ): ContractCallTxSignature {
+    object: DeepPartial<ContractCallTxConfirmation>
+  ): ContractCallTxConfirmation {
     const message = {
-      ...baseContractCallTxSignature,
-    } as ContractCallTxSignature;
+      ...baseContractCallTxConfirmation,
+    } as ContractCallTxConfirmation;
     if (
       object.invalidationScope !== undefined &&
       object.invalidationScope !== null
@@ -866,15 +866,15 @@ export const ContractCallTxSignature = {
   },
 };
 
-const baseBatchTxSignature: object = {
+const baseBatchTxConfirmation: object = {
   tokenContract: "",
   batchNonce: Long.UZERO,
   ethereumSigner: "",
 };
 
-export const BatchTxSignature = {
+export const BatchTxConfirmation = {
   encode(
-    message: BatchTxSignature,
+    message: BatchTxConfirmation,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.tokenContract !== "") {
@@ -892,10 +892,10 @@ export const BatchTxSignature = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): BatchTxSignature {
+  decode(input: _m0.Reader | Uint8Array, length?: number): BatchTxConfirmation {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = { ...baseBatchTxSignature } as BatchTxSignature;
+    const message = { ...baseBatchTxConfirmation } as BatchTxConfirmation;
     message.signature = new Uint8Array();
     while (reader.pos < end) {
       const tag = reader.uint32();
@@ -920,8 +920,8 @@ export const BatchTxSignature = {
     return message;
   },
 
-  fromJSON(object: any): BatchTxSignature {
-    const message = { ...baseBatchTxSignature } as BatchTxSignature;
+  fromJSON(object: any): BatchTxConfirmation {
+    const message = { ...baseBatchTxConfirmation } as BatchTxConfirmation;
     message.signature = new Uint8Array();
     if (object.tokenContract !== undefined && object.tokenContract !== null) {
       message.tokenContract = String(object.tokenContract);
@@ -944,7 +944,7 @@ export const BatchTxSignature = {
     return message;
   },
 
-  toJSON(message: BatchTxSignature): unknown {
+  toJSON(message: BatchTxConfirmation): unknown {
     const obj: any = {};
     message.tokenContract !== undefined &&
       (obj.tokenContract = message.tokenContract);
@@ -959,8 +959,8 @@ export const BatchTxSignature = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<BatchTxSignature>): BatchTxSignature {
-    const message = { ...baseBatchTxSignature } as BatchTxSignature;
+  fromPartial(object: DeepPartial<BatchTxConfirmation>): BatchTxConfirmation {
+    const message = { ...baseBatchTxConfirmation } as BatchTxConfirmation;
     if (object.tokenContract !== undefined && object.tokenContract !== null) {
       message.tokenContract = object.tokenContract;
     } else {
@@ -985,14 +985,14 @@ export const BatchTxSignature = {
   },
 };
 
-const baseSignerSetTxSignature: object = {
+const baseSignerSetTxConfirmation: object = {
   signerSetNonce: Long.UZERO,
   ethereumSigner: "",
 };
 
-export const SignerSetTxSignature = {
+export const SignerSetTxConfirmation = {
   encode(
-    message: SignerSetTxSignature,
+    message: SignerSetTxConfirmation,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (!message.signerSetNonce.isZero()) {
@@ -1010,10 +1010,12 @@ export const SignerSetTxSignature = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): SignerSetTxSignature {
+  ): SignerSetTxConfirmation {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = { ...baseSignerSetTxSignature } as SignerSetTxSignature;
+    const message = {
+      ...baseSignerSetTxConfirmation,
+    } as SignerSetTxConfirmation;
     message.signature = new Uint8Array();
     while (reader.pos < end) {
       const tag = reader.uint32();
@@ -1035,8 +1037,10 @@ export const SignerSetTxSignature = {
     return message;
   },
 
-  fromJSON(object: any): SignerSetTxSignature {
-    const message = { ...baseSignerSetTxSignature } as SignerSetTxSignature;
+  fromJSON(object: any): SignerSetTxConfirmation {
+    const message = {
+      ...baseSignerSetTxConfirmation,
+    } as SignerSetTxConfirmation;
     message.signature = new Uint8Array();
     if (object.signerSetNonce !== undefined && object.signerSetNonce !== null) {
       message.signerSetNonce = Long.fromString(object.signerSetNonce);
@@ -1054,7 +1058,7 @@ export const SignerSetTxSignature = {
     return message;
   },
 
-  toJSON(message: SignerSetTxSignature): unknown {
+  toJSON(message: SignerSetTxConfirmation): unknown {
     const obj: any = {};
     message.signerSetNonce !== undefined &&
       (obj.signerSetNonce = (message.signerSetNonce || Long.UZERO).toString());
@@ -1067,8 +1071,12 @@ export const SignerSetTxSignature = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<SignerSetTxSignature>): SignerSetTxSignature {
-    const message = { ...baseSignerSetTxSignature } as SignerSetTxSignature;
+  fromPartial(
+    object: DeepPartial<SignerSetTxConfirmation>
+  ): SignerSetTxConfirmation {
+    const message = {
+      ...baseSignerSetTxConfirmation,
+    } as SignerSetTxConfirmation;
     if (object.signerSetNonce !== undefined && object.signerSetNonce !== null) {
       message.signerSetNonce = object.signerSetNonce as Long;
     } else {
@@ -1088,11 +1096,11 @@ export const SignerSetTxSignature = {
   },
 };
 
-const baseMsgSubmitEthereumSignatureResponse: object = {};
+const baseMsgSubmitEthereumTxConfirmationResponse: object = {};
 
-export const MsgSubmitEthereumSignatureResponse = {
+export const MsgSubmitEthereumTxConfirmationResponse = {
   encode(
-    _: MsgSubmitEthereumSignatureResponse,
+    _: MsgSubmitEthereumTxConfirmationResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     return writer;
@@ -1101,12 +1109,12 @@ export const MsgSubmitEthereumSignatureResponse = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number
-  ): MsgSubmitEthereumSignatureResponse {
+  ): MsgSubmitEthereumTxConfirmationResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
-      ...baseMsgSubmitEthereumSignatureResponse,
-    } as MsgSubmitEthereumSignatureResponse;
+      ...baseMsgSubmitEthereumTxConfirmationResponse,
+    } as MsgSubmitEthereumTxConfirmationResponse;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1118,24 +1126,24 @@ export const MsgSubmitEthereumSignatureResponse = {
     return message;
   },
 
-  fromJSON(_: any): MsgSubmitEthereumSignatureResponse {
+  fromJSON(_: any): MsgSubmitEthereumTxConfirmationResponse {
     const message = {
-      ...baseMsgSubmitEthereumSignatureResponse,
-    } as MsgSubmitEthereumSignatureResponse;
+      ...baseMsgSubmitEthereumTxConfirmationResponse,
+    } as MsgSubmitEthereumTxConfirmationResponse;
     return message;
   },
 
-  toJSON(_: MsgSubmitEthereumSignatureResponse): unknown {
+  toJSON(_: MsgSubmitEthereumTxConfirmationResponse): unknown {
     const obj: any = {};
     return obj;
   },
 
   fromPartial(
-    _: DeepPartial<MsgSubmitEthereumSignatureResponse>
-  ): MsgSubmitEthereumSignatureResponse {
+    _: DeepPartial<MsgSubmitEthereumTxConfirmationResponse>
+  ): MsgSubmitEthereumTxConfirmationResponse {
     const message = {
-      ...baseMsgSubmitEthereumSignatureResponse,
-    } as MsgSubmitEthereumSignatureResponse;
+      ...baseMsgSubmitEthereumTxConfirmationResponse,
+    } as MsgSubmitEthereumTxConfirmationResponse;
     return message;
   },
 };
@@ -2186,9 +2194,9 @@ export interface Msg {
   RequestBatchTx(
     request: MsgRequestBatchTx
   ): Promise<MsgRequestBatchTxResponse>;
-  SubmitEthereumSignature(
-    request: MsgSubmitEthereumSignature
-  ): Promise<MsgSubmitEthereumSignatureResponse>;
+  SubmitEthereumTxConfirmation(
+    request: MsgSubmitEthereumTxConfirmation
+  ): Promise<MsgSubmitEthereumTxConfirmationResponse>;
   SubmitEthereumEvent(
     request: MsgSubmitEthereumEvent
   ): Promise<MsgSubmitEthereumEventResponse>;
@@ -2202,7 +2210,9 @@ export class MsgClientImpl implements Msg {
     this.SendToEthereum = this.SendToEthereum.bind(this);
     this.CancelSendToEthereum = this.CancelSendToEthereum.bind(this);
     this.RequestBatchTx = this.RequestBatchTx.bind(this);
-    this.SubmitEthereumSignature = this.SubmitEthereumSignature.bind(this);
+    this.SubmitEthereumTxConfirmation = this.SubmitEthereumTxConfirmation.bind(
+      this
+    );
     this.SubmitEthereumEvent = this.SubmitEthereumEvent.bind(this);
     this.SetDelegateKeys = this.SetDelegateKeys.bind(this);
   }
@@ -2240,17 +2250,17 @@ export class MsgClientImpl implements Msg {
     );
   }
 
-  SubmitEthereumSignature(
-    request: MsgSubmitEthereumSignature
-  ): Promise<MsgSubmitEthereumSignatureResponse> {
-    const data = MsgSubmitEthereumSignature.encode(request).finish();
+  SubmitEthereumTxConfirmation(
+    request: MsgSubmitEthereumTxConfirmation
+  ): Promise<MsgSubmitEthereumTxConfirmationResponse> {
+    const data = MsgSubmitEthereumTxConfirmation.encode(request).finish();
     const promise = this.rpc.request(
       "gravity.v1.Msg",
-      "SubmitEthereumSignature",
+      "SubmitEthereumTxConfirmation",
       data
     );
     return promise.then((data) =>
-      MsgSubmitEthereumSignatureResponse.decode(new _m0.Reader(data))
+      MsgSubmitEthereumTxConfirmationResponse.decode(new _m0.Reader(data))
     );
   }
 

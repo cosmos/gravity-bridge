@@ -55,7 +55,7 @@ When a validator signs over a validator set this is considered a `valSetConfirma
 
 | Key                                         | Value                  | Type                     | Encoding         |
 |---------------------------------------------|------------------------|--------------------------|------------------|
-| `[]byte{0x3} + (nonce + []byte(AccAddress)` | Validator Confirmation | `types.MsgSubmitEthereumSignature` | Protobuf encoded |
+| `[]byte{0x3} + (nonce + []byte(AccAddress)` | Validator Confirmation | `types.MsgSubmitEthereumTxConfirmation` | Protobuf encoded |
 
 ### ConfirmBatch
 

@@ -105,7 +105,7 @@ pub struct BatchConfirmResponse {
 
 impl BatchConfirmResponse {
     pub fn from_proto(
-        input: gravity_proto::gravity::BatchTxSignature,
+        input: gravity_proto::gravity::BatchTxConfirmation,
     ) -> Result<Self, GravityError> {
         Ok(BatchConfirmResponse {
             nonce: input.batch_nonce,

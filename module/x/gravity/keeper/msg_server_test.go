@@ -54,22 +54,22 @@ func TestMsgServer_SubmitEthereumSignature(t *testing.T) {
 	signature, err := types.NewEthereumSignature(checkpoint, ethPrivKey)
 	require.NoError(t, err)
 
-	signerSetTxSignature := &types.SignerSetTxSignature{
+	signerSetTxConfirmation := &types.SignerSetTxConfirmation{
 		SignerSetNonce: signerSetTx.Nonce,
 		EthereumSigner: ethAddr1.Hex(),
 		Signature:      signature,
 	}
 
-	confirmation, err := types.PackSignature(signerSetTxSignature)
+	confirmation, err := types.PackConfirmation(signerSetTxConfirmation)
 	require.NoError(t, err)
 
 	msgServer := NewMsgServerImpl(gk)
 
-	msg := &types.MsgSubmitEthereumSignature{
-		Signature: confirmation,
-		Signer:    orcAddr1.String(),
+	msg := &types.MsgSubmitEthereumTxConfirmation{
+		Confirmation: confirmation,
+		Signer:       orcAddr1.String(),
 	}
 
-	_, err = msgServer.SubmitEthereumSignature(sdk.WrapSDKContext(ctx), msg)
+	_, err = msgServer.SubmitEthereumTxConfirmation(sdk.WrapSDKContext(ctx), msg)
 	require.NoError(t, err)
 }

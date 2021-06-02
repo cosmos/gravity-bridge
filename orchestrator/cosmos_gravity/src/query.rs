@@ -91,7 +91,7 @@ pub async fn get_all_valset_confirms(
     nonce: u64,
 ) -> Result<Vec<ValsetConfirmResponse>, GravityError> {
     let request = client
-        .signer_set_tx_ethereum_signatures(SignerSetTxEthereumSignaturesRequest {
+        .signer_set_tx_confirmations(SignerSetTxConfirmationsRequest {
             signer_set_nonce: nonce,
         })
         .await?;
@@ -144,7 +144,7 @@ pub async fn get_transaction_batch_signatures(
     contract_address: EthAddress,
 ) -> Result<Vec<BatchConfirmResponse>, GravityError> {
     let request = client
-        .batch_tx_ethereum_signatures(BatchTxEthereumSignaturesRequest {
+        .batch_tx_confirmations(BatchTxConfirmationsRequest {
             batch_nonce: nonce,
             token_contract: contract_address.to_string(),
         })
@@ -192,7 +192,7 @@ pub async fn get_logic_call_signatures(
     invalidation_nonce: u64,
 ) -> Result<Vec<LogicCallConfirmResponse>, GravityError> {
     let request = client
-        .contract_call_tx_ethereum_signatures(ContractCallTxEthereumSignaturesRequest {
+        .contract_call_tx_confirmations(ContractCallTxConfirmationsRequest {
             invalidation_scope,
             invalidation_nonce,
         })

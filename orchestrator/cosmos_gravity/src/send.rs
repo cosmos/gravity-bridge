@@ -123,7 +123,7 @@ pub async fn send_valset_confirms(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = proto::SignerSetTxSignature {
+        let confirm = proto::SignerSetTxConfirmation {
             ethereum_signer: our_eth_address.to_string(),
             signer_set_nonce: valset.nonce,
             signature: eth_signature.to_bytes().to_vec(),
@@ -131,14 +131,14 @@ pub async fn send_valset_confirms(
         let size = Message::encoded_len(&confirm);
         let mut buf = BytesMut::with_capacity(size);
         Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
-        let wrapper = proto::MsgSubmitEthereumSignature {
+        let wrapper = proto::MsgSubmitEthereumTxConfirmation {
             signer: our_address.to_string(),
-            signature: Some(Any {
-                type_url: "/gravity.v1.SignerSetTxSignature".into(),
+            confirmation: Some(Any {
+                type_url: "/gravity.v1.SignerSetTxConfirmation".into(),
                 value: buf.to_vec(),
             }),
         };
-        let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumSignature", wrapper);
+        let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -190,7 +190,7 @@ pub async fn send_batch_confirm(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = proto::BatchTxSignature {
+        let confirm = proto::BatchTxConfirmation {
             token_contract: batch.token_contract.to_string(),
             batch_nonce: batch.nonce,
             ethereum_signer: our_eth_address.to_string(),
@@ -250,7 +250,7 @@ pub async fn send_logic_call_confirm(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = proto::ContractCallTxSignature {
+        let confirm = proto::ContractCallTxConfirmation {
             ethereum_signer: our_eth_address.to_string(),
             signature: bytes_to_hex_str(&eth_signature.to_bytes())
                 .as_bytes()
@@ -261,14 +261,14 @@ pub async fn send_logic_call_confirm(
         let size = Message::encoded_len(&confirm);
         let mut buf = BytesMut::with_capacity(size);
         Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
-        let wrapper = proto::MsgSubmitEthereumSignature {
+        let wrapper = proto::MsgSubmitEthereumTxConfirmation {
             signer: our_address.to_string(),
-            signature: Some(Any {
-                type_url: "/gravity.v1.ContractCallTxSignature".into(),
+            confirmation: Some(Any {
+                type_url: "/gravity.v1.ContractCallTxConfirmation".into(),
                 value: buf.to_vec(),
             }),
         };
-        let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumSignature", wrapper);
+        let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;

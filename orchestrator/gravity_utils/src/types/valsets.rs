@@ -8,7 +8,8 @@ use std::fmt::Debug;
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
-    fmt, str,
+    fmt,
+    str,
     // str::FromStr,
 };
 
@@ -61,7 +62,7 @@ pub struct ValsetConfirmResponse {
 
 impl ValsetConfirmResponse {
     pub fn from_proto(
-        input: gravity_proto::gravity::SignerSetTxSignature,
+        input: gravity_proto::gravity::SignerSetTxConfirmation,
     ) -> Result<Self, GravityError> {
         println!(":==: ValsetConfirmResponse::from_proto input {:?}", input);
 

@@ -76,8 +76,8 @@ func (gs *GenesisState) UnpackInterfaces(unpacker cdctypes.AnyUnpacker) error {
 			return err
 		}
 	}
-	for _, sig := range gs.Signatures {
-		var signature EthereumSignature
+	for _, sig := range gs.Confirmations {
+		var signature EthereumTxConfirmation
 		if err := unpacker.UnpackAny(sig, &signature); err != nil {
 			return err
 		}

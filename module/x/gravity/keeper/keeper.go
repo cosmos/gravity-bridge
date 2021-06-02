@@ -12,7 +12,6 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -112,12 +111,12 @@ func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
 ///////////////////////////////
 
 // getEthereumSignature returns a valset confirmation by a nonce and validator address
-func (k Keeper) getEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) hexutil.Bytes {
+func (k Keeper) getEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) []byte {
 	return ctx.KVStore(k.storeKey).Get(types.MakeEthereumSignatureKey(storeIndex, validator))
 }
 
 // SetEthereumSignature sets a valset confirmation
-func (k Keeper) SetEthereumSignature(ctx sdk.Context, sig types.EthereumSignature, val sdk.ValAddress) []byte {
+func (k Keeper) SetEthereumSignature(ctx sdk.Context, sig types.EthereumTxConfirmation, val sdk.ValAddress) []byte {
 	key := types.MakeEthereumSignatureKey(sig.GetStoreIndex(), val)
 	ctx.KVStore(k.storeKey).Set(key, sig.GetSignature())
 	return key
@@ -128,9 +127,9 @@ func (k Keeper) deleteEthereumSignature(ctx sdk.Context, storeIndex []byte, vali
 }
 
 // GetEthereumSignatures returns all etherum signatures for a given outgoing tx by store index
-func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[string]hexutil.Bytes {
-	var signatures = make(map[string]hexutil.Bytes)
-	k.iterateEthereumSignatures(ctx, storeIndex, func(val sdk.ValAddress, h hexutil.Bytes) bool {
+func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[string][]byte {
+	var signatures = make(map[string][]byte)
+	k.iterateEthereumSignatures(ctx, storeIndex, func(val sdk.ValAddress, h []byte) bool {
 		signatures[val.String()] = h
 		return false
 	})
@@ -138,7 +137,7 @@ func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[st
 }
 
 // iterateEthereumSignatures iterates through all valset confirms by nonce in ASC order
-func (k Keeper) iterateEthereumSignatures(ctx sdk.Context, storeIndex []byte, cb func(sdk.ValAddress, hexutil.Bytes) bool) {
+func (k Keeper) iterateEthereumSignatures(ctx sdk.Context, storeIndex []byte, cb func(sdk.ValAddress, []byte) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.EthereumSignatureKey}, storeIndex...))
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
