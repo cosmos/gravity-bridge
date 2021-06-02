@@ -27,9 +27,9 @@ func GetQueryCmd() *cobra.Command {
 		CmdSignerSetTxs(),
 		CmdBatchTxs(),
 		CmdContractCallTxs(),
-		CmdSignerSetTxEthereumSignatures(),
-		CmdBatchTxEthereumSignatures(),
-		CmdContractCallTxEthereumSignatures(),
+		CmdSignerSetTxConfirmations(),
+		CmdBatchTxConfirmations(),
+		CmdContractCallTxConfirmations(),
 		CmdUnsignedSignerSetTxs(),
 		CmdUnsignedBatchTxs(),
 		CmdUnsignedContractCallTxs(),
@@ -273,7 +273,7 @@ func CmdContractCallTxs() *cobra.Command {
 	return cmd
 }
 
-func CmdSignerSetTxEthereumSignatures() *cobra.Command {
+func CmdSignerSetTxConfirmations() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "signer-set-tx-ethereum-signatures [nonce]",
 		Args:  cobra.ExactArgs(2),
@@ -288,11 +288,11 @@ func CmdSignerSetTxEthereumSignatures() *cobra.Command {
 				nonce uint64 // TODO(levi) init and validate from args[0]
 			)
 
-			req := types.SignerSetTxEthereumSignaturesRequest{
+			req := types.SignerSetTxConfirmationsRequest{
 				SignerSetNonce: nonce,
 			}
 
-			res, err := queryClient.SignerSetTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.SignerSetTxConfirmations(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
@@ -305,7 +305,7 @@ func CmdSignerSetTxEthereumSignatures() *cobra.Command {
 	return cmd
 }
 
-func CmdBatchTxEthereumSignatures() *cobra.Command {
+func CmdBatchTxConfirmations() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "batch-tx-ethereum-signatures [nonce] [contract-address]",
 		Args:  cobra.MinimumNArgs(2),
@@ -330,12 +330,12 @@ func CmdBatchTxEthereumSignatures() *cobra.Command {
 				return nil
 			}
 
-			req := types.BatchTxEthereumSignaturesRequest{
+			req := types.BatchTxConfirmationsRequest{
 				BatchNonce:    nonce,
 				TokenContract: contractAddress,
 			}
 
-			res, err := queryClient.BatchTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.BatchTxConfirmations(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
@@ -348,7 +348,7 @@ func CmdBatchTxEthereumSignatures() *cobra.Command {
 	return cmd
 }
 
-func CmdContractCallTxEthereumSignatures() *cobra.Command {
+func CmdContractCallTxConfirmations() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "contract-call-tx-ethereum-signatures [invalidation-scope] [invalidation-nonce]",
 		Args:  cobra.MinimumNArgs(2),
@@ -364,12 +364,12 @@ func CmdContractCallTxEthereumSignatures() *cobra.Command {
 				invalidationNonce uint64 // TODO(levi) init and validate from args[1]
 			)
 
-			req := types.ContractCallTxEthereumSignaturesRequest{
+			req := types.ContractCallTxConfirmationsRequest{
 				InvalidationNonce: invalidationNonce,
 				InvalidationScope: invalidationScope,
 			}
 
-			res, err := queryClient.ContractCallTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.ContractCallTxConfirmations(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}

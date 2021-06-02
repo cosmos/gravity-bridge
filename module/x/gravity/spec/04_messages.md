@@ -30,7 +30,7 @@ This message is expected to fail if:
   - Does not start with 0x
 - The validator is not present in the validator set.
 
-### MsgSubmitEthereumSignature
+### MsgSubmitEthereumTxConfirmation
 
 When the gravity daemon witnesses a complete validator set within the gravity module, the validator submits a signature of a message containing the entire validator set. 
 

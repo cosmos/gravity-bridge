@@ -432,23 +432,23 @@ func (m *ContractCallTxResponse) GetLogicCall() *ContractCallTx {
 	return nil
 }
 
-// rpc SignerSetTxEthereumSignatures
-type SignerSetTxEthereumSignaturesRequest struct {
+// rpc SignerSetTxConfirmations
+type SignerSetTxConfirmationsRequest struct {
 	SignerSetNonce uint64 `protobuf:"varint,1,opt,name=signer_set_nonce,json=signerSetNonce,proto3" json:"signer_set_nonce,omitempty"`
 }
 
-func (m *SignerSetTxEthereumSignaturesRequest) Reset()         { *m = SignerSetTxEthereumSignaturesRequest{} }
-func (m *SignerSetTxEthereumSignaturesRequest) String() string { return proto.CompactTextString(m) }
-func (*SignerSetTxEthereumSignaturesRequest) ProtoMessage()    {}
-func (*SignerSetTxEthereumSignaturesRequest) Descriptor() ([]byte, []int) {
+func (m *SignerSetTxConfirmationsRequest) Reset()         { *m = SignerSetTxConfirmationsRequest{} }
+func (m *SignerSetTxConfirmationsRequest) String() string { return proto.CompactTextString(m) }
+func (*SignerSetTxConfirmationsRequest) ProtoMessage()    {}
+func (*SignerSetTxConfirmationsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_29a9d4192703013c, []int{9}
 }
-func (m *SignerSetTxEthereumSignaturesRequest) XXX_Unmarshal(b []byte) error {
+func (m *SignerSetTxConfirmationsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *SignerSetTxEthereumSignaturesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *SignerSetTxConfirmationsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_SignerSetTxEthereumSignaturesRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_SignerSetTxConfirmationsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -458,41 +458,41 @@ func (m *SignerSetTxEthereumSignaturesRequest) XXX_Marshal(b []byte, determinist
 		return b[:n], nil
 	}
 }
-func (m *SignerSetTxEthereumSignaturesRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SignerSetTxEthereumSignaturesRequest.Merge(m, src)
+func (m *SignerSetTxConfirmationsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SignerSetTxConfirmationsRequest.Merge(m, src)
 }
-func (m *SignerSetTxEthereumSignaturesRequest) XXX_Size() int {
+func (m *SignerSetTxConfirmationsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *SignerSetTxEthereumSignaturesRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_SignerSetTxEthereumSignaturesRequest.DiscardUnknown(m)
+func (m *SignerSetTxConfirmationsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SignerSetTxConfirmationsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SignerSetTxEthereumSignaturesRequest proto.InternalMessageInfo
+var xxx_messageInfo_SignerSetTxConfirmationsRequest proto.InternalMessageInfo
 
-func (m *SignerSetTxEthereumSignaturesRequest) GetSignerSetNonce() uint64 {
+func (m *SignerSetTxConfirmationsRequest) GetSignerSetNonce() uint64 {
 	if m != nil {
 		return m.SignerSetNonce
 	}
 	return 0
 }
 
-type SignerSetTxEthereumSignaturesResponse struct {
-	Signatures []*SignerSetTxSignature `protobuf:"bytes,1,rep,name=signatures,proto3" json:"signatures,omitempty"`
+type SignerSetTxConfirmationsResponse struct {
+	Signatures []*SignerSetTxConfirmation `protobuf:"bytes,1,rep,name=signatures,proto3" json:"signatures,omitempty"`
 }
 
-func (m *SignerSetTxEthereumSignaturesResponse) Reset()         { *m = SignerSetTxEthereumSignaturesResponse{} }
-func (m *SignerSetTxEthereumSignaturesResponse) String() string { return proto.CompactTextString(m) }
-func (*SignerSetTxEthereumSignaturesResponse) ProtoMessage()    {}
-func (*SignerSetTxEthereumSignaturesResponse) Descriptor() ([]byte, []int) {
+func (m *SignerSetTxConfirmationsResponse) Reset()         { *m = SignerSetTxConfirmationsResponse{} }
+func (m *SignerSetTxConfirmationsResponse) String() string { return proto.CompactTextString(m) }
+func (*SignerSetTxConfirmationsResponse) ProtoMessage()    {}
+func (*SignerSetTxConfirmationsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_29a9d4192703013c, []int{10}
 }
-func (m *SignerSetTxEthereumSignaturesResponse) XXX_Unmarshal(b []byte) error {
+func (m *SignerSetTxConfirmationsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *SignerSetTxEthereumSignaturesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *SignerSetTxConfirmationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_SignerSetTxEthereumSignaturesResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_SignerSetTxConfirmationsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -502,19 +502,19 @@ func (m *SignerSetTxEthereumSignaturesResponse) XXX_Marshal(b []byte, determinis
 		return b[:n], nil
 	}
 }
-func (m *SignerSetTxEthereumSignaturesResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SignerSetTxEthereumSignaturesResponse.Merge(m, src)
+func (m *SignerSetTxConfirmationsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SignerSetTxConfirmationsResponse.Merge(m, src)
 }
-func (m *SignerSetTxEthereumSignaturesResponse) XXX_Size() int {
+func (m *SignerSetTxConfirmationsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *SignerSetTxEthereumSignaturesResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_SignerSetTxEthereumSignaturesResponse.DiscardUnknown(m)
+func (m *SignerSetTxConfirmationsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_SignerSetTxConfirmationsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SignerSetTxEthereumSignaturesResponse proto.InternalMessageInfo
+var xxx_messageInfo_SignerSetTxConfirmationsResponse proto.InternalMessageInfo
 
-func (m *SignerSetTxEthereumSignaturesResponse) GetSignatures() []*SignerSetTxSignature {
+func (m *SignerSetTxConfirmationsResponse) GetSignatures() []*SignerSetTxConfirmation {
 	if m != nil {
 		return m.Signatures
 	}
@@ -1163,25 +1163,23 @@ func (m *BatchTxFeesResponse) GetFees() github_com_cosmos_cosmos_sdk_types.Coins
 	return nil
 }
 
-type ContractCallTxEthereumSignaturesRequest struct {
+type ContractCallTxConfirmationsRequest struct {
 	InvalidationScope []byte `protobuf:"bytes,1,opt,name=invalidation_scope,json=invalidationScope,proto3" json:"invalidation_scope,omitempty"`
 	InvalidationNonce uint64 `protobuf:"varint,2,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`
 }
 
-func (m *ContractCallTxEthereumSignaturesRequest) Reset() {
-	*m = ContractCallTxEthereumSignaturesRequest{}
-}
-func (m *ContractCallTxEthereumSignaturesRequest) String() string { return proto.CompactTextString(m) }
-func (*ContractCallTxEthereumSignaturesRequest) ProtoMessage()    {}
-func (*ContractCallTxEthereumSignaturesRequest) Descriptor() ([]byte, []int) {
+func (m *ContractCallTxConfirmationsRequest) Reset()         { *m = ContractCallTxConfirmationsRequest{} }
+func (m *ContractCallTxConfirmationsRequest) String() string { return proto.CompactTextString(m) }
+func (*ContractCallTxConfirmationsRequest) ProtoMessage()    {}
+func (*ContractCallTxConfirmationsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_29a9d4192703013c, []int{25}
 }
-func (m *ContractCallTxEthereumSignaturesRequest) XXX_Unmarshal(b []byte) error {
+func (m *ContractCallTxConfirmationsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ContractCallTxEthereumSignaturesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ContractCallTxConfirmationsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ContractCallTxEthereumSignaturesRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ContractCallTxConfirmationsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -1191,50 +1189,48 @@ func (m *ContractCallTxEthereumSignaturesRequest) XXX_Marshal(b []byte, determin
 		return b[:n], nil
 	}
 }
-func (m *ContractCallTxEthereumSignaturesRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ContractCallTxEthereumSignaturesRequest.Merge(m, src)
+func (m *ContractCallTxConfirmationsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContractCallTxConfirmationsRequest.Merge(m, src)
 }
-func (m *ContractCallTxEthereumSignaturesRequest) XXX_Size() int {
+func (m *ContractCallTxConfirmationsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *ContractCallTxEthereumSignaturesRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_ContractCallTxEthereumSignaturesRequest.DiscardUnknown(m)
+func (m *ContractCallTxConfirmationsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContractCallTxConfirmationsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ContractCallTxEthereumSignaturesRequest proto.InternalMessageInfo
+var xxx_messageInfo_ContractCallTxConfirmationsRequest proto.InternalMessageInfo
 
-func (m *ContractCallTxEthereumSignaturesRequest) GetInvalidationScope() []byte {
+func (m *ContractCallTxConfirmationsRequest) GetInvalidationScope() []byte {
 	if m != nil {
 		return m.InvalidationScope
 	}
 	return nil
 }
 
-func (m *ContractCallTxEthereumSignaturesRequest) GetInvalidationNonce() uint64 {
+func (m *ContractCallTxConfirmationsRequest) GetInvalidationNonce() uint64 {
 	if m != nil {
 		return m.InvalidationNonce
 	}
 	return 0
 }
 
-type ContractCallTxEthereumSignaturesResponse struct {
-	Signatures []*ContractCallTxSignature `protobuf:"bytes,1,rep,name=signatures,proto3" json:"signatures,omitempty"`
+type ContractCallTxConfirmationsResponse struct {
+	Signatures []*ContractCallTxConfirmation `protobuf:"bytes,1,rep,name=signatures,proto3" json:"signatures,omitempty"`
 }
 
-func (m *ContractCallTxEthereumSignaturesResponse) Reset() {
-	*m = ContractCallTxEthereumSignaturesResponse{}
-}
-func (m *ContractCallTxEthereumSignaturesResponse) String() string { return proto.CompactTextString(m) }
-func (*ContractCallTxEthereumSignaturesResponse) ProtoMessage()    {}
-func (*ContractCallTxEthereumSignaturesResponse) Descriptor() ([]byte, []int) {
+func (m *ContractCallTxConfirmationsResponse) Reset()         { *m = ContractCallTxConfirmationsResponse{} }
+func (m *ContractCallTxConfirmationsResponse) String() string { return proto.CompactTextString(m) }
+func (*ContractCallTxConfirmationsResponse) ProtoMessage()    {}
+func (*ContractCallTxConfirmationsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_29a9d4192703013c, []int{26}
 }
-func (m *ContractCallTxEthereumSignaturesResponse) XXX_Unmarshal(b []byte) error {
+func (m *ContractCallTxConfirmationsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ContractCallTxEthereumSignaturesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ContractCallTxConfirmationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ContractCallTxEthereumSignaturesResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ContractCallTxConfirmationsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -1244,42 +1240,42 @@ func (m *ContractCallTxEthereumSignaturesResponse) XXX_Marshal(b []byte, determi
 		return b[:n], nil
 	}
 }
-func (m *ContractCallTxEthereumSignaturesResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ContractCallTxEthereumSignaturesResponse.Merge(m, src)
+func (m *ContractCallTxConfirmationsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContractCallTxConfirmationsResponse.Merge(m, src)
 }
-func (m *ContractCallTxEthereumSignaturesResponse) XXX_Size() int {
+func (m *ContractCallTxConfirmationsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *ContractCallTxEthereumSignaturesResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ContractCallTxEthereumSignaturesResponse.DiscardUnknown(m)
+func (m *ContractCallTxConfirmationsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContractCallTxConfirmationsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ContractCallTxEthereumSignaturesResponse proto.InternalMessageInfo
+var xxx_messageInfo_ContractCallTxConfirmationsResponse proto.InternalMessageInfo
 
-func (m *ContractCallTxEthereumSignaturesResponse) GetSignatures() []*ContractCallTxSignature {
+func (m *ContractCallTxConfirmationsResponse) GetSignatures() []*ContractCallTxConfirmation {
 	if m != nil {
 		return m.Signatures
 	}
 	return nil
 }
 
-type BatchTxEthereumSignaturesRequest struct {
+type BatchTxConfirmationsRequest struct {
 	BatchNonce    uint64 `protobuf:"varint,1,opt,name=batch_nonce,json=batchNonce,proto3" json:"batch_nonce,omitempty"`
 	TokenContract string `protobuf:"bytes,2,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
 }
 
-func (m *BatchTxEthereumSignaturesRequest) Reset()         { *m = BatchTxEthereumSignaturesRequest{} }
-func (m *BatchTxEthereumSignaturesRequest) String() string { return proto.CompactTextString(m) }
-func (*BatchTxEthereumSignaturesRequest) ProtoMessage()    {}
-func (*BatchTxEthereumSignaturesRequest) Descriptor() ([]byte, []int) {
+func (m *BatchTxConfirmationsRequest) Reset()         { *m = BatchTxConfirmationsRequest{} }
+func (m *BatchTxConfirmationsRequest) String() string { return proto.CompactTextString(m) }
+func (*BatchTxConfirmationsRequest) ProtoMessage()    {}
+func (*BatchTxConfirmationsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_29a9d4192703013c, []int{27}
 }
-func (m *BatchTxEthereumSignaturesRequest) XXX_Unmarshal(b []byte) error {
+func (m *BatchTxConfirmationsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *BatchTxEthereumSignaturesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *BatchTxConfirmationsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_BatchTxEthereumSignaturesRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_BatchTxConfirmationsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -1289,48 +1285,48 @@ func (m *BatchTxEthereumSignaturesRequest) XXX_Marshal(b []byte, deterministic b
 		return b[:n], nil
 	}
 }
-func (m *BatchTxEthereumSignaturesRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BatchTxEthereumSignaturesRequest.Merge(m, src)
+func (m *BatchTxConfirmationsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BatchTxConfirmationsRequest.Merge(m, src)
 }
-func (m *BatchTxEthereumSignaturesRequest) XXX_Size() int {
+func (m *BatchTxConfirmationsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *BatchTxEthereumSignaturesRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_BatchTxEthereumSignaturesRequest.DiscardUnknown(m)
+func (m *BatchTxConfirmationsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_BatchTxConfirmationsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_BatchTxEthereumSignaturesRequest proto.InternalMessageInfo
+var xxx_messageInfo_BatchTxConfirmationsRequest proto.InternalMessageInfo
 
-func (m *BatchTxEthereumSignaturesRequest) GetBatchNonce() uint64 {
+func (m *BatchTxConfirmationsRequest) GetBatchNonce() uint64 {
 	if m != nil {
 		return m.BatchNonce
 	}
 	return 0
 }
 
-func (m *BatchTxEthereumSignaturesRequest) GetTokenContract() string {
+func (m *BatchTxConfirmationsRequest) GetTokenContract() string {
 	if m != nil {
 		return m.TokenContract
 	}
 	return ""
 }
 
-type BatchTxEthereumSignaturesResponse struct {
-	Signatures []*BatchTxSignature `protobuf:"bytes,1,rep,name=signatures,proto3" json:"signatures,omitempty"`
+type BatchTxConfirmationsResponse struct {
+	Signatures []*BatchTxConfirmation `protobuf:"bytes,1,rep,name=signatures,proto3" json:"signatures,omitempty"`
 }
 
-func (m *BatchTxEthereumSignaturesResponse) Reset()         { *m = BatchTxEthereumSignaturesResponse{} }
-func (m *BatchTxEthereumSignaturesResponse) String() string { return proto.CompactTextString(m) }
-func (*BatchTxEthereumSignaturesResponse) ProtoMessage()    {}
-func (*BatchTxEthereumSignaturesResponse) Descriptor() ([]byte, []int) {
+func (m *BatchTxConfirmationsResponse) Reset()         { *m = BatchTxConfirmationsResponse{} }
+func (m *BatchTxConfirmationsResponse) String() string { return proto.CompactTextString(m) }
+func (*BatchTxConfirmationsResponse) ProtoMessage()    {}
+func (*BatchTxConfirmationsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_29a9d4192703013c, []int{28}
 }
-func (m *BatchTxEthereumSignaturesResponse) XXX_Unmarshal(b []byte) error {
+func (m *BatchTxConfirmationsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *BatchTxEthereumSignaturesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *BatchTxConfirmationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_BatchTxEthereumSignaturesResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_BatchTxConfirmationsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -1340,19 +1336,19 @@ func (m *BatchTxEthereumSignaturesResponse) XXX_Marshal(b []byte, deterministic 
 		return b[:n], nil
 	}
 }
-func (m *BatchTxEthereumSignaturesResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BatchTxEthereumSignaturesResponse.Merge(m, src)
+func (m *BatchTxConfirmationsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BatchTxConfirmationsResponse.Merge(m, src)
 }
-func (m *BatchTxEthereumSignaturesResponse) XXX_Size() int {
+func (m *BatchTxConfirmationsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *BatchTxEthereumSignaturesResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_BatchTxEthereumSignaturesResponse.DiscardUnknown(m)
+func (m *BatchTxConfirmationsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_BatchTxConfirmationsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_BatchTxEthereumSignaturesResponse proto.InternalMessageInfo
+var xxx_messageInfo_BatchTxConfirmationsResponse proto.InternalMessageInfo
 
-func (m *BatchTxEthereumSignaturesResponse) GetSignatures() []*BatchTxSignature {
+func (m *BatchTxConfirmationsResponse) GetSignatures() []*BatchTxConfirmation {
 	if m != nil {
 		return m.Signatures
 	}
@@ -2130,8 +2126,8 @@ func init() {
 	proto.RegisterType((*BatchTxResponse)(nil), "gravity.v1.BatchTxResponse")
 	proto.RegisterType((*ContractCallTxRequest)(nil), "gravity.v1.ContractCallTxRequest")
 	proto.RegisterType((*ContractCallTxResponse)(nil), "gravity.v1.ContractCallTxResponse")
-	proto.RegisterType((*SignerSetTxEthereumSignaturesRequest)(nil), "gravity.v1.SignerSetTxEthereumSignaturesRequest")
-	proto.RegisterType((*SignerSetTxEthereumSignaturesResponse)(nil), "gravity.v1.SignerSetTxEthereumSignaturesResponse")
+	proto.RegisterType((*SignerSetTxConfirmationsRequest)(nil), "gravity.v1.SignerSetTxConfirmationsRequest")
+	proto.RegisterType((*SignerSetTxConfirmationsResponse)(nil), "gravity.v1.SignerSetTxConfirmationsResponse")
 	proto.RegisterType((*SignerSetTxsRequest)(nil), "gravity.v1.SignerSetTxsRequest")
 	proto.RegisterType((*SignerSetTxsResponse)(nil), "gravity.v1.SignerSetTxsResponse")
 	proto.RegisterType((*BatchTxsRequest)(nil), "gravity.v1.BatchTxsRequest")
@@ -2146,10 +2142,10 @@ func init() {
 	proto.RegisterType((*UnsignedContractCallTxsResponse)(nil), "gravity.v1.UnsignedContractCallTxsResponse")
 	proto.RegisterType((*BatchTxFeesRequest)(nil), "gravity.v1.BatchTxFeesRequest")
 	proto.RegisterType((*BatchTxFeesResponse)(nil), "gravity.v1.BatchTxFeesResponse")
-	proto.RegisterType((*ContractCallTxEthereumSignaturesRequest)(nil), "gravity.v1.ContractCallTxEthereumSignaturesRequest")
-	proto.RegisterType((*ContractCallTxEthereumSignaturesResponse)(nil), "gravity.v1.ContractCallTxEthereumSignaturesResponse")
-	proto.RegisterType((*BatchTxEthereumSignaturesRequest)(nil), "gravity.v1.BatchTxEthereumSignaturesRequest")
-	proto.RegisterType((*BatchTxEthereumSignaturesResponse)(nil), "gravity.v1.BatchTxEthereumSignaturesResponse")
+	proto.RegisterType((*ContractCallTxConfirmationsRequest)(nil), "gravity.v1.ContractCallTxConfirmationsRequest")
+	proto.RegisterType((*ContractCallTxConfirmationsResponse)(nil), "gravity.v1.ContractCallTxConfirmationsResponse")
+	proto.RegisterType((*BatchTxConfirmationsRequest)(nil), "gravity.v1.BatchTxConfirmationsRequest")
+	proto.RegisterType((*BatchTxConfirmationsResponse)(nil), "gravity.v1.BatchTxConfirmationsResponse")
 	proto.RegisterType((*LastSubmittedEthereumEventRequest)(nil), "gravity.v1.LastSubmittedEthereumEventRequest")
 	proto.RegisterType((*LastSubmittedEthereumEventResponse)(nil), "gravity.v1.LastSubmittedEthereumEventResponse")
 	proto.RegisterType((*ERC20ToDenomRequest)(nil), "gravity.v1.ERC20ToDenomRequest")
@@ -2171,108 +2167,107 @@ func init() {
 func init() { proto.RegisterFile("gravity/v1/query.proto", fileDescriptor_29a9d4192703013c) }
 
 var fileDescriptor_29a9d4192703013c = []byte{
-	// 1608 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x59, 0xcd, 0x72, 0x13, 0xc7,
-	0x16, 0xd6, 0xf8, 0x62, 0x7e, 0x8e, 0xc1, 0x3f, 0x6d, 0x01, 0x66, 0x30, 0xb2, 0x3d, 0x36, 0xd7,
-	0x06, 0x63, 0xc9, 0x36, 0xb7, 0x2e, 0xf7, 0xa6, 0x48, 0x2a, 0xd8, 0xd8, 0x54, 0x2a, 0xfc, 0x18,
-	0xc9, 0xa1, 0x20, 0x95, 0x94, 0x32, 0x92, 0x3a, 0xe3, 0x09, 0xd2, 0xb4, 0x99, 0x19, 0x29, 0x98,
-	0xaa, 0xac, 0x52, 0x45, 0xaa, 0xb2, 0x09, 0x8b, 0x6c, 0xf2, 0x0a, 0xd9, 0xe6, 0x25, 0x58, 0xb2,
-	0xc8, 0x22, 0xab, 0x24, 0x05, 0x2f, 0x92, 0x9a, 0xe9, 0x9e, 0x56, 0xf7, 0xa8, 0x7b, 0x64, 0x3b,
-	0xce, 0x0a, 0xeb, 0xf4, 0x39, 0xdf, 0xf9, 0xce, 0x99, 0xd3, 0x3d, 0x5f, 0x0f, 0x70, 0xce, 0xf1,
-	0xed, 0x8e, 0x1b, 0xee, 0x95, 0x3a, 0x2b, 0xa5, 0x67, 0x6d, 0xec, 0xef, 0x15, 0x77, 0x7d, 0x12,
-	0x12, 0x04, 0xcc, 0x5e, 0xec, 0xac, 0x98, 0x57, 0xeb, 0x24, 0x68, 0x91, 0xa0, 0x54, 0xb3, 0x03,
-	0x4c, 0x9d, 0x4a, 0x9d, 0x95, 0x1a, 0x0e, 0xed, 0x95, 0xd2, 0xae, 0xed, 0xb8, 0x9e, 0x1d, 0xba,
-	0xc4, 0xa3, 0x71, 0x66, 0x41, 0xf4, 0x4d, 0xbc, 0xea, 0xc4, 0x4d, 0xd6, 0xf3, 0x0e, 0x71, 0x48,
-	0xfc, 0x67, 0x29, 0xfa, 0x8b, 0x59, 0x27, 0x1d, 0x42, 0x9c, 0x26, 0x2e, 0xd9, 0xbb, 0x6e, 0xc9,
-	0xf6, 0x3c, 0x12, 0xc6, 0x90, 0x01, 0x5b, 0x9d, 0x10, 0x38, 0x3a, 0xd8, 0xc3, 0x81, 0xab, 0x5c,
-	0x61, 0x84, 0xe9, 0xca, 0x59, 0x61, 0xa5, 0x15, 0x38, 0x2c, 0xc0, 0x1a, 0x81, 0x33, 0x5b, 0xb6,
-	0x6f, 0xb7, 0x82, 0x32, 0x7e, 0xd6, 0xc6, 0x41, 0x68, 0xad, 0xc1, 0x70, 0x62, 0x08, 0x76, 0x89,
-	0x17, 0x60, 0xb4, 0x0c, 0xc7, 0x77, 0x63, 0xcb, 0x84, 0x31, 0x6d, 0x2c, 0x0c, 0xad, 0xa2, 0x62,
-	0xb7, 0x15, 0x45, 0xea, 0xbb, 0x76, 0xec, 0xf5, 0xef, 0x53, 0xb9, 0x32, 0xf3, 0xb3, 0x3e, 0x00,
-	0x54, 0x71, 0x1d, 0x0f, 0xfb, 0x15, 0x1c, 0x6e, 0x3f, 0x67, 0xc8, 0x68, 0x01, 0x46, 0x83, 0xd8,
-	0x5a, 0x0d, 0x70, 0x58, 0xf5, 0x88, 0x57, 0xc7, 0x31, 0xe2, 0xb1, 0xf2, 0x70, 0x90, 0x78, 0xdf,
-	0x8f, 0xac, 0x96, 0x09, 0x13, 0x77, 0xed, 0x10, 0x07, 0x61, 0x2f, 0x8a, 0x75, 0x0f, 0xc6, 0x25,
-	0x2b, 0x23, 0xf9, 0x5f, 0x80, 0x2e, 0x38, 0x23, 0x7a, 0x5e, 0x24, 0x2a, 0x06, 0x9d, 0xe2, 0xf9,
-	0xac, 0xc7, 0x30, 0xbc, 0x66, 0x87, 0xf5, 0x9d, 0x2e, 0xcd, 0xcb, 0x30, 0x1c, 0x92, 0xa7, 0xd8,
-	0xab, 0xd6, 0x89, 0x17, 0xfa, 0x76, 0x9d, 0xa2, 0x9d, 0x2a, 0x9f, 0x89, 0xad, 0xeb, 0xcc, 0x88,
-	0xa6, 0x60, 0xa8, 0x16, 0x05, 0xb2, 0x42, 0x06, 0xe2, 0x42, 0x20, 0x36, 0xd1, 0x22, 0x6e, 0xc2,
-	0x08, 0x47, 0x66, 0x24, 0xaf, 0xc0, 0x60, 0xec, 0xc0, 0xf8, 0x8d, 0x8b, 0xfc, 0x12, 0x5f, 0xea,
-	0x61, 0xb5, 0xe1, 0x6c, 0x92, 0x6a, 0xdd, 0x6e, 0x36, 0xbb, 0xf4, 0x96, 0x00, 0xb9, 0x5e, 0xc7,
-	0x6e, 0xba, 0x8d, 0x78, 0x24, 0xaa, 0x41, 0x9d, 0xec, 0xd2, 0x3e, 0x9e, 0x2e, 0x8f, 0x89, 0x2b,
-	0x95, 0x68, 0xa1, 0xc7, 0x5d, 0x64, 0x2b, 0xb9, 0x53, 0xd2, 0x15, 0x38, 0x97, 0x4e, 0xcb, 0xb8,
-	0xff, 0x1f, 0xa0, 0x49, 0x1c, 0xb7, 0x5e, 0xad, 0xdb, 0xcd, 0x26, 0x2b, 0xc0, 0x14, 0x0b, 0x48,
-	0xc5, 0x9d, 0x8a, 0xbd, 0xa3, 0x1f, 0xd6, 0x16, 0xcc, 0x09, 0xdd, 0xdf, 0x08, 0x77, 0xb0, 0x8f,
-	0xdb, 0xad, 0xc8, 0x64, 0x87, 0x6d, 0x1f, 0x07, 0x07, 0x1f, 0x10, 0x17, 0x2e, 0xf7, 0x41, 0x64,
-	0xac, 0x3f, 0xa4, 0x63, 0x41, 0xad, 0x13, 0xc6, 0xf4, 0xbf, 0x16, 0x86, 0x56, 0xa7, 0x35, 0x63,
-	0xc1, 0xc3, 0xcb, 0x42, 0x8c, 0xf5, 0xb9, 0x34, 0x6f, 0x9c, 0xeb, 0x26, 0x40, 0x77, 0xab, 0xb3,
-	0x76, 0xfc, 0xbb, 0x48, 0xf7, 0x7a, 0x31, 0xda, 0xeb, 0x45, 0x7a, 0x78, 0xb0, 0x1d, 0x5f, 0xdc,
-	0xb2, 0x1d, 0xcc, 0x62, 0xcb, 0x42, 0xa4, 0xf5, 0x93, 0x01, 0x79, 0x19, 0x9f, 0x31, 0xff, 0x1f,
-	0x0c, 0x75, 0x9b, 0x91, 0x50, 0xd7, 0x4e, 0x34, 0xf0, 0x06, 0x05, 0xe8, 0x8e, 0x44, 0x6d, 0x20,
-	0xa6, 0x36, 0xdf, 0x97, 0x1a, 0x4d, 0x2b, 0x71, 0x7b, 0xc2, 0x27, 0xf8, 0xc8, 0xcb, 0xfe, 0xde,
-	0x80, 0xd1, 0x2e, 0x36, 0x2b, 0x79, 0x09, 0x4e, 0xc4, 0xc3, 0xcf, 0x9f, 0x94, 0x72, 0x83, 0x24,
-	0x3e, 0x47, 0x57, 0xe7, 0x17, 0xe9, 0xa1, 0x3f, 0xf2, 0x72, 0x7f, 0x34, 0xe0, 0x7c, 0x4f, 0x0a,
-	0x7e, 0xbc, 0x0e, 0x46, 0x5b, 0x2a, 0xa9, 0x39, 0x6b, 0x4f, 0x51, 0xc7, 0xa3, 0x2b, 0xfc, 0x06,
-	0x5c, 0xfc, 0xc4, 0x8b, 0x27, 0xa7, 0xa1, 0x9a, 0xf1, 0x09, 0x38, 0x61, 0x37, 0x1a, 0x3e, 0x0e,
-	0x02, 0x76, 0x04, 0x26, 0x3f, 0xad, 0xc7, 0x30, 0xa9, 0x0e, 0xfc, 0xbb, 0xc3, 0x6b, 0x5d, 0x87,
-	0xf3, 0x09, 0x72, 0x7a, 0xf6, 0xf4, 0x74, 0x3e, 0x82, 0x89, 0xde, 0xa0, 0x43, 0x0d, 0x95, 0xf5,
-	0x1e, 0x14, 0x12, 0x28, 0xcd, 0x4c, 0xe8, 0x69, 0x54, 0x60, 0x4a, 0x1b, 0x7b, 0xd8, 0x87, 0x6d,
-	0xe5, 0x01, 0x31, 0x92, 0x9b, 0x98, 0x1f, 0x95, 0x56, 0x07, 0xc6, 0x25, 0x2b, 0x83, 0xaf, 0xc2,
-	0xb1, 0x2f, 0x31, 0xaf, 0xf4, 0x82, 0x34, 0x13, 0xc9, 0x34, 0xac, 0x13, 0xd7, 0x5b, 0x5b, 0x8e,
-	0xde, 0xd7, 0x3f, 0xff, 0x31, 0xb5, 0xe0, 0xb8, 0xe1, 0x4e, 0xbb, 0x56, 0xac, 0x93, 0x56, 0x89,
-	0x09, 0x15, 0xfa, 0xcf, 0x52, 0xd0, 0x78, 0x5a, 0x0a, 0xf7, 0x76, 0x71, 0x10, 0x07, 0x04, 0xe5,
-	0x18, 0xd8, 0xfa, 0xce, 0x80, 0x79, 0x99, 0xa7, 0xfe, 0x38, 0xff, 0x67, 0xdf, 0x54, 0x04, 0x16,
-	0xfa, 0x13, 0x61, 0x6d, 0x59, 0x57, 0xbc, 0x05, 0x66, 0xf5, 0xad, 0x57, 0xbf, 0x08, 0xbe, 0x82,
-	0x69, 0xd6, 0x72, 0x7d, 0xc9, 0x29, 0x51, 0x60, 0xa4, 0x45, 0x81, 0x42, 0x5c, 0x0c, 0x28, 0xc4,
-	0x85, 0x65, 0xc3, 0x4c, 0x46, 0x2e, 0x56, 0xd5, 0x4d, 0x45, 0x55, 0x93, 0x8a, 0xe1, 0x56, 0x97,
-	0xf3, 0x3e, 0xcc, 0xdc, 0xb5, 0x83, 0xb0, 0xd2, 0xae, 0xb5, 0xdc, 0x30, 0xc4, 0x8d, 0x24, 0xd1,
-	0x46, 0x07, 0x7b, 0x61, 0xff, 0x59, 0xdf, 0x00, 0x2b, 0x2b, 0x9c, 0x51, 0x9c, 0x82, 0x21, 0x1c,
-	0x19, 0xe4, 0x7e, 0xc4, 0x26, 0xfa, 0x14, 0x17, 0x61, 0x7c, 0xa3, 0xbc, 0xbe, 0xba, 0xbc, 0x4d,
-	0x6e, 0x63, 0x8f, 0xb4, 0x92, 0xbc, 0x79, 0x18, 0xc4, 0x7e, 0x7d, 0x75, 0x99, 0x65, 0xa5, 0x3f,
-	0xac, 0x27, 0x90, 0x97, 0x9d, 0x59, 0x96, 0x3c, 0x0c, 0x36, 0x22, 0x43, 0xe2, 0x1d, 0xff, 0x40,
-	0x8b, 0x30, 0x46, 0x47, 0xb9, 0x4a, 0x7c, 0x37, 0x3e, 0xf2, 0x70, 0x23, 0xee, 0xf6, 0xc9, 0xf2,
-	0x28, 0x5d, 0x78, 0xc0, 0xed, 0x11, 0x8f, 0x18, 0x73, 0x9b, 0xc4, 0x19, 0x04, 0x1e, 0xbd, 0xc8,
-	0x11, 0x0f, 0xd9, 0xb9, 0xcb, 0xa3, 0x97, 0xf5, 0xc1, 0x78, 0xdc, 0x83, 0xc2, 0x6d, 0xdc, 0xc4,
-	0x8e, 0x1d, 0xe2, 0x8f, 0xf1, 0x5e, 0xb0, 0xb6, 0xf7, 0x88, 0x8e, 0x3d, 0xf1, 0x13, 0x4a, 0x8b,
-	0x30, 0xd6, 0x49, 0x6c, 0x55, 0xf9, 0xe1, 0x8c, 0xf2, 0x85, 0x5b, 0xec, 0x29, 0xb5, 0x61, 0x4a,
-	0x0b, 0x27, 0x3c, 0xa2, 0x70, 0x27, 0x85, 0x04, 0x38, 0xdc, 0x61, 0x18, 0x68, 0x05, 0xf2, 0xc4,
-	0x8f, 0xce, 0xc6, 0xd0, 0x97, 0x72, 0xd2, 0xc1, 0x1d, 0x17, 0xd7, 0x92, 0xb4, 0xf7, 0x61, 0x56,
-	0x4e, 0x2b, 0x4e, 0x31, 0xe6, 0xa5, 0xcc, 0xc3, 0x08, 0x66, 0x0b, 0x55, 0xfa, 0x0a, 0x60, 0xe9,
-	0x87, 0xb1, 0xe4, 0x6f, 0xbd, 0x34, 0x60, 0x2e, 0x1b, 0x90, 0x15, 0x73, 0x90, 0xe6, 0x1c, 0xa6,
-	0xb0, 0x47, 0x30, 0x23, 0xf3, 0x78, 0x20, 0x38, 0x25, 0x65, 0xe9, 0x70, 0x0d, 0x3d, 0xee, 0x0b,
-	0xb0, 0xb2, 0x70, 0x0f, 0x53, 0x9d, 0xa2, 0xb9, 0x03, 0xca, 0xe6, 0x6e, 0xc2, 0xa5, 0xf8, 0xa0,
-	0xc0, 0x8d, 0x0a, 0xf6, 0x1a, 0xdb, 0x24, 0x69, 0x6d, 0x20, 0x5c, 0x88, 0x02, 0xec, 0x35, 0x70,
-	0x3a, 0xe7, 0x19, 0x6a, 0x4d, 0x6a, 0xd8, 0x81, 0x82, 0x0e, 0x87, 0xf1, 0xdf, 0x84, 0xb1, 0x28,
-	0xa4, 0x1a, 0x92, 0x6a, 0xc2, 0x41, 0xf9, 0x22, 0x94, 0xe3, 0xcb, 0x23, 0x81, 0x8c, 0x67, 0xbd,
-	0x32, 0xa2, 0x17, 0x6d, 0xed, 0x08, 0x48, 0xa7, 0x04, 0xde, 0xc0, 0xa1, 0x05, 0xde, 0x2f, 0x06,
-	0x4c, 0xeb, 0x29, 0x1d, 0x6d, 0xfd, 0x47, 0xa6, 0xff, 0x56, 0x7f, 0x45, 0x30, 0xf8, 0x30, 0x72,
-	0x45, 0xb7, 0xe0, 0x38, 0xbd, 0xc9, 0xa3, 0x0b, 0xbd, 0xb7, 0x7b, 0x56, 0xb0, 0x69, 0xaa, 0x96,
-	0x28, 0xac, 0x95, 0x43, 0x5b, 0x30, 0x24, 0x88, 0x3a, 0x54, 0xd0, 0xa9, 0x3d, 0x06, 0x36, 0xa5,
-	0x5d, 0xe7, 0x88, 0x9f, 0xc1, 0x58, 0xcf, 0x67, 0x00, 0x34, 0x27, 0xc6, 0xe9, 0xbe, 0x12, 0xec,
-	0x07, 0xfd, 0x36, 0x9c, 0x60, 0x2f, 0x48, 0x64, 0xaa, 0x24, 0x21, 0x43, 0xba, 0xa8, 0x5c, 0xe3,
-	0x28, 0x4f, 0x60, 0x58, 0x16, 0x0f, 0x68, 0x26, 0x43, 0xd3, 0x31, 0x4c, 0x2b, 0xcb, 0x85, 0x43,
-	0x57, 0xe0, 0xb4, 0x28, 0xae, 0x91, 0xae, 0x26, 0xfe, 0x7c, 0xa6, 0xf5, 0x0e, 0x1c, 0xf4, 0x0e,
-	0x9c, 0x4c, 0x24, 0x32, 0x52, 0x95, 0xc6, 0xc1, 0x26, 0xd5, 0x8b, 0xc2, 0xc3, 0x19, 0x49, 0x89,
-	0x5c, 0x94, 0x51, 0x16, 0x87, 0x9d, 0xcd, 0xf4, 0xe1, 0xe8, 0x2f, 0x0d, 0xb8, 0x94, 0x79, 0xc3,
-	0x47, 0xcb, 0x9a, 0x62, 0xb5, 0xe2, 0xcc, 0x5c, 0x39, 0x40, 0x04, 0x27, 0xf2, 0x02, 0x2e, 0x68,
-	0x95, 0x18, 0xba, 0xa6, 0xe8, 0x91, 0x3e, 0xff, 0xd2, 0x3e, 0xbd, 0x79, 0xee, 0x1f, 0x0c, 0x98,
-	0xee, 0xa7, 0x71, 0xd1, 0x75, 0x7d, 0x43, 0xf5, 0x54, 0xfe, 0x73, 0xb0, 0x20, 0xce, 0xe8, 0x29,
-	0xe4, 0x55, 0xf7, 0x3e, 0x34, 0x2f, 0xe2, 0x65, 0x5c, 0x29, 0xcd, 0x85, 0xfe, 0x8e, 0x3c, 0x59,
-	0x15, 0x46, 0xd3, 0xb7, 0x3a, 0x34, 0xab, 0x8a, 0x4f, 0x8f, 0xee, 0x5c, 0xb6, 0x13, 0x4f, 0x10,
-	0x76, 0xef, 0x9a, 0xe9, 0x51, 0xbe, 0xaa, 0x82, 0xd0, 0x8c, 0xf4, 0xe2, 0xbe, 0x7c, 0x79, 0xd6,
-	0x6f, 0xc0, 0xd4, 0x2b, 0x67, 0xb4, 0x24, 0x1f, 0x6f, 0x7d, 0x04, 0xba, 0x59, 0xdc, 0xaf, 0xbb,
-	0x78, 0x4c, 0x0b, 0x37, 0x47, 0xf9, 0x98, 0xee, 0xbd, 0x68, 0xca, 0x07, 0xa9, 0xe2, 0xca, 0x49,
-	0xcf, 0x29, 0x51, 0x96, 0xcb, 0xe7, 0x94, 0x42, 0xdd, 0xcb, 0xe7, 0x94, 0x4a, 0xd1, 0x53, 0x50,
-	0x51, 0x63, 0xcb, 0xa0, 0x0a, 0xa9, 0x2e, 0x83, 0xaa, 0xe4, 0xb9, 0x95, 0x43, 0xcf, 0xe0, 0x9c,
-	0x5a, 0xa2, 0xa0, 0x2b, 0x3d, 0x65, 0xea, 0x94, 0x85, 0x79, 0x75, 0x3f, 0xae, 0x3c, 0xe5, 0xd7,
-	0x30, 0xa1, 0xd3, 0x05, 0x28, 0x35, 0x38, 0x99, 0x82, 0xc6, 0xbc, 0xb6, 0x3f, 0x67, 0x71, 0xb8,
-	0x35, 0xd2, 0x5f, 0x1e, 0xee, 0xec, 0xeb, 0x86, 0x3c, 0xdc, 0x7d, 0xee, 0x12, 0x56, 0x0e, 0x7d,
-	0x6b, 0xc0, 0x64, 0x96, 0x52, 0x47, 0x25, 0x3d, 0x9e, 0xf2, 0x92, 0x60, 0x2e, 0xef, 0x3f, 0x40,
-	0xdc, 0x62, 0x7a, 0x39, 0x2d, 0x6f, 0xb1, 0xbe, 0x72, 0x5e, 0xde, 0x62, 0xfd, 0x55, 0xba, 0x95,
-	0x5b, 0x7b, 0xf8, 0xfa, 0x6d, 0xc1, 0x78, 0xf3, 0xb6, 0x60, 0xfc, 0xf9, 0xb6, 0x60, 0xbc, 0x7a,
-	0x57, 0xc8, 0xbd, 0x79, 0x57, 0xc8, 0xfd, 0xf6, 0xae, 0x90, 0xfb, 0xf4, 0x46, 0xef, 0xe7, 0x16,
-	0x06, 0xbe, 0x54, 0xf3, 0xdd, 0x86, 0x83, 0x4b, 0x2d, 0xd2, 0x68, 0x37, 0x71, 0xe9, 0x79, 0x62,
-	0xa7, 0xdf, 0x60, 0x6a, 0xc7, 0xe3, 0xff, 0xad, 0xb9, 0xfe, 0x57, 0x00, 0x00, 0x00, 0xff, 0xff,
-	0x71, 0x4d, 0xf7, 0xe8, 0x9e, 0x1a, 0x00, 0x00,
+	// 1599 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x59, 0x4d, 0x6f, 0xdb, 0x46,
+	0x13, 0x16, 0xfd, 0xc6, 0xf9, 0x18, 0x27, 0xfe, 0x58, 0x2b, 0x89, 0x23, 0xfb, 0x95, 0x9c, 0x75,
+	0xde, 0xc4, 0x89, 0x5f, 0x8b, 0xb6, 0x03, 0x34, 0x6d, 0xd1, 0x0f, 0xc4, 0x8e, 0x1d, 0x14, 0xf9,
+	0x96, 0xdc, 0x20, 0x29, 0x5a, 0xa8, 0x94, 0xb4, 0xa1, 0x89, 0x48, 0x5c, 0x87, 0xa4, 0xd4, 0xb8,
+	0x40, 0x81, 0xa2, 0x05, 0x7a, 0xe8, 0x29, 0x87, 0x5e, 0xfa, 0x07, 0x7a, 0xe8, 0xb5, 0x7f, 0x22,
+	0xc7, 0x1c, 0x7b, 0x6a, 0x8b, 0xe4, 0x8f, 0x14, 0xe4, 0x2e, 0xa9, 0x5d, 0x6a, 0x97, 0x52, 0x5c,
+	0xf5, 0x14, 0x73, 0x76, 0xe6, 0x99, 0x67, 0x96, 0xb3, 0xc3, 0x67, 0x15, 0x38, 0x63, 0x7b, 0x56,
+	0xd7, 0x09, 0x0e, 0xcc, 0xee, 0xba, 0xf9, 0xac, 0x43, 0xbc, 0x83, 0xf2, 0xbe, 0x47, 0x03, 0x8a,
+	0x80, 0xdb, 0xcb, 0xdd, 0xf5, 0xc2, 0x95, 0x06, 0xf5, 0xdb, 0xd4, 0x37, 0xeb, 0x96, 0x4f, 0x98,
+	0x93, 0xd9, 0x5d, 0xaf, 0x93, 0xc0, 0x5a, 0x37, 0xf7, 0x2d, 0xdb, 0x71, 0xad, 0xc0, 0xa1, 0x2e,
+	0x8b, 0x2b, 0x14, 0x45, 0xdf, 0xd8, 0xab, 0x41, 0x9d, 0x78, 0x3d, 0x6f, 0x53, 0x9b, 0x46, 0x7f,
+	0x9a, 0xe1, 0x5f, 0xdc, 0xba, 0x60, 0x53, 0x6a, 0xb7, 0x88, 0x69, 0xed, 0x3b, 0xa6, 0xe5, 0xba,
+	0x34, 0x88, 0x20, 0x7d, 0xbe, 0x3a, 0x27, 0x70, 0xb4, 0x89, 0x4b, 0x7c, 0x47, 0xb9, 0xc2, 0x09,
+	0xb3, 0x95, 0xd3, 0xc2, 0x4a, 0xdb, 0xb7, 0x79, 0x00, 0x9e, 0x82, 0x53, 0xf7, 0x2d, 0xcf, 0x6a,
+	0xfb, 0x15, 0xf2, 0xac, 0x43, 0xfc, 0x00, 0x6f, 0xc2, 0x64, 0x6c, 0xf0, 0xf7, 0xa9, 0xeb, 0x13,
+	0xb4, 0x06, 0x47, 0xf7, 0x23, 0xcb, 0x9c, 0xb1, 0x68, 0x2c, 0x4f, 0x6c, 0xa0, 0x72, 0x6f, 0x2b,
+	0xca, 0xcc, 0x77, 0xf3, 0xc8, 0xcb, 0x3f, 0x4a, 0xb9, 0x0a, 0xf7, 0xc3, 0x1f, 0x01, 0xaa, 0x3a,
+	0xb6, 0x4b, 0xbc, 0x2a, 0x09, 0x76, 0x9f, 0x73, 0x64, 0xb4, 0x0c, 0xd3, 0x7e, 0x64, 0xad, 0xf9,
+	0x24, 0xa8, 0xb9, 0xd4, 0x6d, 0x90, 0x08, 0xf1, 0x48, 0x65, 0xd2, 0x8f, 0xbd, 0xef, 0x86, 0x56,
+	0x5c, 0x80, 0xb9, 0xdb, 0x56, 0x40, 0xfc, 0xa0, 0x1f, 0x05, 0xdf, 0x81, 0x59, 0xc9, 0xca, 0x49,
+	0xbe, 0x03, 0xd0, 0x03, 0xe7, 0x44, 0xcf, 0x8a, 0x44, 0xc5, 0xa0, 0x13, 0x49, 0x3e, 0xfc, 0x08,
+	0x26, 0x37, 0xad, 0xa0, 0xb1, 0xd7, 0xa3, 0xf9, 0x3f, 0x98, 0x0c, 0xe8, 0x53, 0xe2, 0xd6, 0x1a,
+	0xd4, 0x0d, 0x3c, 0xab, 0xc1, 0xd0, 0x4e, 0x54, 0x4e, 0x45, 0xd6, 0x2d, 0x6e, 0x44, 0x25, 0x98,
+	0xa8, 0x87, 0x81, 0xbc, 0x90, 0xb1, 0xa8, 0x10, 0x88, 0x4c, 0xac, 0x88, 0x0f, 0x60, 0x2a, 0x41,
+	0xe6, 0x24, 0x2f, 0xc3, 0x78, 0xe4, 0xc0, 0xf9, 0xcd, 0x8a, 0xfc, 0x62, 0x5f, 0xe6, 0x81, 0x3b,
+	0x70, 0x3a, 0x4e, 0xb5, 0x65, 0xb5, 0x5a, 0x3d, 0x7a, 0xab, 0x80, 0x1c, 0xb7, 0x6b, 0xb5, 0x9c,
+	0x66, 0xd4, 0x12, 0x35, 0xbf, 0x41, 0xf7, 0xd9, 0x3e, 0x9e, 0xac, 0xcc, 0x88, 0x2b, 0xd5, 0x70,
+	0xa1, 0xcf, 0x5d, 0x64, 0x2b, 0xb9, 0x33, 0xd2, 0x55, 0x38, 0x93, 0x4e, 0xcb, 0xb9, 0xbf, 0x07,
+	0xd0, 0xa2, 0xb6, 0xd3, 0xa8, 0x35, 0xac, 0x56, 0x8b, 0x17, 0x50, 0x10, 0x0b, 0x48, 0xc5, 0x9d,
+	0x88, 0xbc, 0xc3, 0x07, 0x7c, 0x0b, 0x4a, 0xc2, 0xee, 0x6f, 0x51, 0xf7, 0x89, 0xe3, 0xb5, 0x59,
+	0x43, 0xbf, 0x7d, 0x6f, 0xd8, 0xb0, 0xa8, 0x07, 0xe3, 0x5c, 0xb7, 0x58, 0x33, 0x58, 0x41, 0xc7,
+	0x23, 0x61, 0xd7, 0xfe, 0x67, 0x79, 0x62, 0x63, 0x49, 0xd3, 0x0c, 0x22, 0x42, 0x45, 0x08, 0xc3,
+	0x5f, 0x48, 0x8d, 0x96, 0x30, 0xdd, 0x01, 0xe8, 0x9d, 0x71, 0xbe, 0x0f, 0x17, 0xcb, 0xec, 0x90,
+	0x97, 0xc3, 0x43, 0x5e, 0x66, 0x53, 0x83, 0x1f, 0xf5, 0xf2, 0x7d, 0xcb, 0x26, 0x3c, 0xb6, 0x22,
+	0x44, 0xe2, 0x9f, 0x0d, 0xc8, 0xcb, 0xf8, 0x9c, 0xfc, 0xbb, 0x30, 0xd1, 0xdb, 0x8a, 0x98, 0xbd,
+	0xb6, 0x95, 0x21, 0xd9, 0x1e, 0x1f, 0xdd, 0x94, 0xa8, 0x8d, 0x45, 0xd4, 0x2e, 0x0d, 0xa4, 0xc6,
+	0xd2, 0x4a, 0xdc, 0x1e, 0x27, 0xad, 0x3b, 0xf2, 0xb2, 0x7f, 0x34, 0x60, 0xba, 0x87, 0xcd, 0x4b,
+	0x5e, 0x85, 0x63, 0x51, 0xd7, 0x27, 0x2f, 0x4b, 0x79, 0x32, 0x62, 0x9f, 0xd1, 0xd5, 0xf9, 0x65,
+	0xba, 0xdb, 0x47, 0x5e, 0xee, 0x4f, 0x06, 0x9c, 0xed, 0x4b, 0x91, 0xcc, 0xd5, 0xf1, 0xf0, 0x2c,
+	0xc5, 0x35, 0x67, 0x1d, 0x26, 0xe6, 0x38, 0xba, 0xc2, 0xaf, 0xc1, 0xfc, 0xa7, 0x6e, 0xd4, 0x39,
+	0x4d, 0x55, 0x8f, 0xcf, 0xc1, 0x31, 0xab, 0xd9, 0xf4, 0x88, 0xef, 0xf3, 0xd9, 0x17, 0x3f, 0xe2,
+	0x47, 0xb0, 0xa0, 0x0e, 0xfc, 0xa7, 0xcd, 0x8b, 0xaf, 0xc2, 0xd9, 0x18, 0x39, 0xdd, 0x7b, 0x7a,
+	0x3a, 0x9f, 0xc0, 0x5c, 0x7f, 0xd0, 0xa1, 0x9a, 0x0a, 0xbf, 0x0f, 0xc5, 0x18, 0x4a, 0xd3, 0x13,
+	0x7a, 0x1a, 0x55, 0x28, 0x69, 0x63, 0x0f, 0xfb, 0xb2, 0x71, 0x1e, 0x10, 0x27, 0xb9, 0x43, 0x48,
+	0xf2, 0x79, 0xee, 0xc2, 0xac, 0x64, 0xe5, 0xf0, 0x35, 0x38, 0xf2, 0x84, 0x24, 0x95, 0x9e, 0x93,
+	0x7a, 0x22, 0xee, 0x86, 0x2d, 0xea, 0xb8, 0x9b, 0x6b, 0xe1, 0x87, 0xfa, 0xd7, 0x3f, 0x4b, 0xcb,
+	0xb6, 0x13, 0xec, 0x75, 0xea, 0xe5, 0x06, 0x6d, 0x9b, 0x5c, 0xa1, 0xb0, 0x7f, 0x56, 0xfd, 0xe6,
+	0x53, 0x33, 0x38, 0xd8, 0x27, 0x7e, 0x14, 0xe0, 0x57, 0x22, 0x60, 0xfc, 0x9d, 0x01, 0x58, 0xe6,
+	0xa9, 0x9c, 0xe3, 0xff, 0xee, 0xd7, 0xa9, 0x0d, 0x4b, 0x99, 0x1c, 0xf8, 0x66, 0xec, 0x28, 0xc6,
+	0xff, 0x45, 0xfd, 0x86, 0x6b, 0xbf, 0x00, 0x04, 0xe6, 0xf9, 0x5e, 0x2b, 0x6b, 0x4d, 0x29, 0x00,
+	0x23, 0xad, 0x00, 0x14, 0x4a, 0x62, 0x4c, 0xa1, 0x24, 0x70, 0x0d, 0x16, 0xd4, 0x69, 0x78, 0x39,
+	0x1f, 0x2b, 0xca, 0x29, 0x29, 0x7a, 0x59, 0x5b, 0xc7, 0x87, 0x70, 0xfe, 0xb6, 0xe5, 0x07, 0xd5,
+	0x4e, 0xbd, 0xed, 0x04, 0x01, 0x69, 0x6e, 0x07, 0x7b, 0xc4, 0x23, 0x9d, 0xf6, 0x76, 0x97, 0xb8,
+	0xc1, 0xe0, 0xee, 0xde, 0x06, 0x9c, 0x15, 0xce, 0x59, 0x96, 0x60, 0x82, 0x84, 0x06, 0x79, 0x37,
+	0x22, 0x13, 0x7b, 0x79, 0x2b, 0x30, 0xbb, 0x5d, 0xd9, 0xda, 0x58, 0xdb, 0xa5, 0x37, 0x88, 0x4b,
+	0xdb, 0x71, 0xde, 0x3c, 0x8c, 0x13, 0xaf, 0xb1, 0xb1, 0xc6, 0xb3, 0xb2, 0x07, 0xfc, 0x18, 0xf2,
+	0xb2, 0x33, 0xcf, 0x92, 0x87, 0xf1, 0x66, 0x68, 0x88, 0xbd, 0xa3, 0x07, 0xb4, 0x02, 0x33, 0xac,
+	0x79, 0x6b, 0xd4, 0x73, 0xa2, 0x21, 0x47, 0x9a, 0xd1, 0x5e, 0x1f, 0xaf, 0x4c, 0xb3, 0x85, 0x7b,
+	0x89, 0x3d, 0xe4, 0x11, 0x61, 0xee, 0xd2, 0x28, 0x83, 0xc0, 0xa3, 0x1f, 0x39, 0xe4, 0x21, 0x3b,
+	0xf7, 0x78, 0xf4, 0xb3, 0x7e, 0x3b, 0x1e, 0x77, 0xa0, 0x78, 0x83, 0xb4, 0x88, 0x6d, 0x05, 0xe4,
+	0x16, 0x39, 0xf0, 0x37, 0x0f, 0x1e, 0xb2, 0x6e, 0xa7, 0x5e, 0x4c, 0x69, 0x05, 0x66, 0xba, 0xb1,
+	0xad, 0x26, 0xbf, 0x9c, 0xe9, 0x64, 0xe1, 0x3a, 0x7f, 0x4b, 0x1d, 0x28, 0x69, 0xe1, 0x84, 0x57,
+	0x14, 0xec, 0xa5, 0x90, 0x80, 0x04, 0x7b, 0x1c, 0x03, 0xad, 0x43, 0x9e, 0x7a, 0xe1, 0x34, 0x0c,
+	0x3c, 0x29, 0x27, 0x6b, 0xdb, 0x59, 0x71, 0x2d, 0x4e, 0x7b, 0x17, 0x96, 0xe4, 0xb4, 0x71, 0x77,
+	0xb0, 0x39, 0x1f, 0x97, 0x72, 0x09, 0xa6, 0x08, 0x5f, 0xa8, 0xb1, 0xa1, 0xcf, 0xd3, 0x4f, 0x12,
+	0xc9, 0x1f, 0xff, 0x60, 0xc0, 0x85, 0x6c, 0x40, 0x5e, 0xcc, 0xdb, 0x6c, 0xce, 0x61, 0x0a, 0x7b,
+	0x08, 0xe7, 0x65, 0x1e, 0xf7, 0x04, 0xa7, 0xb8, 0x2c, 0x1d, 0xae, 0xa1, 0xc7, 0xfd, 0x1a, 0x70,
+	0x16, 0xee, 0x61, 0xaa, 0x53, 0x6c, 0xee, 0x98, 0x72, 0x73, 0x77, 0xe0, 0xbf, 0xd1, 0xac, 0x20,
+	0xcd, 0x2a, 0x71, 0x9b, 0xbb, 0x34, 0xde, 0x5a, 0x5f, 0xb8, 0xfb, 0xf8, 0xc4, 0x6d, 0x92, 0x74,
+	0xce, 0x53, 0xcc, 0x1a, 0xd7, 0xb0, 0x07, 0x45, 0x1d, 0x4e, 0x32, 0x82, 0x67, 0xc2, 0x90, 0x5a,
+	0x40, 0x6b, 0x31, 0x07, 0xe5, 0xa7, 0x4f, 0x8e, 0xaf, 0x4c, 0xf9, 0x32, 0x1e, 0x7e, 0x61, 0x84,
+	0x9f, 0xd6, 0xfa, 0x08, 0x48, 0xa7, 0x24, 0xdd, 0xd8, 0xa1, 0x25, 0xdd, 0x6f, 0x06, 0x2c, 0xea,
+	0x29, 0x8d, 0xb6, 0xfe, 0x91, 0x29, 0xbe, 0x8d, 0x5f, 0x10, 0x8c, 0x3f, 0x08, 0x5d, 0xd1, 0x75,
+	0x38, 0xca, 0x2e, 0xed, 0xe8, 0x5c, 0xff, 0x45, 0x9e, 0x17, 0x5c, 0x28, 0xa8, 0x96, 0x18, 0x2c,
+	0xce, 0xa1, 0xfb, 0x30, 0x21, 0xc8, 0x38, 0x54, 0xd4, 0xe9, 0x3b, 0x0e, 0x56, 0xd2, 0xae, 0x27,
+	0x88, 0x9f, 0xc3, 0x4c, 0xdf, 0x8d, 0x1f, 0x5d, 0x10, 0xe3, 0x74, 0x3f, 0x08, 0x0c, 0x83, 0x7e,
+	0x03, 0x8e, 0xf1, 0x6f, 0x24, 0x2a, 0xa8, 0x44, 0x20, 0x47, 0x9a, 0x57, 0xae, 0x25, 0x28, 0x8f,
+	0x61, 0x52, 0x16, 0x0e, 0xe8, 0x7c, 0x86, 0x8a, 0xe3, 0x98, 0x38, 0xcb, 0x25, 0x81, 0xae, 0xc2,
+	0x49, 0x51, 0x4e, 0x23, 0x5d, 0x4d, 0xc9, 0xfb, 0x59, 0xd4, 0x3b, 0x24, 0xa0, 0x37, 0xe1, 0x78,
+	0x2c, 0x8a, 0x91, 0xaa, 0xb4, 0x04, 0x6c, 0x41, 0xbd, 0x28, 0xbc, 0x9c, 0xa9, 0x94, 0xac, 0x45,
+	0x19, 0x65, 0x25, 0xb0, 0x4b, 0x99, 0x3e, 0x09, 0xfa, 0x57, 0x30, 0xa7, 0xbb, 0xd0, 0xa3, 0x95,
+	0x21, 0x2e, 0xed, 0x49, 0xbe, 0xff, 0x0f, 0xe7, 0x9c, 0x24, 0x7e, 0x0a, 0x79, 0x95, 0xee, 0x42,
+	0x97, 0x06, 0x68, 0xab, 0x24, 0xe1, 0xf2, 0x60, 0xc7, 0x24, 0xd9, 0xb7, 0x06, 0xcc, 0x67, 0x68,
+	0x57, 0x54, 0x1e, 0x4e, 0x9f, 0x26, 0xb9, 0xcd, 0xa1, 0xfd, 0xc5, 0x7a, 0x55, 0x77, 0x37, 0xb9,
+	0xde, 0x8c, 0x6b, 0xa1, 0x5c, 0x6f, 0xd6, 0x35, 0x10, 0xe7, 0x50, 0x0d, 0xa6, 0xd3, 0x37, 0x33,
+	0xb4, 0xa4, 0x8a, 0x4f, 0x37, 0xe3, 0x85, 0x6c, 0xa7, 0x24, 0x41, 0xd0, 0xbb, 0x2f, 0xa6, 0x9b,
+	0xf3, 0x8a, 0x0a, 0x42, 0xd3, 0xa4, 0x2b, 0x43, 0xf9, 0x26, 0x59, 0xbf, 0x81, 0x82, 0x5e, 0x0b,
+	0xa3, 0x55, 0x79, 0x60, 0x0d, 0x90, 0xdc, 0x85, 0xf2, 0xb0, 0xee, 0xe2, 0xe0, 0x15, 0x6e, 0x7f,
+	0xf2, 0xe0, 0xed, 0xbf, 0x2c, 0x16, 0x4a, 0xda, 0x75, 0x71, 0xf2, 0x88, 0x42, 0x5b, 0x9e, 0x3c,
+	0x0a, 0xbd, 0x2e, 0x4f, 0x1e, 0x95, 0x46, 0x67, 0xa0, 0xa2, 0x6a, 0x96, 0x41, 0x15, 0xe2, 0x5b,
+	0x06, 0x55, 0x09, 0x6e, 0x9c, 0x43, 0xcf, 0xe0, 0x8c, 0x5a, 0x74, 0xa0, 0xcb, 0x7d, 0x65, 0xea,
+	0xb4, 0x42, 0xe1, 0xca, 0x30, 0xae, 0xe2, 0x68, 0xd2, 0x7d, 0xe9, 0x51, 0xaa, 0x71, 0x32, 0x25,
+	0x8a, 0x3c, 0x9a, 0x06, 0x89, 0x07, 0xd6, 0xdc, 0x1a, 0x31, 0x2f, 0x37, 0x77, 0xf6, 0x05, 0x42,
+	0x6e, 0xee, 0x01, 0xb7, 0x03, 0x9c, 0x43, 0xdf, 0x1b, 0xb0, 0x90, 0xa5, 0xbd, 0x91, 0xa9, 0xc7,
+	0x53, 0xca, 0xfe, 0xc2, 0xda, 0xf0, 0x01, 0xe2, 0x11, 0xd3, 0x0b, 0x64, 0xf9, 0x88, 0x0d, 0x14,
+	0xe8, 0xf2, 0x11, 0x1b, 0xac, 0xbb, 0x71, 0x6e, 0xf3, 0xc1, 0xcb, 0xd7, 0x45, 0xe3, 0xd5, 0xeb,
+	0xa2, 0xf1, 0xd7, 0xeb, 0xa2, 0xf1, 0xe2, 0x4d, 0x31, 0xf7, 0xea, 0x4d, 0x31, 0xf7, 0xfb, 0x9b,
+	0x62, 0xee, 0xb3, 0x6b, 0xfd, 0x3f, 0x99, 0x70, 0xf0, 0xd5, 0xba, 0xe7, 0x34, 0x6d, 0x62, 0xb6,
+	0x69, 0xb3, 0xd3, 0x22, 0xe6, 0xf3, 0xd8, 0xce, 0x7e, 0x47, 0xa9, 0x1f, 0x8d, 0xfe, 0xab, 0xe5,
+	0xea, 0xdf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x0c, 0x03, 0x0e, 0x23, 0x5b, 0x1a, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -2299,9 +2294,9 @@ type QueryClient interface {
 	BatchTxs(ctx context.Context, in *BatchTxsRequest, opts ...grpc.CallOption) (*BatchTxsResponse, error)
 	ContractCallTxs(ctx context.Context, in *ContractCallTxsRequest, opts ...grpc.CallOption) (*ContractCallTxsResponse, error)
 	// TODO: can/should we group these into one endpoint?
-	SignerSetTxEthereumSignatures(ctx context.Context, in *SignerSetTxEthereumSignaturesRequest, opts ...grpc.CallOption) (*SignerSetTxEthereumSignaturesResponse, error)
-	BatchTxEthereumSignatures(ctx context.Context, in *BatchTxEthereumSignaturesRequest, opts ...grpc.CallOption) (*BatchTxEthereumSignaturesResponse, error)
-	ContractCallTxEthereumSignatures(ctx context.Context, in *ContractCallTxEthereumSignaturesRequest, opts ...grpc.CallOption) (*ContractCallTxEthereumSignaturesResponse, error)
+	SignerSetTxConfirmations(ctx context.Context, in *SignerSetTxConfirmationsRequest, opts ...grpc.CallOption) (*SignerSetTxConfirmationsResponse, error)
+	BatchTxConfirmations(ctx context.Context, in *BatchTxConfirmationsRequest, opts ...grpc.CallOption) (*BatchTxConfirmationsResponse, error)
+	ContractCallTxConfirmations(ctx context.Context, in *ContractCallTxConfirmationsRequest, opts ...grpc.CallOption) (*ContractCallTxConfirmationsResponse, error)
 	// pending ethereum signature queries for orchestrators to figure out which
 	// signatures they are missing
 	// TODO: can/should we group this into one endpoint?
@@ -2406,27 +2401,27 @@ func (c *queryClient) ContractCallTxs(ctx context.Context, in *ContractCallTxsRe
 	return out, nil
 }
 
-func (c *queryClient) SignerSetTxEthereumSignatures(ctx context.Context, in *SignerSetTxEthereumSignaturesRequest, opts ...grpc.CallOption) (*SignerSetTxEthereumSignaturesResponse, error) {
-	out := new(SignerSetTxEthereumSignaturesResponse)
-	err := c.cc.Invoke(ctx, "/gravity.v1.Query/SignerSetTxEthereumSignatures", in, out, opts...)
+func (c *queryClient) SignerSetTxConfirmations(ctx context.Context, in *SignerSetTxConfirmationsRequest, opts ...grpc.CallOption) (*SignerSetTxConfirmationsResponse, error) {
+	out := new(SignerSetTxConfirmationsResponse)
+	err := c.cc.Invoke(ctx, "/gravity.v1.Query/SignerSetTxConfirmations", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) BatchTxEthereumSignatures(ctx context.Context, in *BatchTxEthereumSignaturesRequest, opts ...grpc.CallOption) (*BatchTxEthereumSignaturesResponse, error) {
-	out := new(BatchTxEthereumSignaturesResponse)
-	err := c.cc.Invoke(ctx, "/gravity.v1.Query/BatchTxEthereumSignatures", in, out, opts...)
+func (c *queryClient) BatchTxConfirmations(ctx context.Context, in *BatchTxConfirmationsRequest, opts ...grpc.CallOption) (*BatchTxConfirmationsResponse, error) {
+	out := new(BatchTxConfirmationsResponse)
+	err := c.cc.Invoke(ctx, "/gravity.v1.Query/BatchTxConfirmations", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) ContractCallTxEthereumSignatures(ctx context.Context, in *ContractCallTxEthereumSignaturesRequest, opts ...grpc.CallOption) (*ContractCallTxEthereumSignaturesResponse, error) {
-	out := new(ContractCallTxEthereumSignaturesResponse)
-	err := c.cc.Invoke(ctx, "/gravity.v1.Query/ContractCallTxEthereumSignatures", in, out, opts...)
+func (c *queryClient) ContractCallTxConfirmations(ctx context.Context, in *ContractCallTxConfirmationsRequest, opts ...grpc.CallOption) (*ContractCallTxConfirmationsResponse, error) {
+	out := new(ContractCallTxConfirmationsResponse)
+	err := c.cc.Invoke(ctx, "/gravity.v1.Query/ContractCallTxConfirmations", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2555,9 +2550,9 @@ type QueryServer interface {
 	BatchTxs(context.Context, *BatchTxsRequest) (*BatchTxsResponse, error)
 	ContractCallTxs(context.Context, *ContractCallTxsRequest) (*ContractCallTxsResponse, error)
 	// TODO: can/should we group these into one endpoint?
-	SignerSetTxEthereumSignatures(context.Context, *SignerSetTxEthereumSignaturesRequest) (*SignerSetTxEthereumSignaturesResponse, error)
-	BatchTxEthereumSignatures(context.Context, *BatchTxEthereumSignaturesRequest) (*BatchTxEthereumSignaturesResponse, error)
-	ContractCallTxEthereumSignatures(context.Context, *ContractCallTxEthereumSignaturesRequest) (*ContractCallTxEthereumSignaturesResponse, error)
+	SignerSetTxConfirmations(context.Context, *SignerSetTxConfirmationsRequest) (*SignerSetTxConfirmationsResponse, error)
+	BatchTxConfirmations(context.Context, *BatchTxConfirmationsRequest) (*BatchTxConfirmationsResponse, error)
+	ContractCallTxConfirmations(context.Context, *ContractCallTxConfirmationsRequest) (*ContractCallTxConfirmationsResponse, error)
 	// pending ethereum signature queries for orchestrators to figure out which
 	// signatures they are missing
 	// TODO: can/should we group this into one endpoint?
@@ -2610,14 +2605,14 @@ func (*UnimplementedQueryServer) BatchTxs(ctx context.Context, req *BatchTxsRequ
 func (*UnimplementedQueryServer) ContractCallTxs(ctx context.Context, req *ContractCallTxsRequest) (*ContractCallTxsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ContractCallTxs not implemented")
 }
-func (*UnimplementedQueryServer) SignerSetTxEthereumSignatures(ctx context.Context, req *SignerSetTxEthereumSignaturesRequest) (*SignerSetTxEthereumSignaturesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SignerSetTxEthereumSignatures not implemented")
+func (*UnimplementedQueryServer) SignerSetTxConfirmations(ctx context.Context, req *SignerSetTxConfirmationsRequest) (*SignerSetTxConfirmationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SignerSetTxConfirmations not implemented")
 }
-func (*UnimplementedQueryServer) BatchTxEthereumSignatures(ctx context.Context, req *BatchTxEthereumSignaturesRequest) (*BatchTxEthereumSignaturesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BatchTxEthereumSignatures not implemented")
+func (*UnimplementedQueryServer) BatchTxConfirmations(ctx context.Context, req *BatchTxConfirmationsRequest) (*BatchTxConfirmationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchTxConfirmations not implemented")
 }
-func (*UnimplementedQueryServer) ContractCallTxEthereumSignatures(ctx context.Context, req *ContractCallTxEthereumSignaturesRequest) (*ContractCallTxEthereumSignaturesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ContractCallTxEthereumSignatures not implemented")
+func (*UnimplementedQueryServer) ContractCallTxConfirmations(ctx context.Context, req *ContractCallTxConfirmationsRequest) (*ContractCallTxConfirmationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ContractCallTxConfirmations not implemented")
 }
 func (*UnimplementedQueryServer) UnsignedSignerSetTxs(ctx context.Context, req *UnsignedSignerSetTxsRequest) (*UnsignedSignerSetTxsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnsignedSignerSetTxs not implemented")
@@ -2804,56 +2799,56 @@ func _Query_ContractCallTxs_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_SignerSetTxEthereumSignatures_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SignerSetTxEthereumSignaturesRequest)
+func _Query_SignerSetTxConfirmations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SignerSetTxConfirmationsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).SignerSetTxEthereumSignatures(ctx, in)
+		return srv.(QueryServer).SignerSetTxConfirmations(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gravity.v1.Query/SignerSetTxEthereumSignatures",
+		FullMethod: "/gravity.v1.Query/SignerSetTxConfirmations",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).SignerSetTxEthereumSignatures(ctx, req.(*SignerSetTxEthereumSignaturesRequest))
+		return srv.(QueryServer).SignerSetTxConfirmations(ctx, req.(*SignerSetTxConfirmationsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_BatchTxEthereumSignatures_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BatchTxEthereumSignaturesRequest)
+func _Query_BatchTxConfirmations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchTxConfirmationsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).BatchTxEthereumSignatures(ctx, in)
+		return srv.(QueryServer).BatchTxConfirmations(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gravity.v1.Query/BatchTxEthereumSignatures",
+		FullMethod: "/gravity.v1.Query/BatchTxConfirmations",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).BatchTxEthereumSignatures(ctx, req.(*BatchTxEthereumSignaturesRequest))
+		return srv.(QueryServer).BatchTxConfirmations(ctx, req.(*BatchTxConfirmationsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_ContractCallTxEthereumSignatures_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContractCallTxEthereumSignaturesRequest)
+func _Query_ContractCallTxConfirmations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContractCallTxConfirmationsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).ContractCallTxEthereumSignatures(ctx, in)
+		return srv.(QueryServer).ContractCallTxConfirmations(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gravity.v1.Query/ContractCallTxEthereumSignatures",
+		FullMethod: "/gravity.v1.Query/ContractCallTxConfirmations",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ContractCallTxEthereumSignatures(ctx, req.(*ContractCallTxEthereumSignaturesRequest))
+		return srv.(QueryServer).ContractCallTxConfirmations(ctx, req.(*ContractCallTxConfirmationsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3111,16 +3106,16 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_ContractCallTxs_Handler,
 		},
 		{
-			MethodName: "SignerSetTxEthereumSignatures",
-			Handler:    _Query_SignerSetTxEthereumSignatures_Handler,
+			MethodName: "SignerSetTxConfirmations",
+			Handler:    _Query_SignerSetTxConfirmations_Handler,
 		},
 		{
-			MethodName: "BatchTxEthereumSignatures",
-			Handler:    _Query_BatchTxEthereumSignatures_Handler,
+			MethodName: "BatchTxConfirmations",
+			Handler:    _Query_BatchTxConfirmations_Handler,
 		},
 		{
-			MethodName: "ContractCallTxEthereumSignatures",
-			Handler:    _Query_ContractCallTxEthereumSignatures_Handler,
+			MethodName: "ContractCallTxConfirmations",
+			Handler:    _Query_ContractCallTxConfirmations_Handler,
 		},
 		{
 			MethodName: "UnsignedSignerSetTxs",
@@ -3457,7 +3452,7 @@ func (m *ContractCallTxResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
-func (m *SignerSetTxEthereumSignaturesRequest) Marshal() (dAtA []byte, err error) {
+func (m *SignerSetTxConfirmationsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -3467,12 +3462,12 @@ func (m *SignerSetTxEthereumSignaturesRequest) Marshal() (dAtA []byte, err error
 	return dAtA[:n], nil
 }
 
-func (m *SignerSetTxEthereumSignaturesRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *SignerSetTxConfirmationsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *SignerSetTxEthereumSignaturesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *SignerSetTxConfirmationsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -3485,7 +3480,7 @@ func (m *SignerSetTxEthereumSignaturesRequest) MarshalToSizedBuffer(dAtA []byte)
 	return len(dAtA) - i, nil
 }
 
-func (m *SignerSetTxEthereumSignaturesResponse) Marshal() (dAtA []byte, err error) {
+func (m *SignerSetTxConfirmationsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -3495,12 +3490,12 @@ func (m *SignerSetTxEthereumSignaturesResponse) Marshal() (dAtA []byte, err erro
 	return dAtA[:n], nil
 }
 
-func (m *SignerSetTxEthereumSignaturesResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *SignerSetTxConfirmationsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *SignerSetTxEthereumSignaturesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *SignerSetTxConfirmationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -4035,7 +4030,7 @@ func (m *BatchTxFeesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *ContractCallTxEthereumSignaturesRequest) Marshal() (dAtA []byte, err error) {
+func (m *ContractCallTxConfirmationsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -4045,12 +4040,12 @@ func (m *ContractCallTxEthereumSignaturesRequest) Marshal() (dAtA []byte, err er
 	return dAtA[:n], nil
 }
 
-func (m *ContractCallTxEthereumSignaturesRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *ContractCallTxConfirmationsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ContractCallTxEthereumSignaturesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *ContractCallTxConfirmationsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -4070,7 +4065,7 @@ func (m *ContractCallTxEthereumSignaturesRequest) MarshalToSizedBuffer(dAtA []by
 	return len(dAtA) - i, nil
 }
 
-func (m *ContractCallTxEthereumSignaturesResponse) Marshal() (dAtA []byte, err error) {
+func (m *ContractCallTxConfirmationsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -4080,12 +4075,12 @@ func (m *ContractCallTxEthereumSignaturesResponse) Marshal() (dAtA []byte, err e
 	return dAtA[:n], nil
 }
 
-func (m *ContractCallTxEthereumSignaturesResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *ContractCallTxConfirmationsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ContractCallTxEthereumSignaturesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *ContractCallTxConfirmationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -4107,7 +4102,7 @@ func (m *ContractCallTxEthereumSignaturesResponse) MarshalToSizedBuffer(dAtA []b
 	return len(dAtA) - i, nil
 }
 
-func (m *BatchTxEthereumSignaturesRequest) Marshal() (dAtA []byte, err error) {
+func (m *BatchTxConfirmationsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -4117,12 +4112,12 @@ func (m *BatchTxEthereumSignaturesRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *BatchTxEthereumSignaturesRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *BatchTxConfirmationsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *BatchTxEthereumSignaturesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *BatchTxConfirmationsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -4142,7 +4137,7 @@ func (m *BatchTxEthereumSignaturesRequest) MarshalToSizedBuffer(dAtA []byte) (in
 	return len(dAtA) - i, nil
 }
 
-func (m *BatchTxEthereumSignaturesResponse) Marshal() (dAtA []byte, err error) {
+func (m *BatchTxConfirmationsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -4152,12 +4147,12 @@ func (m *BatchTxEthereumSignaturesResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *BatchTxEthereumSignaturesResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *BatchTxConfirmationsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *BatchTxEthereumSignaturesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *BatchTxConfirmationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -4859,7 +4854,7 @@ func (m *ContractCallTxResponse) Size() (n int) {
 	return n
 }
 
-func (m *SignerSetTxEthereumSignaturesRequest) Size() (n int) {
+func (m *SignerSetTxConfirmationsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4871,7 +4866,7 @@ func (m *SignerSetTxEthereumSignaturesRequest) Size() (n int) {
 	return n
 }
 
-func (m *SignerSetTxEthereumSignaturesResponse) Size() (n int) {
+func (m *SignerSetTxConfirmationsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5090,7 +5085,7 @@ func (m *BatchTxFeesResponse) Size() (n int) {
 	return n
 }
 
-func (m *ContractCallTxEthereumSignaturesRequest) Size() (n int) {
+func (m *ContractCallTxConfirmationsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5106,7 +5101,7 @@ func (m *ContractCallTxEthereumSignaturesRequest) Size() (n int) {
 	return n
 }
 
-func (m *ContractCallTxEthereumSignaturesResponse) Size() (n int) {
+func (m *ContractCallTxConfirmationsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5121,7 +5116,7 @@ func (m *ContractCallTxEthereumSignaturesResponse) Size() (n int) {
 	return n
 }
 
-func (m *BatchTxEthereumSignaturesRequest) Size() (n int) {
+func (m *BatchTxConfirmationsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5137,7 +5132,7 @@ func (m *BatchTxEthereumSignaturesRequest) Size() (n int) {
 	return n
 }
 
-func (m *BatchTxEthereumSignaturesResponse) Size() (n int) {
+func (m *BatchTxConfirmationsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -6136,7 +6131,7 @@ func (m *ContractCallTxResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *SignerSetTxEthereumSignaturesRequest) Unmarshal(dAtA []byte) error {
+func (m *SignerSetTxConfirmationsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6159,10 +6154,10 @@ func (m *SignerSetTxEthereumSignaturesRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: SignerSetTxEthereumSignaturesRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: SignerSetTxConfirmationsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SignerSetTxEthereumSignaturesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: SignerSetTxConfirmationsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -6208,7 +6203,7 @@ func (m *SignerSetTxEthereumSignaturesRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *SignerSetTxEthereumSignaturesResponse) Unmarshal(dAtA []byte) error {
+func (m *SignerSetTxConfirmationsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6231,10 +6226,10 @@ func (m *SignerSetTxEthereumSignaturesResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: SignerSetTxEthereumSignaturesResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: SignerSetTxConfirmationsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SignerSetTxEthereumSignaturesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: SignerSetTxConfirmationsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -6266,7 +6261,7 @@ func (m *SignerSetTxEthereumSignaturesResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Signatures = append(m.Signatures, &SignerSetTxSignature{})
+			m.Signatures = append(m.Signatures, &SignerSetTxConfirmation{})
 			if err := m.Signatures[len(m.Signatures)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -7587,7 +7582,7 @@ func (m *BatchTxFeesResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ContractCallTxEthereumSignaturesRequest) Unmarshal(dAtA []byte) error {
+func (m *ContractCallTxConfirmationsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7610,10 +7605,10 @@ func (m *ContractCallTxEthereumSignaturesRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ContractCallTxEthereumSignaturesRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: ContractCallTxConfirmationsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ContractCallTxEthereumSignaturesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ContractCallTxConfirmationsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7693,7 +7688,7 @@ func (m *ContractCallTxEthereumSignaturesRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ContractCallTxEthereumSignaturesResponse) Unmarshal(dAtA []byte) error {
+func (m *ContractCallTxConfirmationsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7716,10 +7711,10 @@ func (m *ContractCallTxEthereumSignaturesResponse) Unmarshal(dAtA []byte) error 
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ContractCallTxEthereumSignaturesResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: ContractCallTxConfirmationsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ContractCallTxEthereumSignaturesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ContractCallTxConfirmationsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7751,7 +7746,7 @@ func (m *ContractCallTxEthereumSignaturesResponse) Unmarshal(dAtA []byte) error 
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Signatures = append(m.Signatures, &ContractCallTxSignature{})
+			m.Signatures = append(m.Signatures, &ContractCallTxConfirmation{})
 			if err := m.Signatures[len(m.Signatures)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -7780,7 +7775,7 @@ func (m *ContractCallTxEthereumSignaturesResponse) Unmarshal(dAtA []byte) error 
 	}
 	return nil
 }
-func (m *BatchTxEthereumSignaturesRequest) Unmarshal(dAtA []byte) error {
+func (m *BatchTxConfirmationsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7803,10 +7798,10 @@ func (m *BatchTxEthereumSignaturesRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: BatchTxEthereumSignaturesRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: BatchTxConfirmationsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: BatchTxEthereumSignaturesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: BatchTxConfirmationsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7884,7 +7879,7 @@ func (m *BatchTxEthereumSignaturesRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *BatchTxEthereumSignaturesResponse) Unmarshal(dAtA []byte) error {
+func (m *BatchTxConfirmationsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7907,10 +7902,10 @@ func (m *BatchTxEthereumSignaturesResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: BatchTxEthereumSignaturesResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: BatchTxConfirmationsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: BatchTxEthereumSignaturesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: BatchTxConfirmationsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7942,7 +7937,7 @@ func (m *BatchTxEthereumSignaturesResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Signatures = append(m.Signatures, &BatchTxSignature{})
+			m.Signatures = append(m.Signatures, &BatchTxConfirmation{})
 			if err := m.Signatures[len(m.Signatures)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
