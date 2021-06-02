@@ -27,6 +27,11 @@ func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress common.
 	if len(signature) < 65 {
 		return sdkerrors.Wrap(ErrInvalid, "signature too short")
 	}
+
+	// Copy to avoid mutating signature slice by accident
+	var sigCopy = make([]byte, len(signature))
+	copy(sigCopy, signature)
+
 	// To verify signature
 	// - use crypto.SigToPub to get the public key
 	// - use crypto.PubkeyToAddress to get the address
@@ -41,11 +46,11 @@ func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress common.
 	//
 	// We could attempt to break or otherwise exit early on obviously invalid values for this
 	// byte, but that's a task best left to go-ethereum
-	if signature[64] == 27 || signature[64] == 28 {
-		signature[64] -= 27
+	if sigCopy[64] == 27 || sigCopy[64] == 28 {
+		sigCopy[64] -= 27
 	}
 
-	pubkey, err := crypto.SigToPub(crypto.Keccak256Hash(append([]uint8(signaturePrefix), hash...)).Bytes(), signature)
+	pubkey, err := crypto.SigToPub(crypto.Keccak256Hash(append([]uint8(signaturePrefix), hash...)).Bytes(), sigCopy)
 	if err != nil {
 		return sdkerrors.Wrap(err, "signature to public key")
 	}

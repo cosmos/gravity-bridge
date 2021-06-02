@@ -16,6 +16,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
+		fmt.Printf("&&&&&&&& got a message %s", msg)
 		switch msg := msg.(type) {
 		case *types.MsgSendToEthereum:
 			res, err := msgServer.SendToEthereum(sdk.WrapSDKContext(ctx), msg)
@@ -26,8 +27,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgRequestBatchTx:
 			res, err := msgServer.RequestBatchTx(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgSubmitEthereumSignature:
-			res, err := msgServer.SubmitEthereumSignature(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgSubmitEthereumTxConfirmation:
+			res, err := msgServer.SubmitEthereumTxConfirmation(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgSubmitEthereumEvent:
 			res, err := msgServer.SubmitEthereumEvent(sdk.WrapSDKContext(ctx), msg)

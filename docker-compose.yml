@@ -124,3 +124,17 @@ services:
       - DENOM
       - CONTRACT_ADDR
       - RUST_BACKTRACE=1
+
+  test_runner:
+    build:
+      context: ./orchestrator
+      dockerfile: testnet.Dockerfile
+    depends_on:
+      - gravity0
+      - ethereum
+    volumes:
+      - ./testdata:/testdata
+    environment:
+      - RUST_BACKTRACE=full
+      - RUST_LOG=INFO
+      - TEST_TYPE

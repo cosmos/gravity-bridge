@@ -3,11 +3,14 @@ use crate::error::GravityError;
 use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
 use deep_space::error::CosmosGrpcError;
+use deep_space::utils::bytes_to_hex_str;
 use std::fmt::Debug;
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
     fmt,
+    str,
+    // str::FromStr,
 };
 
 /// The total power in the Gravity bridge is normalized to u32 max every
@@ -59,12 +62,14 @@ pub struct ValsetConfirmResponse {
 
 impl ValsetConfirmResponse {
     pub fn from_proto(
-        input: gravity_proto::gravity::SignerSetTxSignature,
+        input: gravity_proto::gravity::SignerSetTxConfirmation,
     ) -> Result<Self, GravityError> {
+        println!(":==: ValsetConfirmResponse::from_proto input {:?}", input);
+
         Ok(ValsetConfirmResponse {
             eth_signer: input.ethereum_signer.parse()?,
-            nonce: input.nonce,
-            eth_signature: EthSignature::from_bytes(&input.signature)?,
+            nonce: input.signer_set_nonce,
+            eth_signature: bytes_to_hex_str(&input.signature).parse()?,
         })
     }
 }
@@ -148,6 +153,11 @@ impl Valset {
                 if let Some(sig) = signatures_hashmap.get(&eth_address) {
                     assert_eq!(sig.get_eth_address(), eth_address);
                     assert!(sig.get_signature().is_valid());
+                    println!(
+                        ":==: IN GET SIGNATURE STATUS, sig: {:#?}, sig.get_signature(): {:#?}",
+                        sig,
+                        sig.get_signature()
+                    );
                     let recover_key = sig.get_signature().recover(signed_message).unwrap();
                     if recover_key == sig.get_eth_address() {
                         out.push(GravitySignature {

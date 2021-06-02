@@ -20,6 +20,10 @@ use gravity_utils::message_signatures::{
 use gravity_utils::types::*;
 use std::{collections::HashMap, time::Duration};
 
+use bytes::BytesMut;
+use prost::Message;
+use prost_types::Any;
+
 pub const MEMO: &str = "Sent using Althea Orchestrator";
 pub const TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -106,6 +110,7 @@ pub async fn send_valset_confirms(
 
     for valset in valsets {
         trace!("Submitting signature for valset {:?}", valset);
+        println!(":==: Submitting signature for valset {:?}", valset);
         let message = encode_valset_confirm(gravity_id.clone(), valset.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
         trace!(
@@ -113,13 +118,27 @@ pub async fn send_valset_confirms(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = proto::SignerSetTxSignature {
+        println!(
+            ":==: Sending valset update with address {} and sig {:#?}",
+            our_eth_address,
+            &eth_signature.to_bytes()
+        );
+        let confirm = proto::SignerSetTxConfirmation {
             ethereum_signer: our_eth_address.to_string(),
-            nonce: valset.nonce,
+            signer_set_nonce: valset.nonce,
             signature: eth_signature.to_bytes().to_vec(),
         };
-
-        let msg = Msg::new("/gravity.v1.MsgValsetConfirm", confirm);
+        let size = Message::encoded_len(&confirm);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumTxConfirmation {
+            signer: our_address.to_string(),
+            confirmation: Some(Any {
+                type_url: "/gravity.v1.SignerSetTxConfirmation".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -171,9 +190,9 @@ pub async fn send_batch_confirm(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = proto::BatchTxSignature {
+        let confirm = proto::BatchTxConfirmation {
             token_contract: batch.token_contract.to_string(),
-            nonce: batch.nonce,
+            batch_nonce: batch.nonce,
             ethereum_signer: our_eth_address.to_string(),
             signature: bytes_to_hex_str(&eth_signature.to_bytes())
                 .as_bytes()
@@ -231,7 +250,7 @@ pub async fn send_logic_call_confirm(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = proto::ContractCallTxSignature {
+        let confirm = proto::ContractCallTxConfirmation {
             ethereum_signer: our_eth_address.to_string(),
             signature: bytes_to_hex_str(&eth_signature.to_bytes())
                 .as_bytes()
@@ -239,7 +258,17 @@ pub async fn send_logic_call_confirm(
             invalidation_scope: bytes_to_hex_str(&call.invalidation_id).as_bytes().to_vec(),
             invalidation_nonce: call.invalidation_nonce,
         };
-        let msg = Msg::new("/gravity.v1.MsgConfirmLogicCall", confirm);
+        let size = Message::encoded_len(&confirm);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumTxConfirmation {
+            signer: our_address.to_string(),
+            confirmation: Some(Any {
+                type_url: "/gravity.v1.ContractCallTxConfirmation".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;

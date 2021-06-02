@@ -1,7 +1,6 @@
 use clarity::abi::Token;
 use clarity::Uint256;
 use clarity::{abi::encode_tokens, Address as EthAddress};
-use deep_space::address::Address as CosmosAddress;
 use gravity_utils::error::GravityError;
 use gravity_utils::types::*;
 use sha3::{Digest, Keccak256};
