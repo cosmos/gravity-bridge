@@ -40,8 +40,8 @@ pub struct KeyStorage {
 
 /// Checks if the user has setup their config environment
 pub fn config_exists(home_dir: &Path) -> bool {
-    let config_file = home_dir.with_file_name(CONFIG_NAME);
-    let keys_file = home_dir.with_file_name(KEYS_NAME);
+    let config_file = home_dir.join(CONFIG_FOLDER).with_file_name(CONFIG_NAME);
+    let keys_file = home_dir.join(CONFIG_FOLDER).with_file_name(KEYS_NAME);
     home_dir.exists() && config_file.exists() && keys_file.exists()
 }
 
@@ -57,10 +57,10 @@ pub fn init_config(_init_ops: InitOpts, home_dir: PathBuf) {
     } else {
         create_dir(home_dir.clone()).expect("Failed to create config directory!");
 
-        fs::write(home_dir.with_file_name(CONFIG_NAME), get_default_config())
+        fs::write(home_dir.join(CONFIG_NAME), get_default_config())
             .expect("Unable to write config file");
         fs::write(
-            home_dir.with_file_name(KEYS_NAME),
+            home_dir.join(KEYS_NAME),
             toml::to_string(&KeyStorage::default()).unwrap(),
         )
         .expect("Unable to write config file");
@@ -88,7 +88,7 @@ pub fn get_home_dir(home_arg: Option<PathBuf>) -> PathBuf {
 
 /// Load the config file, this operates at runtime
 pub fn load_config(home_dir: &Path) -> GravityBridgeToolsConfig {
-    let config_file = home_dir.with_file_name(CONFIG_NAME);
+    let config_file = home_dir.join(CONFIG_FOLDER).with_file_name(CONFIG_NAME);
     if !config_file.exists() {
         return GravityBridgeToolsConfig::default();
     }
@@ -106,7 +106,7 @@ pub fn load_config(home_dir: &Path) -> GravityBridgeToolsConfig {
 
 /// Load the keys file, this operates at runtime
 pub fn load_keys(home_dir: &Path) -> KeyStorage {
-    let keys_file = home_dir.with_file_name(KEYS_NAME);
+    let keys_file = home_dir.join(CONFIG_FOLDER).with_file_name(KEYS_NAME);
     if !keys_file.exists() {
         error!(
             "Keys file at {} not detected, use `gbt init` to generate a config.",
@@ -127,7 +127,7 @@ pub fn load_keys(home_dir: &Path) -> KeyStorage {
 
 /// Saves the keys file, overwriting the existing one
 pub fn save_keys(home_dir: &Path, updated_keys: KeyStorage) {
-    let config_file = home_dir.with_file_name(KEYS_NAME);
+    let config_file = home_dir.join(CONFIG_FOLDER).with_file_name(KEYS_NAME);
     if !config_file.exists() {
         info!(
             "Config file at {} not detected, using defaults, use `gbt init` to generate a config.",
@@ -136,7 +136,7 @@ pub fn save_keys(home_dir: &Path, updated_keys: KeyStorage) {
     }
 
     fs::write(
-        home_dir.with_file_name(KEYS_NAME),
+        home_dir.join(KEYS_NAME),
         toml::to_string(&updated_keys).unwrap(),
     )
     .expect("Unable to write config file");
