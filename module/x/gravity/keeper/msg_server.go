@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -61,8 +60,6 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 
 // SubmitEthereumSignature handles MsgSubmitEthereumSignature
 func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubmitEthereumSignature) (*types.MsgSubmitEthereumSignatureResponse, error) {
-	log.Println(":==: msgServer.SubmitEthereumSignature")
-
 	ctx := sdk.UnwrapSDKContext(c)
 
 	signature, err := types.UnpackSignature(msg.Signature)
@@ -89,7 +86,14 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 	}
 
 	if err = types.ValidateEthereumSignature(checkpoint, signature.GetSignature(), ethAddress); err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf(
+			"signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s %s",
+			ethAddress.Hex(),
+			gravityID,
+			hex.EncodeToString(checkpoint),
+			msg.Signature.TypeUrl,
+			hex.EncodeToString(msg.Signature.Value),
+		))
 	}
 
 	// TODO: should validators be able to overwrite their signatures?
