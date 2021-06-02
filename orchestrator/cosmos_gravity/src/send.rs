@@ -110,7 +110,6 @@ pub async fn send_valset_confirms(
 
     for valset in valsets {
         trace!("Submitting signature for valset {:?}", valset);
-        println!(":==: Submitting signature for valset {:?}", valset);
         let message = encode_valset_confirm(gravity_id.clone(), valset.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
         trace!(
@@ -190,6 +189,7 @@ pub async fn send_batch_confirm(
             token_contract: batch.token_contract.to_string(),
             batch_nonce: batch.nonce,
             ethereum_signer: our_eth_address.to_string(),
+            // TODO JEHAN: this will break
             signature: bytes_to_hex_str(&eth_signature.to_bytes())
                 .as_bytes()
                 .to_vec(),
@@ -248,9 +248,11 @@ pub async fn send_logic_call_confirm(
         );
         let confirm = proto::ContractCallTxConfirmation {
             ethereum_signer: our_eth_address.to_string(),
+            // TODO JEHAN: this will break
             signature: bytes_to_hex_str(&eth_signature.to_bytes())
                 .as_bytes()
                 .to_vec(),
+            // TODO JEHAN: this will break
             invalidation_scope: bytes_to_hex_str(&call.invalidation_id).as_bytes().to_vec(),
             invalidation_nonce: call.invalidation_nonce,
         };

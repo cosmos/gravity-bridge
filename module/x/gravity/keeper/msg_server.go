@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -61,7 +60,6 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 
 // SubmitEthereumTxConfirmation handles MsgSubmitEthereumTxConfirmation
 func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.MsgSubmitEthereumTxConfirmation) (*types.MsgSubmitEthereumTxConfirmationResponse, error) {
-	log.Println(":==: msgServer.SubmitEthereumTxConfirmation")
 	ctx := sdk.UnwrapSDKContext(c)
 
 	confirmation, err := types.UnpackConfirmation(msg.Confirmation)

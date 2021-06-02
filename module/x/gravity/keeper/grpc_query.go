@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"log"
 
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -167,8 +166,6 @@ func (k Keeper) SignerSetTxConfirmations(c context.Context, req *types.SignerSet
 		})
 		return false
 	})
-
-	log.Printf(":==: keeper.SignerSetTxConfirmations %v %v", out, req.SignerSetNonce)
 
 	return &types.SignerSetTxConfirmationsResponse{Signatures: out}, nil
 }

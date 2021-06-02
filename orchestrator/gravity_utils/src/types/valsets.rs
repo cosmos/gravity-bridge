@@ -64,12 +64,10 @@ impl ValsetConfirmResponse {
     pub fn from_proto(
         input: gravity_proto::gravity::SignerSetTxConfirmation,
     ) -> Result<Self, GravityError> {
-        println!(":==: ValsetConfirmResponse::from_proto input {:?}", input);
-
         Ok(ValsetConfirmResponse {
             eth_signer: input.ethereum_signer.parse()?,
             nonce: input.signer_set_nonce,
-            eth_signature: bytes_to_hex_str(&input.signature).parse()?,
+            eth_signature: EthSignature::from_bytes(&input.signature)?,
         })
     }
 }
@@ -153,11 +151,6 @@ impl Valset {
                 if let Some(sig) = signatures_hashmap.get(&eth_address) {
                     assert_eq!(sig.get_eth_address(), eth_address);
                     assert!(sig.get_signature().is_valid());
-                    println!(
-                        ":==: IN GET SIGNATURE STATUS, sig: {:#?}, sig.get_signature(): {:#?}",
-                        sig,
-                        sig.get_signature()
-                    );
                     let recover_key = sig.get_signature().recover(signed_message).unwrap();
                     if recover_key == sig.get_eth_address() {
                         out.push(GravitySignature {

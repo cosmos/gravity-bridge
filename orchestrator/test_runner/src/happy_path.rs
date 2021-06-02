@@ -45,13 +45,20 @@ pub async fn happy_path_test(
     // power can be reallocated to the down validator before things stop
     // working. We'll settle for testing that the initial valset (generated
     // with the first block) is successfully updated
-    if !validator_out {
-        for _ in 0u32..2 {
-            test_valset_update(&web30, &keys, gravity_address).await;
-        }
-    } else {
-        wait_for_nonzero_valset(&web30, gravity_address).await;
-    }
+
+    // TODO JEHAN: bring this back in once we have a gRPC library for delegating
+    // if !validator_out {
+    //     for _ in 0u32..2 {
+    //         test_valset_update(&web30, &keys, gravity_address).await;
+    //     }
+    // } else {
+    //     wait_for_nonzero_valset(&web30, gravity_address).await;
+    // }
+
+    // TODO JEHAN: take this out once the above has been brought back in
+    wait_for_nonzero_valset(&web30, gravity_address).await;
+
+    println!(":==: got past wait_for_nonzero_valset");
 
     // generate an address for coin sending tests, this ensures test imdepotency
     let mut rng = rand::thread_rng();
@@ -217,6 +224,7 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
         "Delegating {} to {} in order to generate a validator set update",
         amount, delegate_address
     );
+    // TODO JEHAN: Bring this back in once we have a gRPC endpoint for delegation
     // delegate_tokens(delegate_address, amount).await;
 
     let mut current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
@@ -225,7 +233,7 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
 
     while starting_eth_valset_nonce == current_eth_valset_nonce {
         info!(
-            "Validator set is not yet updated to {}>, waiting",
+            "Validator set is not yet updated to >{}, waiting",
             starting_eth_valset_nonce
         );
         current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
@@ -236,6 +244,7 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
             panic!("Failed to update validator set");
         }
     }
+
     assert!(starting_eth_valset_nonce != current_eth_valset_nonce);
     info!("Validator set successfully updated!");
 }
@@ -434,17 +443,17 @@ async fn submit_duplicate_erc20_send(
         .await
         .expect("Did not find coins!");
 
-        let ethereum_sender = "0x912fd21d7a69678227fe6d08c64222db41477ba0"
+    let ethereum_sender = "0x912fd21d7a69678227fe6d08c64222db41477ba0"
         .parse()
         .unwrap();
-        let event = SendToCosmosEvent {
-            event_nonce: nonce,
-            block_height: 500u16.into(),
-            erc20: erc20_address,
-            sender: ethereum_sender,
-            destination: receiver,
-            amount,
-        };
+    let event = SendToCosmosEvent {
+        event_nonce: nonce,
+        block_height: 500u16.into(),
+        erc20: erc20_address,
+        sender: ethereum_sender,
+        destination: receiver,
+        amount,
+    };
 
     // iterate through all validators and try to send an event with duplicate nonce
     for k in keys.iter() {
