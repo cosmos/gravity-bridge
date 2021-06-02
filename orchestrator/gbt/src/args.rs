@@ -12,7 +12,7 @@ use deep_space::{address::Address as CosmosAddress, Coin};
 
 /// Gravity Bridge tools (gbt) provides tools for interacting with the Althea Gravity bridge for Cosmos based blockchains.
 #[derive(Clap)]
-#[clap(version = "1.0", author = "Justin Kilpatrick <justin@althea.net>")]
+#[clap(version = env!("CARGO_PKG_VERSION"), author = "Justin Kilpatrick <justin@althea.net>")]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Opts {
     /// Increase the logging verbosity
