@@ -19,7 +19,7 @@ use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use happy_path::happy_path_test;
 use happy_path_v2::happy_path_test_v2;
 use lazy_static::lazy_static;
-use orch_keys_update::orch_keys_update;
+use orch_keys::orch_keys;
 use std::{env, time::Duration};
 use transaction_stress_test::transaction_stress_test;
 use valset_stress::validator_set_stress_test;
@@ -28,7 +28,7 @@ mod arbitrary_logic;
 mod bootstrapping;
 mod happy_path;
 mod happy_path_v2;
-mod orch_keys_update;
+mod orch_keys;
 mod transaction_stress_test;
 mod utils;
 mod valset_stress;
@@ -206,7 +206,7 @@ pub async fn main() {
             return;
         } else if test_type == "ORCHESTRATOR_KEYS" {
             info!("Starting orchestrator key update tests!");
-            orch_keys_update(grpc_client, &contact, keys).await;
+            orch_keys(grpc_client, &contact, keys).await;
             return;
         }
     }
