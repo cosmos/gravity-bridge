@@ -11,7 +11,7 @@ gravity_utils = {path = "../gravity_utils"}
 ethereum_gravity = {path = "../ethereum_gravity"}
 gravity_proto = {path = "../gravity_proto/"}
 
-deep_space = "2.3"
+deep_space = "2.4"
 clarity = "0.4"
 serde = "1.0"
 num256 = "0.3"

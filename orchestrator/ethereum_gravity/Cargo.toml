@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 gravity_utils = {path = "../gravity_utils"}
 
-deep_space = "2.2"
+deep_space = "2.4"
 clarity = "0.4"
 web30 = "0.14"
 num256 = "0.3"

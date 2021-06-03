@@ -8,7 +8,7 @@ use crate::config::save_keys;
 use crate::config::KeyStorage;
 use crate::utils::TIMEOUT;
 use clarity::PrivateKey as EthPrivateKey;
-use cosmos_gravity::send::update_gravity_delegate_addresses;
+use cosmos_gravity::send::set_gravity_delegate_addresses;
 use deep_space::{mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
 use gravity_utils::connection_prep::check_for_fee;
 use gravity_utils::connection_prep::{create_rpc_connections, wait_for_cosmos_node_ready};
@@ -80,7 +80,7 @@ pub async fn register_orchestrator_address(
 
     let ethereum_address = ethereum_key.to_public_key().unwrap();
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
-    let res = update_gravity_delegate_addresses(
+    let res = set_gravity_delegate_addresses(
         &contact,
         ethereum_address,
         cosmos_address,

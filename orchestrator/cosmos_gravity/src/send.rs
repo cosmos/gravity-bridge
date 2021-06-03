@@ -12,9 +12,7 @@ use ethereum_gravity::message_signatures::{
 };
 use ethereum_gravity::utils::downcast_uint256;
 use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
-use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::service_client::ServiceClient as TxServiceClient;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastMode;
-use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastTxRequest;
 use gravity_proto::gravity::MsgBatchSendToEthClaim;
 use gravity_proto::gravity::MsgConfirmBatch;
 use gravity_proto::gravity::MsgConfirmLogicCall;
@@ -34,7 +32,9 @@ pub const TIMEOUT: Duration = Duration::from_secs(60);
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
-pub async fn update_gravity_delegate_addresses(
+/// this can only be called once! Key rotation code is possible but
+/// not currently implemented
+pub async fn set_gravity_delegate_addresses(
     contact: &Contact,
     delegate_eth_address: EthAddress,
     delegate_cosmos_address: Address,
@@ -76,18 +76,11 @@ pub async fn update_gravity_delegate_addresses(
 
     let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
 
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 /// Send in a confirmation for an array of validator sets, it's far more efficient to send these
@@ -136,18 +129,11 @@ pub async fn send_valset_confirms(
 
     let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
 
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 /// Send in a confirmation for a specific transaction batch
@@ -195,18 +181,11 @@ pub async fn send_batch_confirm(
 
     let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
 
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 /// Send in a confirmation for a specific logic call
@@ -254,18 +233,11 @@ pub async fn send_logic_call_confirm(
 
     let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
 
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 #[allow(clippy::clippy::too_many_arguments)]
@@ -378,18 +350,11 @@ pub async fn send_ethereum_claims(
 
     let msg_bytes = private_key.sign_std_msg(&msgs, args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
 
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
@@ -453,18 +418,11 @@ pub async fn send_to_eth(
 
     let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
 
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 pub async fn send_request_batch(
@@ -494,16 +452,9 @@ pub async fn send_request_batch(
 
     let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
 
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
