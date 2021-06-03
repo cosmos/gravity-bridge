@@ -301,8 +301,6 @@ pub struct MsgDelegateKeys {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgDelegateKeysResponse {}
-#[cfg(feature = "grpc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "grpc")))]
 #[doc = r" Generated client implementations."]
 pub mod msg_client {
     #![allow(unused_variables, dead_code, missing_docs)]
@@ -546,7 +544,7 @@ pub struct GenesisState {
     #[prost(message, repeated, tag = "3")]
     pub outgoing_txs: ::prost::alloc::vec::Vec<::prost_types::Any>,
     #[prost(message, repeated, tag = "4")]
-    pub signatures: ::prost::alloc::vec::Vec<::prost_types::Any>,
+    pub confirmations: ::prost::alloc::vec::Vec<::prost_types::Any>,
     #[prost(message, repeated, tag = "9")]
     pub ethereum_event_vote_records: ::prost::alloc::vec::Vec<EthereumEventVoteRecord>,
     #[prost(message, repeated, tag = "10")]
@@ -836,8 +834,6 @@ pub struct UnbatchedSendToEthereumsResponse {
     pub pagination:
         ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageResponse>,
 }
-#[cfg(feature = "grpc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "grpc")))]
 #[doc = r" Generated client implementations."]
 pub mod query_client {
     #![allow(unused_variables, dead_code, missing_docs)]

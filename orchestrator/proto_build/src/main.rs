@@ -17,14 +17,6 @@ use walkdir::WalkDir;
 /// Protos belonging to these Protobuf packages will be excluded
 /// (i.e. because they are sourced from `tendermint-proto` or `cosmos-sdk-proto`)
 const EXCLUDED_PROTO_PACKAGES: &[&str] = &["gogoproto", "google", "tendermint", "cosmos.base"];
-/// Attribute preceeding a Tonic client definition
-const TONIC_CLIENT_ATTRIBUTE: &str = "#[doc = r\" Generated client implementations.\"]";
-/// Attributes to add to gRPC clients
-const GRPC_CLIENT_ATTRIBUTES: &[&str] = &[
-    "#[cfg(feature = \"grpc\")]",
-    "#[cfg_attr(docsrs, doc(cfg(feature = \"grpc\")))]",
-    TONIC_CLIENT_ATTRIBUTE,
-];
 /// Regex for locating instances of `cosmos-sdk-proto` in prost/tonic build output
 const COSMOS_SDK_PROTO_REGEX: &str = "(super::)+cosmos";
 
@@ -159,9 +151,5 @@ fn copy_and_patch(src: impl AsRef<Path>, dest: impl AsRef<Path>) -> io::Result<(
         .unwrap()
         .replace_all(&contents, "cosmos_sdk_proto::cosmos");
 
-    // Patch each service definition with a feature attribute
-    let patched_contents =
-        contents.replace(TONIC_CLIENT_ATTRIBUTE, &GRPC_CLIENT_ATTRIBUTES.join("\n"));
-
-    fs::write(dest, patched_contents)
+    fs::write(dest, contents.as_bytes())
 }
