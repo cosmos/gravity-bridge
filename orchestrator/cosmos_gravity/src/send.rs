@@ -133,7 +133,7 @@ pub async fn send_valset_confirms(
                 value: buf.to_vec(),
             }),
         };
-        let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumTxConfirmation", wrapper);
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -266,7 +266,7 @@ pub async fn send_logic_call_confirm(
                 value: buf.to_vec(),
             }),
         };
-        let msg = Msg::new("/gravity.v1.Msg/SubmitEthereumTxConfirmation", wrapper);
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -309,17 +309,28 @@ pub async fn send_ethereum_claims(
     // We index the events by event nonce in an unordered hashmap and then play them back in order into a vec
     let mut unordered_msgs = HashMap::new();
     for deposit in deposits {
-        let amount: [u8; 32] = deposit.amount.into();
-        let amount: Vec<u8> = amount.into();
-        let claim = proto::SendToCosmosEvent {
+        let event = proto::SendToCosmosEvent {
             event_nonce: downcast_uint256(deposit.event_nonce.clone()).unwrap(),
             ethereum_height: downcast_uint256(deposit.block_height).unwrap(),
             token_contract: deposit.erc20.to_string(),
-            amount,
+            amount: deposit.amount.to_string(),
             cosmos_receiver: deposit.destination.to_string(),
             ethereum_sender: deposit.sender.to_string(),
         };
-        let msg = Msg::new("/gravity.v1.MsgDepositClaim", claim);
+
+        println!(":==: send to cosmos event {:#?}", event);
+
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.SendToCosmosEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
         unordered_msgs.insert(deposit.event_nonce, msg);
     }
     for withdraw in withdraws {
@@ -375,6 +386,7 @@ pub async fn send_ethereum_claims(
 
     let args = contact.get_message_args(our_address, fee).await?;
     trace!("got optional tx info");
+    info!(":==: got optional tx info msgs.len {}", msgs.len()); // deleteme
 
     let msg_bytes = private_key.sign_std_msg(&msgs, args, MEMO)?;
 

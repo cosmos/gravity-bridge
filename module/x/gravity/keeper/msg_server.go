@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -118,7 +119,10 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 
 // SubmitEthereumEvent handles MsgSubmitEthereumEvent
 func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEthereumEvent) (*types.MsgSubmitEthereumEventResponse, error) {
+	log.Println(":==: msgServer.SubmitEthereumEvent", msg)
+
 	ctx := sdk.UnwrapSDKContext(c)
+
 	event, err := types.UnpackEvent(msg.Event)
 	if err != nil {
 		return nil, err

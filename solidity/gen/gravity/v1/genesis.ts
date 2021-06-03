@@ -101,7 +101,7 @@ export interface GenesisState {
   params?: Params;
   lastObservedEventNonce: Long;
   outgoingTxs: Any[];
-  signatures: Any[];
+  confirmations: Any[];
   ethereumEventVoteRecords: EthereumEventVoteRecord[];
   delegateKeys: MsgDelegateKeys[];
   erc20ToDenoms: ERC20ToDenom[];
@@ -581,7 +581,7 @@ export const GenesisState = {
     for (const v of message.outgoingTxs) {
       Any.encode(v!, writer.uint32(26).fork()).ldelim();
     }
-    for (const v of message.signatures) {
+    for (const v of message.confirmations) {
       Any.encode(v!, writer.uint32(34).fork()).ldelim();
     }
     for (const v of message.ethereumEventVoteRecords) {
@@ -604,7 +604,7 @@ export const GenesisState = {
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseGenesisState } as GenesisState;
     message.outgoingTxs = [];
-    message.signatures = [];
+    message.confirmations = [];
     message.ethereumEventVoteRecords = [];
     message.delegateKeys = [];
     message.erc20ToDenoms = [];
@@ -622,7 +622,7 @@ export const GenesisState = {
           message.outgoingTxs.push(Any.decode(reader, reader.uint32()));
           break;
         case 4:
-          message.signatures.push(Any.decode(reader, reader.uint32()));
+          message.confirmations.push(Any.decode(reader, reader.uint32()));
           break;
         case 9:
           message.ethereumEventVoteRecords.push(
@@ -655,7 +655,7 @@ export const GenesisState = {
   fromJSON(object: any): GenesisState {
     const message = { ...baseGenesisState } as GenesisState;
     message.outgoingTxs = [];
-    message.signatures = [];
+    message.confirmations = [];
     message.ethereumEventVoteRecords = [];
     message.delegateKeys = [];
     message.erc20ToDenoms = [];
@@ -680,9 +680,9 @@ export const GenesisState = {
         message.outgoingTxs.push(Any.fromJSON(e));
       }
     }
-    if (object.signatures !== undefined && object.signatures !== null) {
-      for (const e of object.signatures) {
-        message.signatures.push(Any.fromJSON(e));
+    if (object.confirmations !== undefined && object.confirmations !== null) {
+      for (const e of object.confirmations) {
+        message.confirmations.push(Any.fromJSON(e));
       }
     }
     if (
@@ -731,12 +731,12 @@ export const GenesisState = {
     } else {
       obj.outgoingTxs = [];
     }
-    if (message.signatures) {
-      obj.signatures = message.signatures.map((e) =>
+    if (message.confirmations) {
+      obj.confirmations = message.confirmations.map((e) =>
         e ? Any.toJSON(e) : undefined
       );
     } else {
-      obj.signatures = [];
+      obj.confirmations = [];
     }
     if (message.ethereumEventVoteRecords) {
       obj.ethereumEventVoteRecords = message.ethereumEventVoteRecords.map((e) =>
@@ -772,7 +772,7 @@ export const GenesisState = {
   fromPartial(object: DeepPartial<GenesisState>): GenesisState {
     const message = { ...baseGenesisState } as GenesisState;
     message.outgoingTxs = [];
-    message.signatures = [];
+    message.confirmations = [];
     message.ethereumEventVoteRecords = [];
     message.delegateKeys = [];
     message.erc20ToDenoms = [];
@@ -795,9 +795,9 @@ export const GenesisState = {
         message.outgoingTxs.push(Any.fromPartial(e));
       }
     }
-    if (object.signatures !== undefined && object.signatures !== null) {
-      for (const e of object.signatures) {
-        message.signatures.push(Any.fromPartial(e));
+    if (object.confirmations !== undefined && object.confirmations !== null) {
+      for (const e of object.confirmations) {
+        message.confirmations.push(Any.fromPartial(e));
       }
     }
     if (

@@ -1,6 +1,6 @@
 */node_modules
+*/target/*
 .DS_Store
 .dockerignore
-.gitignore
 .git
-target
+.gitignore

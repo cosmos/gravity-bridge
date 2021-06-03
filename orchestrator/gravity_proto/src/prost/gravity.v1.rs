@@ -215,8 +215,8 @@ pub struct SendToCosmosEvent {
     pub event_nonce: u64,
     #[prost(string, tag = "2")]
     pub token_contract: ::prost::alloc::string::String,
-    #[prost(bytes = "vec", tag = "3")]
-    pub amount: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "3")]
+    pub amount: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
     pub ethereum_sender: ::prost::alloc::string::String,
     #[prost(string, tag = "5")]

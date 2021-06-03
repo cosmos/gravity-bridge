@@ -161,6 +161,7 @@ pub async fn check_for_events(
             )
             .await?;
             trace!("Claims response {:?}", res);
+            info!(":==: Claims response {:?}", res); // deleteme
             let new_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
             // since we can't actually trust that the above txresponse is correct we have to check here
             // we may be able to trust the tx response post grpc
