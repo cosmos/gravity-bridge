@@ -544,7 +544,7 @@ pub struct GenesisState {
     #[prost(message, repeated, tag = "3")]
     pub outgoing_txs: ::prost::alloc::vec::Vec<::prost_types::Any>,
     #[prost(message, repeated, tag = "4")]
-    pub signatures: ::prost::alloc::vec::Vec<::prost_types::Any>,
+    pub confirmations: ::prost::alloc::vec::Vec<::prost_types::Any>,
     #[prost(message, repeated, tag = "9")]
     pub ethereum_event_vote_records: ::prost::alloc::vec::Vec<EthereumEventVoteRecord>,
     #[prost(message, repeated, tag = "10")]
@@ -625,8 +625,7 @@ pub struct SignerSetTxConfirmationsResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignerSetTxsRequest {
     #[prost(message, optional, tag = "1")]
-    pub pagination:
-        ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
+    pub pagination: ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignerSetTxsResponse {
@@ -640,8 +639,7 @@ pub struct SignerSetTxsResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchTxsRequest {
     #[prost(message, optional, tag = "1")]
-    pub pagination:
-        ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
+    pub pagination: ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchTxsResponse {
@@ -655,8 +653,7 @@ pub struct BatchTxsResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ContractCallTxsRequest {
     #[prost(message, optional, tag = "1")]
-    pub pagination:
-        ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
+    pub pagination: ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ContractCallTxsResponse {
@@ -827,8 +824,7 @@ pub struct UnbatchedSendToEthereumsRequest {
     #[prost(string, tag = "1")]
     pub sender_address: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "2")]
-    pub pagination:
-        ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
+    pub pagination: ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UnbatchedSendToEthereumsResponse {
