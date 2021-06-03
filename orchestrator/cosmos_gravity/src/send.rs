@@ -295,6 +295,7 @@ pub async fn send_ethereum_claims(
     withdraws: Vec<TransactionBatchExecutedEvent>,
     erc20_deploys: Vec<Erc20DeployedEvent>,
     logic_calls: Vec<LogicCallExecutedEvent>,
+    valsets: Vec<ValsetUpdatedEvent>,
     fee: Coin,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
@@ -318,7 +319,7 @@ pub async fn send_ethereum_claims(
             ethereum_sender: deposit.sender.to_string(),
         };
 
-        println!(":==: send to cosmos event {:#?}", event);
+        println!(":==: send_ethereum_claims deposit {:?}", event);
 
         let size = Message::encoded_len(&event);
         let mut buf = BytesMut::with_capacity(size);
@@ -366,6 +367,32 @@ pub async fn send_ethereum_claims(
         let msg = Msg::new("/gravity.v1.MsgLogicCallExecutedClaim", claim);
         unordered_msgs.insert(call.event_nonce.clone(), msg);
     }
+    for valset in valsets {
+        let event = proto::SignerSetTxExecutedEvent {
+            event_nonce: downcast_uint256(valset.event_nonce.clone()).unwrap(),
+            signer_set_tx_nonce: downcast_uint256(valset.valset_nonce.clone()).unwrap(),
+            ethereum_height: downcast_uint256(valset.block_height).unwrap(),
+            members: valset.members.iter().map(|v| v.into()).collect(),
+        };
+
+        println!(":==: send_ethereum_claims valset {:?}", event);
+
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.SignerSetTxExecutedEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
+        unordered_msgs.insert(valset.event_nonce, msg);
+    }
+
+    // println!(":==: send_ethereum_claims unordered_msgs {:?}", unordered_msgs);
+
     let mut keys = Vec::new();
     for (key, _) in unordered_msgs.iter() {
         keys.push(key.clone());
@@ -374,8 +401,12 @@ pub async fn send_ethereum_claims(
 
     let mut msgs = Vec::new();
     for i in keys {
+        println!(":==: send_ethereum_claims key {:?}", i);
         msgs.push(unordered_msgs.remove_entry(&i).unwrap().1);
     }
+
+
+    // println!(":==: send_ethereum_claims msgs (ordered) {:?}", msgs);
 
     let fee = Fee {
         amount: vec![fee],
@@ -386,7 +417,6 @@ pub async fn send_ethereum_claims(
 
     let args = contact.get_message_args(our_address, fee).await?;
     trace!("got optional tx info");
-    info!(":==: got optional tx info msgs.len {}", msgs.len()); // deleteme
 
     let msg_bytes = private_key.sign_std_msg(&msgs, args, MEMO)?;
 

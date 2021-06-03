@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"log"
 
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -73,6 +74,8 @@ func (msg *MsgSubmitEthereumEvent) Type() string { return "submit_ethereum_event
 
 // ValidateBasic performs stateless checks
 func (msg *MsgSubmitEthereumEvent) ValidateBasic() (err error) {
+	log.Println(":==: MsgSubmitEthereumEvent.ValidateBasic")
+
 	if _, err = sdk.AccAddressFromBech32(msg.Signer); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Signer)
 	}
@@ -81,6 +84,9 @@ func (msg *MsgSubmitEthereumEvent) ValidateBasic() (err error) {
 	if err != nil {
 		return err
 	}
+	log.Println(":==: MsgSubmitEthereumEvent.ValidateBasic event.GetEthereumHeight()", event.GetEthereumHeight())
+	log.Println(":==: MsgSubmitEthereumEvent.ValidateBasic event.GetEventNonce()", event.GetEventNonce())
+	log.Println(":==: MsgSubmitEthereumEvent.ValidateBasic event.Validate()", event.Validate())
 
 	return event.Validate()
 }

@@ -92,14 +92,19 @@ pub async fn check_for_events(
     ) {
         let valsets = ValsetUpdatedEvent::from_logs(&valsets)?;
         trace!("parsed valsets {:?}", valsets);
+        println!(":==: parsed valsets {:?}", valsets);
         let withdraws = TransactionBatchExecutedEvent::from_logs(&batches)?;
         trace!("parsed batches {:?}", batches);
+        println!(":==: parsed batches {:?}", batches);
         let deposits = SendToCosmosEvent::from_logs(&deposits)?;
         trace!("parsed deposits {:?}", deposits);
+        println!(":==: parsed deposits {:?}", deposits);
         let erc20_deploys = Erc20DeployedEvent::from_logs(&deploys)?;
         trace!("parsed erc20 deploys {:?}", erc20_deploys);
+        println!(":==: parsed erc20 deploys {:?}", erc20_deploys);
         let logic_calls = LogicCallExecutedEvent::from_logs(&logic_calls)?;
         trace!("logic call executions {:?}", logic_calls);
+        println!(":==: logic call executions {:?}", logic_calls);
 
         // note that starting block overlaps with our last checked block, because we have to deal with
         // the possibility that the relayer was killed after relaying only one of multiple events in a single
@@ -108,12 +113,9 @@ pub async fn check_for_events(
         // atomicly but lets not take that risk.
         let last_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
         let deposits = SendToCosmosEvent::filter_by_event_nonce(last_event_nonce, &deposits);
-        let withdraws =
-            TransactionBatchExecutedEvent::filter_by_event_nonce(last_event_nonce, &withdraws);
-        let erc20_deploys =
-            Erc20DeployedEvent::filter_by_event_nonce(last_event_nonce, &erc20_deploys);
-        let logic_calls =
-            LogicCallExecutedEvent::filter_by_event_nonce(last_event_nonce, &logic_calls);
+        let withdraws = TransactionBatchExecutedEvent::filter_by_event_nonce(last_event_nonce, &withdraws);
+        let erc20_deploys = Erc20DeployedEvent::filter_by_event_nonce(last_event_nonce, &erc20_deploys);
+        let logic_calls = LogicCallExecutedEvent::filter_by_event_nonce(last_event_nonce, &logic_calls);
 
         if !deposits.is_empty() {
             info!(
@@ -149,6 +151,7 @@ pub async fn check_for_events(
             || !withdraws.is_empty()
             || !erc20_deploys.is_empty()
             || !logic_calls.is_empty()
+            || !valsets.is_empty()
         {
             let res = send_ethereum_claims(
                 contact,
@@ -157,11 +160,12 @@ pub async fn check_for_events(
                 withdraws,
                 erc20_deploys,
                 logic_calls,
+                valsets,
                 fee,
             )
             .await?;
             trace!("Claims response {:?}", res);
-            info!(":==: Claims response {:?}", res); // deleteme
+            println!(":==: Claims response {:?}", res); // deleteme
             let new_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
             // since we can't actually trust that the above txresponse is correct we have to check here
             // we may be able to trust the tx response post grpc

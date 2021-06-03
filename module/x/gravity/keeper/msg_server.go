@@ -119,7 +119,7 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 
 // SubmitEthereumEvent handles MsgSubmitEthereumEvent
 func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEthereumEvent) (*types.MsgSubmitEthereumEventResponse, error) {
-	log.Println(":==: msgServer.SubmitEthereumEvent", msg)
+	log.Println(":==: msgServer.SubmitEthereumEvent")
 
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -127,6 +127,7 @@ func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEt
 	if err != nil {
 		return nil, err
 	}
+	log.Println(":==: msgServer.SubmitEthereumEvent: event.GetEventNonce()", event.GetEventNonce())
 
 	// return an error if the validator isn't in the active set
 	val, err := k.getSignerValidator(ctx, msg.Signer)

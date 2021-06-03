@@ -4,7 +4,6 @@ import {
   Query,
   QueryClientImpl,
   SignerSetTxConfirmationsResponse,
-  SignerSetTxsRequest,
 } from "./gen/gravity/v1/query";
 import { SignerSetTx } from "./gen/gravity/v1/gravity";
 import Long from "long";
@@ -74,7 +73,7 @@ async function getDelegateKeys() {
 }
 
 (async function () {
-  //   console.log(await getDelegateKeys());
+  // console.log(await getDelegateKeys());
   // console.log(JSON.stringify(await getAllValsets()));
   const res = await getValset(Long.fromInt(1))
   console.log(JSON.stringify(res));

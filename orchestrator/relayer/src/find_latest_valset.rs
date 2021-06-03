@@ -4,6 +4,7 @@ use gravity_utils::types::ValsetUpdatedEvent;
 use gravity_utils::{error::GravityError, types::Valset};
 use tonic::transport::Channel;
 use web30::client::Web3;
+use ethereum_gravity::utils::downcast_uint256;
 
 /// This function finds the latest valset on the Gravity contract by looking back through the event
 /// history and finding the most recent ValsetUpdatedEvent. Most of the time this will be very fast
@@ -48,7 +49,7 @@ pub async fn find_latest_valset(
             match ValsetUpdatedEvent::from_log(event) {
                 Ok(event) => {
                     let latest_eth_valset = Valset {
-                        nonce: event.valset_nonce,
+                        nonce: downcast_uint256(event.valset_nonce.clone()).unwrap(),
                         members: event.members,
                     };
                     let cosmos_chain_valset =

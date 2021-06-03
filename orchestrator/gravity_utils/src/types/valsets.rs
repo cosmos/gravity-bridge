@@ -440,3 +440,16 @@ impl From<&gravity_proto::gravity::EthereumSigner> for ValsetMember {
         }
     }
 }
+
+impl From<&ValsetMember> for gravity_proto::gravity::EthereumSigner {
+    fn from(input: &ValsetMember) -> gravity_proto::gravity::EthereumSigner {
+        let ethereum_address = match input.eth_address {
+            Some(e) => e.to_string(),
+            None => String::new(),
+        };
+        gravity_proto::gravity::EthereumSigner {
+            power: input.power,
+            ethereum_address,
+        }
+    }
+}
