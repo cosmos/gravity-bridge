@@ -1,8 +1,6 @@
-use crate::get_chain_id;
 use crate::get_fee;
 use crate::utils::*;
 use crate::ADDRESS_PREFIX;
-use crate::CHAIN_BINARY;
 use crate::MINER_ADDRESS;
 use crate::MINER_PRIVATE_KEY;
 use crate::STAKING_TOKEN;
@@ -21,8 +19,8 @@ use ethereum_gravity::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::SendToCosmosEvent;
 use rand::Rng;
-use std::{process::Command, time::Duration};
-use std::{process::ExitStatus, time::Instant};
+use std::time::Duration;
+use std::time::Instant;
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -52,7 +50,7 @@ pub async fn happy_path_test(
     // with the first block) is successfully updated
     if !validator_out {
         for _ in 0u32..2 {
-            test_valset_update(&web30, &keys, gravity_address).await;
+            test_valset_update(&web30, contact, &keys, gravity_address).await;
         }
     } else {
         wait_for_nonzero_valset(&web30, gravity_address).await;
@@ -111,53 +109,6 @@ pub async fn happy_path_test(
     .await;
 }
 
-/// This deals with the horrible error behavior of the Cosmos sdk command
-/// line, mainly that when the tx seq changes while creating the message
-/// it doesn't produce a failed output status or even print to stderror
-/// it logs to stdout and simply fails. This will retry every 5 seconds
-/// until the delegation succeeds
-pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
-    let args = [
-        "tx",
-        "staking",
-        "delegate",
-        // target address
-        delegate_address,
-        // amount, this should be about 4% of the total power to start
-        amount,
-        "--home=/validator1",
-        // this is defined in /tests/container-scripts/setup-validator.sh
-        &format!("--chain-id={}", get_chain_id()),
-        "--keyring-backend=test",
-        "--yes",
-        "--from=validator1",
-    ];
-    let mut cmd = Command::new(CHAIN_BINARY.clone());
-
-    let cmd = cmd.args(&args);
-    let mut output = cmd
-        .current_dir("/")
-        .output()
-        .expect("Failed to update stake to trigger validator set change");
-    let mut stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    while stdout.contains("account sequence mismatch") {
-        if stdout.contains("insufficient funds") {
-            panic!("Can't continue to produce validator sets! Not enough STAKE token")
-        }
-        output = cmd
-            .current_dir("/")
-            .output()
-            .expect("Failed to update stake to trigger validator set change");
-        stdout = String::from_utf8_lossy(&output.stdout).to_string();
-        delay_for(Duration::from_secs(5)).await;
-    }
-    info!("stdout: {}", stdout);
-    info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-    if !ExitStatus::success(&output.status) {
-        panic!("Delegation failed!")
-    }
-}
-
 pub async fn wait_for_nonzero_valset(web30: &Web3, gravity_address: EthAddress) {
     let start = Instant::now();
     let mut current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
@@ -176,7 +127,12 @@ pub async fn wait_for_nonzero_valset(web30: &Web3, gravity_address: EthAddress) 
     }
 }
 
-pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_address: EthAddress) {
+pub async fn test_valset_update(
+    web30: &Web3,
+    contact: &Contact,
+    keys: &[ValidatorKeys],
+    gravity_address: EthAddress,
+) {
     // if we don't do this the orchestrators may run ahead of us and we'll be stuck here after
     // getting credit for two loops when we did one
     let starting_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
@@ -201,18 +157,25 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
         // this is not guaranteed to be correct, the chain may set the valoper prefix in a
         // different way, but I haven't yet seen one that does not match this pattern
         .to_address(&format!("{}valoper", *ADDRESS_PREFIX))
-        .unwrap()
-        .to_string();
-    let amount = &format!(
-        "{}{}",
-        STARTING_STAKE_PER_VALIDATOR / 4,
-        STAKING_TOKEN.as_str()
-    );
+        .unwrap();
+    let amount = Coin {
+        denom: STAKING_TOKEN.to_string(),
+        amount: (STARTING_STAKE_PER_VALIDATOR / 4).into(),
+    };
     info!(
         "Delegating {} to {} in order to generate a validator set update",
         amount, delegate_address
     );
-    delegate_tokens(delegate_address, amount).await;
+    contact
+        .delegate_to_validator(
+            *delegate_address,
+            amount,
+            get_fee(),
+            keys[1].validator_key,
+            Some(TOTAL_TIMEOUT),
+        )
+        .await
+        .unwrap();
 
     let mut current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
         .await

@@ -40,13 +40,6 @@ const TOTAL_TIMEOUT: Duration = Duration::from_secs(300);
 
 // Retrieve values from runtime ENV vars
 lazy_static! {
-    /// for downstream test cases the binary name needs to be different, so we detect
-    /// if a runtime env var is set and if so use that as the chain binary name for
-    /// our re-delegation. This is actually not the best way to handle this problem
-    /// ideally we would send the tx staking delegate command ourselves and never need
-    /// to know what the binary name is
-    static ref CHAIN_BINARY: String =
-        env::var("CHAIN_BINARY").unwrap_or_else(|_| "gravity".to_owned());
     static ref ADDRESS_PREFIX: String =
         env::var("ADDRESS_PREFIX").unwrap_or_else(|_| CosmosAddress::DEFAULT_PREFIX.to_owned());
     static ref STAKING_TOKEN: String =
