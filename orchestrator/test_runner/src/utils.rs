@@ -17,6 +17,7 @@ use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use orchestrator::main_loop::orchestrator_main_loop;
 use rand::Rng;
 use std::thread;
+use web30::jsonrpc::error::Web3Error;
 use web30::{client::Web3, types::SendTxOption};
 
 pub async fn send_eth_to_orchestrators(keys: &[ValidatorKeys], web30: &Web3) {
@@ -84,11 +85,14 @@ pub async fn send_erc20_bulk(
         transactions.push(send);
         nonce += 1u64.into();
     }
-    let _txids = join_all(transactions).await;
+    let txids = join_all(transactions).await;
+    wait_for_txids(txids, web3).await;
+    let mut balance_checks = Vec::new();
     for address in destinations {
-        let new_balance = web3.get_erc20_balance(erc20, *address).await.unwrap();
-        assert!(new_balance >= amount.clone());
+        let check = check_erc20_balance(*address, erc20, amount.clone(), web3);
+        balance_checks.push(check);
     }
+    join_all(balance_checks).await;
 }
 
 /// This function efficiently distributes ETH to a large number of provided Ethereum addresses
@@ -121,12 +125,24 @@ pub async fn send_eth_bulk(amount: Uint256, destinations: &[EthAddress], web3: &
         sends.push(web3.eth_send_raw_transaction(tx.to_bytes().unwrap()));
     }
     let txids = join_all(sends).await;
+    wait_for_txids(txids, web3).await;
+}
+
+/// utility function that waits for a large number of txids to enter a block
+async fn wait_for_txids(txids: Vec<Result<Uint256, Web3Error>>, web3: &Web3) {
     let mut wait_for_txid = Vec::new();
     for txid in txids {
         let wait = web3.wait_for_transaction(txid.unwrap(), TOTAL_TIMEOUT, None);
         wait_for_txid.push(wait);
     }
     join_all(wait_for_txid).await;
+}
+
+/// utility function for bulk checking erc20 balances, used to provide
+/// a single future that contains the assert as well s the request
+async fn check_erc20_balance(address: EthAddress, erc20: EthAddress, amount: Uint256, web3: &Web3) {
+    let new_balance = web3.get_erc20_balance(erc20, address).await.unwrap();
+    assert!(new_balance >= amount.clone());
 }
 
 pub fn get_user_key() -> BridgeUserKey {
