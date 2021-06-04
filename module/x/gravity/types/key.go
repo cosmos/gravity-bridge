@@ -22,17 +22,8 @@ const (
 	QuerierRoute = ModuleName
 )
 
-// TODO(levi) "safer" pattern for setting values into the KVStore?
-type GravityPrefix byte
-
-// TOOD(levi) probably lives on the keeper?
-func GravitySetWithSuffix(store sdk.KVStore, prefix GravityPrefix, suffix, value []byte) {
-	key := append([]byte{byte(prefix)}, suffix...)
-	store.Set(key, value)
-}
-
 const (
-	_ = byte(iota) // TODO(levi) --- make this an iota of GravityPrefix
+	_ = byte(iota)
 	// Key Delegation
 	ValidatorEthereumAddressKey
 	OrchestratorValidatorAddressKey
