@@ -3,7 +3,6 @@ use crate::error::GravityError;
 use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
 use deep_space::error::CosmosGrpcError;
-use deep_space::utils::bytes_to_hex_str;
 use std::fmt::Debug;
 use std::{
     cmp::Ordering,
@@ -438,6 +437,19 @@ impl From<&gravity_proto::gravity::EthereumSigner> for ValsetMember {
         ValsetMember {
             power: input.power as u64,
             eth_address,
+        }
+    }
+}
+
+impl From<&ValsetMember> for gravity_proto::gravity::EthereumSigner {
+    fn from(input: &ValsetMember) -> gravity_proto::gravity::EthereumSigner {
+        let ethereum_address = match input.eth_address {
+            Some(e) => e.to_string(),
+            None => String::new(),
+        };
+        gravity_proto::gravity::EthereumSigner {
+            power: input.power,
+            ethereum_address,
         }
     }
 }

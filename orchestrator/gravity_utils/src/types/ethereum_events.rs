@@ -17,8 +17,9 @@ use web30::types::Log;
 /// when the validator set is updated.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ValsetUpdatedEvent {
-    pub valset_nonce: u64,
-    pub event_nonce: u64,
+    pub valset_nonce: Uint256,
+    pub event_nonce: Uint256,
+    pub block_height: Uint256,
     pub members: Vec<ValsetMember>,
 }
 
@@ -115,10 +116,19 @@ impl ValsetUpdatedEvent {
                 validators, check
             );
         }
+        let block_height = if let Some(bn) = input.block_number.clone() {
+            bn
+        } else {
+            return Err(GravityError::InvalidEventLogError(
+                "Log does not have block number, we only search logs already in blocks?"
+                    .to_string(),
+            ));
+        };
 
         Ok(ValsetUpdatedEvent {
-            valset_nonce,
-            event_nonce,
+            valset_nonce: valset_nonce.into(),
+            event_nonce: event_nonce.into(),
+            block_height,
             members: validators,
         })
     }

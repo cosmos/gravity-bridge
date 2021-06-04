@@ -106,7 +106,7 @@ export interface MsgSubmitEthereumEvent {
 export interface SendToCosmosEvent {
   eventNonce: Long;
   tokenContract: string;
-  amount: Uint8Array;
+  amount: string;
   ethereumSender: string;
   cosmosReceiver: string;
   ethereumHeight: Long;
@@ -1232,6 +1232,7 @@ export const MsgSubmitEthereumEvent = {
 const baseSendToCosmosEvent: object = {
   eventNonce: Long.UZERO,
   tokenContract: "",
+  amount: "",
   ethereumSender: "",
   cosmosReceiver: "",
   ethereumHeight: Long.UZERO,
@@ -1248,8 +1249,8 @@ export const SendToCosmosEvent = {
     if (message.tokenContract !== "") {
       writer.uint32(18).string(message.tokenContract);
     }
-    if (message.amount.length !== 0) {
-      writer.uint32(26).bytes(message.amount);
+    if (message.amount !== "") {
+      writer.uint32(26).string(message.amount);
     }
     if (message.ethereumSender !== "") {
       writer.uint32(34).string(message.ethereumSender);
@@ -1267,7 +1268,6 @@ export const SendToCosmosEvent = {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseSendToCosmosEvent } as SendToCosmosEvent;
-    message.amount = new Uint8Array();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1278,7 +1278,7 @@ export const SendToCosmosEvent = {
           message.tokenContract = reader.string();
           break;
         case 3:
-          message.amount = reader.bytes();
+          message.amount = reader.string();
           break;
         case 4:
           message.ethereumSender = reader.string();
@@ -1299,7 +1299,6 @@ export const SendToCosmosEvent = {
 
   fromJSON(object: any): SendToCosmosEvent {
     const message = { ...baseSendToCosmosEvent } as SendToCosmosEvent;
-    message.amount = new Uint8Array();
     if (object.eventNonce !== undefined && object.eventNonce !== null) {
       message.eventNonce = Long.fromString(object.eventNonce);
     } else {
@@ -1311,7 +1310,9 @@ export const SendToCosmosEvent = {
       message.tokenContract = "";
     }
     if (object.amount !== undefined && object.amount !== null) {
-      message.amount = bytesFromBase64(object.amount);
+      message.amount = String(object.amount);
+    } else {
+      message.amount = "";
     }
     if (object.ethereumSender !== undefined && object.ethereumSender !== null) {
       message.ethereumSender = String(object.ethereumSender);
@@ -1337,10 +1338,7 @@ export const SendToCosmosEvent = {
       (obj.eventNonce = (message.eventNonce || Long.UZERO).toString());
     message.tokenContract !== undefined &&
       (obj.tokenContract = message.tokenContract);
-    message.amount !== undefined &&
-      (obj.amount = base64FromBytes(
-        message.amount !== undefined ? message.amount : new Uint8Array()
-      ));
+    message.amount !== undefined && (obj.amount = message.amount);
     message.ethereumSender !== undefined &&
       (obj.ethereumSender = message.ethereumSender);
     message.cosmosReceiver !== undefined &&
@@ -1365,7 +1363,7 @@ export const SendToCosmosEvent = {
     if (object.amount !== undefined && object.amount !== null) {
       message.amount = object.amount;
     } else {
-      message.amount = new Uint8Array();
+      message.amount = "";
     }
     if (object.ethereumSender !== undefined && object.ethereumSender !== null) {
       message.ethereumSender = object.ethereumSender;

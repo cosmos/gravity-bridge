@@ -465,6 +465,7 @@ async fn submit_duplicate_erc20_send(
             vec![],
             vec![],
             vec![],
+            vec![],
             get_fee(),
         )
         .await
