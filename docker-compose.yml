@@ -20,8 +20,6 @@ services:
     build:
       context: ./module
       dockerfile: ./Dockerfile
-    volumes:
-      - ./testdata/testchain/gravity0:/root/home
     depends_on:
       - ethereum
     ports:
@@ -30,6 +28,8 @@ services:
       - "1317:1317"
       - "9090:9090"
       - "6060-6065:6060-6065"
+    volumes:
+      - ./testdata/testchain/gravity0:/root/home
 
   orchestrator0:
     build:
@@ -39,13 +39,14 @@ services:
       - ethereum
       - gravity0
     environment:
+      - CONTRACT_ADDR
       - COSMOS_KEY
       - COSMOS_PHRASE
-      - ETH_PRIVATE_KEY
-      - VALIDATOR
       - DENOM
-      - CONTRACT_ADDR
+      - ETH_PRIVATE_KEY
       - RUST_BACKTRACE=1
+      - RUST_LOG=INFO
+      - VALIDATOR
 
   gravity1:
     build:
@@ -65,13 +66,12 @@ services:
       - ethereum
       - gravity1
     environment:
+      - CONTRACT_ADDR
       - COSMOS_KEY
       - COSMOS_PHRASE
+      - DENOM
       - ETH_PRIVATE_KEY
       - VALIDATOR
-      - DENOM
-      - CONTRACT_ADDR
-      - RUST_BACKTRACE=1
 
   gravity2:
     build:
@@ -91,13 +91,12 @@ services:
       - ethereum
       - gravity2
     environment:
+      - CONTRACT_ADDR
       - COSMOS_KEY
       - COSMOS_PHRASE
+      - DENOM
       - ETH_PRIVATE_KEY
       - VALIDATOR
-      - DENOM
-      - CONTRACT_ADDR
-      - RUST_BACKTRACE=1
 
   gravity3:
     build:
@@ -117,13 +116,12 @@ services:
       - ethereum
       - gravity3
     environment:
+      - CONTRACT_ADDR
       - COSMOS_KEY
       - COSMOS_PHRASE
+      - DENOM
       - ETH_PRIVATE_KEY
       - VALIDATOR
-      - DENOM
-      - CONTRACT_ADDR
-      - RUST_BACKTRACE=1
 
   test_runner:
     build:
@@ -135,6 +133,6 @@ services:
     volumes:
       - ./testdata:/testdata
     environment:
-      - RUST_BACKTRACE=full
+      - RUST_BACKTRACE=1
       - RUST_LOG=INFO
       - TEST_TYPE
