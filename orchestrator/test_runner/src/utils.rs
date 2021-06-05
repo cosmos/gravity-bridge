@@ -11,8 +11,11 @@ use clarity::{PrivateKey as EthPrivateKey, Transaction};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use deep_space::utils::encode_any;
 use deep_space::Contact;
 use futures::future::join_all;
+use gravity_proto::cosmos_sdk_proto::cosmos::params::v1beta1::ParamChange;
+use gravity_proto::cosmos_sdk_proto::cosmos::params::v1beta1::ParameterChangeProposal;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use orchestrator::main_loop::orchestrator_main_loop;
 use rand::Rng;
@@ -248,4 +251,52 @@ pub async fn start_orchestrators(
             break;
         }
     }
+}
+
+/// Creates a proposal to change the params of our test chain
+pub async fn create_parameter_change_proposal(
+    contact: &Contact,
+    key: CosmosPrivateKey,
+    deposit: Coin,
+    gravity_address: EthAddress,
+    valset_reward: Coin,
+) {
+    let mut params_to_change = Vec::new();
+    // this does not
+    let gravity_address = ParamChange {
+        subspace: "gravity".to_string(),
+        key: "BridgeContractAddress".to_string(),
+        value: format!("\"{}\"", gravity_address),
+    };
+    params_to_change.push(gravity_address);
+    let json_value = serde_json::to_string(&valset_reward).unwrap().to_string();
+    let valset_reward = ParamChange {
+        subspace: "gravity".to_string(),
+        key: "ValsetReward".to_string(),
+        value: json_value.clone(),
+    };
+    params_to_change.push(valset_reward);
+    let chain_id = ParamChange {
+        subspace: "gravity".to_string(),
+        key: "BridgeChainID".to_string(),
+        value: format!("\"{}\"", 1),
+    };
+    params_to_change.push(chain_id);
+    let proposal = ParameterChangeProposal {
+        title: "Set gravity settings!".to_string(),
+        description: "test proposal".to_string(),
+        changes: params_to_change,
+    };
+    let any = encode_any(
+        proposal,
+        "/cosmos.params.v1beta1.ParameterChangeProposal".to_string(),
+    );
+
+    let res = contact
+        .create_gov_proposal(any, deposit, get_fee(), key, Some(TOTAL_TIMEOUT))
+        .await
+        .unwrap();
+    trace!("Gov proposal submitted with {:?}", res);
+    let res = contact.wait_for_tx(res, TOTAL_TIMEOUT).await.unwrap();
+    trace!("Gov proposal executed with {:?}", res);
 }

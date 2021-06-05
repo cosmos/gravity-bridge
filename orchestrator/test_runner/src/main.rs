@@ -8,6 +8,7 @@ extern crate log;
 
 use crate::bootstrapping::*;
 use crate::utils::*;
+use crate::valset_rewards::valset_rewards_test;
 use arbitrary_logic::arbitrary_logic_test;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
@@ -31,6 +32,7 @@ mod happy_path_v2;
 mod orch_keys;
 mod transaction_stress_test;
 mod utils;
+mod valset_rewards;
 mod valset_stress;
 
 /// the timeout for individual requests
@@ -188,6 +190,10 @@ pub async fn main() {
         } else if test_type == "VALSET_STRESS" {
             info!("Starting Valset update stress test");
             validator_set_stress_test(&web30, &contact, keys, gravity_address).await;
+            return;
+        } else if test_type == "VALSET_REWARDS" {
+            info!("Starting Valset rewards test");
+            valset_rewards_test(&web30, grpc_client, &contact, keys, gravity_address, false).await;
             return;
         } else if test_type == "V2_HAPPY_PATH" {
             info!("Starting happy path for Gravity v2");

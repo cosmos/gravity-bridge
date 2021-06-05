@@ -49,5 +49,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Run all up arbitrary logic test
+      - name: Run orchestrator key setting test
         run: tests/all-up-test.sh ORCHESTRATOR_KEYS
+  valset_update_rewards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run the validator set update rewards test
+        run: tests/all-up-test.sh VALSET_REWARDS

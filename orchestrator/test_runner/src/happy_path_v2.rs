@@ -1,7 +1,5 @@
 //! This is the happy path test for Cosmos to Ethereum asset transfers, meaning assets originated on Cosmos
 
-use std::time::{Duration, Instant};
-
 use crate::utils::get_user_key;
 use crate::utils::send_one_eth;
 use crate::utils::start_orchestrators;
@@ -16,6 +14,7 @@ use ethereum_gravity::{deploy_erc20::deploy_erc20, utils::get_event_nonce};
 use gravity_proto::gravity::{
     query_client::QueryClient as GravityQueryClient, QueryDenomToErc20Request,
 };
+use std::time::{Duration, Instant};
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -29,73 +28,19 @@ pub async fn happy_path_test_v2(
     validator_out: bool,
 ) {
     let mut grpc_client = grpc_client;
-    let starting_event_nonce = get_event_nonce(
-        gravity_address,
-        keys[0].eth_key.to_public_key().unwrap(),
-        web30,
-    )
-    .await
-    .unwrap();
-
     let token_to_send_to_eth = "footoken".to_string();
     let token_to_send_to_eth_display_name = "mfootoken".to_string();
 
-    deploy_erc20(
+    let erc20_contract = deploy_cosmos_representing_erc20_and_check_adoption(
+        gravity_address,
+        web30,
+        keys.clone(),
+        &mut grpc_client,
+        validator_out,
         token_to_send_to_eth.clone(),
         token_to_send_to_eth_display_name.clone(),
-        token_to_send_to_eth_display_name.clone(),
-        6,
-        gravity_address,
-        web30,
-        Some(TOTAL_TIMEOUT),
-        keys[0].eth_key,
-        vec![],
     )
-    .await
-    .unwrap();
-    let ending_event_nonce = get_event_nonce(
-        gravity_address,
-        keys[0].eth_key.to_public_key().unwrap(),
-        web30,
-    )
-    .await
-    .unwrap();
-
-    assert!(starting_event_nonce != ending_event_nonce);
-    info!(
-        "Successfully deployed new ERC20 representing FooToken on Cosmos with event nonce {}",
-        ending_event_nonce
-    );
-
-    start_orchestrators(keys.clone(), gravity_address, validator_out).await;
-
-    let start = Instant::now();
-    // the erc20 representing the cosmos asset on Ethereum
-    let mut erc20_contract = None;
-    while Instant::now() - start < TOTAL_TIMEOUT {
-        let res = grpc_client
-            .denom_to_erc20(QueryDenomToErc20Request {
-                denom: token_to_send_to_eth.clone(),
-            })
-            .await;
-        if let Ok(res) = res {
-            let erc20 = res.into_inner().erc20;
-            info!(
-                "Successfully adopted {} token contract of {}",
-                token_to_send_to_eth, erc20
-            );
-            erc20_contract = Some(erc20);
-            break;
-        }
-        delay_for(Duration::from_secs(1)).await;
-    }
-    if erc20_contract.is_none() {
-        panic!(
-            "Cosmos did not adopt the ERC20 contract for {} it must be invalid in some way",
-            token_to_send_to_eth
-        );
-    }
-    let erc20_contract: EthAddress = erc20_contract.unwrap().parse().unwrap();
+    .await;
 
     // one foo token
     let amount_to_bridge: Uint256 = 1_000_000u64.into();
@@ -195,4 +140,83 @@ pub async fn happy_path_test_v2(
         }
         delay_for(Duration::from_secs(1)).await;
     }
+}
+
+/// This segment is broken out because it's used in two different tests
+/// once here where we verify that tokens bridge correctly and once in valset_rewards
+/// where we do a governance update to enable rewards
+pub async fn deploy_cosmos_representing_erc20_and_check_adoption(
+    gravity_address: EthAddress,
+    web30: &Web3,
+    keys: Vec<ValidatorKeys>,
+    grpc_client: &mut GravityQueryClient<Channel>,
+    validator_out: bool,
+    token_to_send_to_eth: String,
+    token_to_send_to_eth_display_name: String,
+) -> EthAddress {
+    let starting_event_nonce = get_event_nonce(
+        gravity_address,
+        keys[0].eth_key.to_public_key().unwrap(),
+        web30,
+    )
+    .await
+    .unwrap();
+
+    deploy_erc20(
+        token_to_send_to_eth.clone(),
+        token_to_send_to_eth_display_name.clone(),
+        token_to_send_to_eth_display_name.clone(),
+        6,
+        gravity_address,
+        web30,
+        Some(TOTAL_TIMEOUT),
+        keys[0].eth_key,
+        vec![],
+    )
+    .await
+    .unwrap();
+    let ending_event_nonce = get_event_nonce(
+        gravity_address,
+        keys[0].eth_key.to_public_key().unwrap(),
+        web30,
+    )
+    .await
+    .unwrap();
+
+    assert!(starting_event_nonce != ending_event_nonce);
+    info!(
+        "Successfully deployed new ERC20 representing FooToken on Cosmos with event nonce {}",
+        ending_event_nonce
+    );
+
+    start_orchestrators(keys.clone(), gravity_address, validator_out).await;
+
+    let start = Instant::now();
+    // the erc20 representing the cosmos asset on Ethereum
+    let mut erc20_contract = None;
+    while Instant::now() - start < TOTAL_TIMEOUT {
+        let res = grpc_client
+            .denom_to_erc20(QueryDenomToErc20Request {
+                denom: token_to_send_to_eth.clone(),
+            })
+            .await;
+        if let Ok(res) = res {
+            let erc20 = res.into_inner().erc20;
+            info!(
+                "Successfully adopted {} token contract of {}",
+                token_to_send_to_eth, erc20
+            );
+            erc20_contract = Some(erc20);
+            break;
+        }
+        delay_for(Duration::from_secs(1)).await;
+    }
+    if erc20_contract.is_none() {
+        panic!(
+            "Cosmos did not adopt the ERC20 contract for {} it must be invalid in some way",
+            token_to_send_to_eth
+        );
+    }
+    let erc20_contract: EthAddress = erc20_contract.unwrap().parse().unwrap();
+    erc20_contract
 }
