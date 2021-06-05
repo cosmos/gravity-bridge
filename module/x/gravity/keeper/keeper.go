@@ -466,7 +466,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	reward := k.GetParams(ctx).ValsetReward
 	var rewardToken string
 	var rewardAmount sdk.Int
-	if reward == nil {
+	if !reward.IsValid() || reward.IsZero() {
 		// the case where a validator has 'no reward'. The 'no reward' value is interpreted as having a zero
 		// address for the ERC20 token and a zero value for the reward amount. Since we store a coin with the
 		// params, a coin with a blank denom and/or zero amount is interpreted in this way.
@@ -474,7 +474,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		rewardAmount = sdk.NewIntFromUint64(0)
 
 	} else {
-		rewardToken, rewardAmount = k.RewardToERC20Lookup(ctx, *reward)
+		rewardToken, rewardAmount = k.RewardToERC20Lookup(ctx, reward)
 	}
 
 	// TODO: make the nonce an incrementing one (i.e. fetch last nonce from state, increment, set here)

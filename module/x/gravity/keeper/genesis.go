@@ -123,8 +123,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// that the valset reward is possible and cosmos originated remove
 	// this if you want a non-cosmos originated reward
 	valsetReward := k.GetParams(ctx).ValsetReward
-	// empty string means 'no reward'
-	if valsetReward != nil {
+	if valsetReward.IsValid() && !valsetReward.IsZero() {
 		_, exists := k.GetCosmosOriginatedERC20(ctx, valsetReward.Denom)
 		if !exists {
 			panic("Invalid Cosmos originated denom for valset reward")

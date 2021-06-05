@@ -62,7 +62,7 @@ func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, string,
 // RewardToERC20Lookup is a specialized function wrapping DenomToERC20Lookup designed to validate
 // the validator set reward any time we generate a validator set
 func (k Keeper) RewardToERC20Lookup(ctx sdk.Context, coin sdk.Coin) (string, sdk.Int) {
-	if len(coin.Denom) == 0 || coin.Amount.BigInt() == nil || coin.Amount == sdk.NewInt(0) {
+	if !coin.IsValid() || coin.IsZero() {
 		panic("Bad validator set relaying reward!")
 	} else {
 		// reward case, pass to DenomToERC20Lookup

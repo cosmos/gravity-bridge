@@ -118,7 +118,9 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  cosmos.base.v1beta1.Coin valset_reward = 17;
+  cosmos.base.v1beta1.Coin valset_reward = 17 [
+    (gogoproto.nullable)   = false
+  ];
 }
 
 // GenesisState struct

@@ -26,9 +26,6 @@ var (
 	// ParamsStoreKeyContractHash stores the contract hash
 	ParamsStoreKeyContractHash = []byte("ContractHash")
 
-	// ParamsStoreKeyStartThreshold stores the start threshold
-	ParamsStoreKeyStartThreshold = []byte("StartThreshold")
-
 	// ParamsStoreKeyBridgeContractAddress stores the contract address
 	ParamsStoreKeyBridgeContractAddress = []byte("BridgeContractAddress")
 
@@ -45,9 +42,6 @@ var (
 	ParamsStoreKeySignedLogicCallsWindow = []byte("SignedLogicCallsWindow")
 
 	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
-	ParamsStoreKeySignedClaimsWindow = []byte("SignedClaimsWindow")
-
-	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
 	ParamsStoreKeyTargetBatchTimeout = []byte("TargetBatchTimeout")
 
 	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
@@ -61,12 +55,6 @@ var (
 
 	// ParamsStoreSlashFractionBatch stores the slash fraction Batch
 	ParamsStoreSlashFractionBatch = []byte("SlashFractionBatch")
-
-	// ParamsStoreSlashFractionClaim stores the slash fraction Claim
-	ParamsStoreSlashFractionClaim = []byte("SlashFractionClaim")
-
-	// ParamsStoreSlashFractionConflictingClaim stores the slash fraction ConflictingClaim
-	ParamsStoreSlashFractionConflictingClaim = []byte("SlashFractionConflictingClaim")
 
 	// ParamStoreUnbondSlashingValsetsWindow stores unbond slashing valset window
 	ParamStoreUnbondSlashingValsetsWindow = []byte("UnbondSlashingValsetsWindow")
@@ -114,7 +102,11 @@ func DefaultParams() *Params {
 		SlashFractionLogicCall:       sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionBadEthSignature: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		UnbondSlashingValsetsWindow:  10000,
-		ValsetReward:                 nil,
+		// this coin is invalid, we use that as the 'no reward' state
+		ValsetReward: sdk.Coin{
+			Denom:  "",
+			Amount: sdk.ZeroInt(),
+		},
 	}
 }
 
@@ -165,6 +157,9 @@ func (p Params) ValidateBasic() error {
 	if err := validateUnbondSlashingValsetsWindow(p.UnbondSlashingValsetsWindow); err != nil {
 		return sdkerrors.Wrap(err, "unbond Slashing valset window")
 	}
+	if err := validateValsetRewardAmount(p.ValsetReward); err != nil {
+		return sdkerrors.Wrap(err, "ValsetReward amount")
+	}
 
 	return nil
 }
@@ -184,13 +179,15 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainId, validateBridgeChainID),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedValsetsWindow, &p.SignedValsetsWindow, validateSignedValsetsWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedBatchesWindow, &p.SignedBatchesWindow, validateSignedBatchesWindow),
-		paramtypes.NewParamSetPair(ParamsStoreKeyAverageBlockTime, &p.AverageBlockTime, validateAverageBlockTime),
+		paramtypes.NewParamSetPair(ParamsStoreKeySignedLogicCallsWindow, &p.SignedLogicCallsWindow, validateSignedLogicCallsWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeyTargetBatchTimeout, &p.TargetBatchTimeout, validateTargetBatchTimeout),
+		paramtypes.NewParamSetPair(ParamsStoreKeyAverageBlockTime, &p.AverageBlockTime, validateAverageBlockTime),
 		paramtypes.NewParamSetPair(ParamsStoreKeyAverageEthereumBlockTime, &p.AverageEthereumBlockTime, validateAverageEthereumBlockTime),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionValset, &p.SlashFractionValset, validateSlashFractionValset),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionBatch, &p.SlashFractionBatch, validateSlashFractionBatch),
-		paramtypes.NewParamSetPair(ParamStoreSlashFractionBadEthSignature, &p.SlashFractionBadEthSignature, validateSlashFractionBadEthSignature),
 		paramtypes.NewParamSetPair(ParamStoreUnbondSlashingValsetsWindow, &p.UnbondSlashingValsetsWindow, validateUnbondSlashingValsetsWindow),
+		paramtypes.NewParamSetPair(ParamStoreSlashFractionBadEthSignature, &p.SlashFractionBadEthSignature, validateSlashFractionBadEthSignature),
+		paramtypes.NewParamSetPair(ParamStoreValsetRewardAmount, &p.ValsetReward, validateValsetRewardAmount),
 	}
 }
 
@@ -331,6 +328,13 @@ func validateSlashFractionLogicCall(i interface{}) error {
 func validateSlashFractionBadEthSignature(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(sdk.Dec); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
+}
+
+func validateValsetRewardAmount(i interface{}) error {
+	if _, ok := i.(sdk.Coin); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 	return nil
