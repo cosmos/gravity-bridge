@@ -121,8 +121,13 @@ pub async fn register_orchestrator_address(
         let phrase = match (generated_cosmos, cosmos_phrase) {
             (Some(v), None) => v.to_string(),
             (None, Some(s)) => s,
-            // this case isn't possible.
-            (_, _) => panic!(),
+            (_, _) => {
+                // in this case the user has set keys in the config
+                // and then registered them so lets just load the config
+                // value again
+                let keys = load_keys(&home_dir);
+                keys.orchestrator_phrase.unwrap()
+            }
         };
         let new_keys = KeyStorage {
             orchestrator_phrase: Some(phrase),

@@ -1217,7 +1217,7 @@ dependencies = [
 
 [[package]]
 name = "gbt"
-version = "0.5.3"
+version = "0.5.4"
 dependencies = [
  "actix-rt 2.2.0",
  "clap",
