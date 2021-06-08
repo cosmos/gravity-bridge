@@ -283,38 +283,12 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 		// time a validator is submitting a claim. Since we don't want to force
 		// them to replay the entire history of all events ever we can't start
 		// at zero
-		//
-		// We could start at the LastObservedEventNonce but if we do that this
-		// validator will be slashed, because they are responsible for making a claim
-		// on any attestation that has not yet passed the slashing window.
-		//
-		// Therefore we need to return to them the lowest attestation that is still within
-		// the slashing window. Since we delete attestations after the slashing window that's
-		// just the lowest observed event in the store. If no claims have been submitted in for
-		// params.SignedClaimsWindow we may have no attestations in our nonce. At which point
-		// the last observed which is a persistent and never cleaned counter will suffice.
-		lowestObserved := k.GetLastObservedEventNonce(ctx)
-		attmap := k.GetAttestationMapping(ctx)
-		// no new claims in params.SignedClaimsWindow, we can return the current value
-		// because the validator can't be slashed for an event that has already passed.
-		// so they only have to worry about the *next* event to occur
-		if len(attmap) == 0 {
-			return lowestObserved
+		lastEventNonce := k.GetLastObservedEventNonce(ctx)
+		if lastEventNonce >= 1 {
+			return lastEventNonce - 1
+		} else {
+			return 0
 		}
-		for nonce, atts := range attmap {
-			for att := range atts {
-				if atts[att].Observed && nonce < lowestObserved {
-					lowestObserved = nonce
-				}
-			}
-		}
-		// return the latest event minus one so that the validator
-		// can submit that event and avoid slashing. special case
-		// for zero
-		if lowestObserved > 0 {
-			return lowestObserved - 1
-		}
-		return 0
 	}
 	return types.UInt64FromBytes(bytes)
 }
