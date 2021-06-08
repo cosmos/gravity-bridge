@@ -1,15 +1,26 @@
 package keeper
 
-import "testing"
-
-func TestKeeper_SignerSetTxs(t *testing.T) {
-	input := CreateTestEnv(t)
-	ctx := input.Context
-	_ = ctx
-}
-
-func TestKeeper_UnsignedSignerSetTxs(t *testing.T) {
-	input := CreateTestEnv(t)
-	ctx := input.Context
-	_ = ctx
-}
+// TODO(levi) ensure coverage for:
+// Params(context.Context, *ParamsRequest) (*ParamsResponse, error)
+// SignerSetTx(context.Context, *SignerSetTxRequest) (*SignerSetTxResponse, error)
+// LatestSignerSetTx(context.Context, *LatestSignerSetTxRequest) (*SignerSetTxResponse, error)
+// BatchTx(context.Context, *BatchTxRequest) (*BatchTxResponse, error)
+// ContractCallTx(context.Context, *ContractCallTxRequest) (*ContractCallTxResponse, error)
+// SignerSetTxs(context.Context, *SignerSetTxsRequest) (*SignerSetTxsResponse, error)
+// BatchTxs(context.Context, *BatchTxsRequest) (*BatchTxsResponse, error)
+// ContractCallTxs(context.Context, *ContractCallTxsRequest) (*ContractCallTxsResponse, error)
+// SignerSetTxConfirmations(context.Context, *SignerSetTxConfirmationsRequest) (*SignerSetTxConfirmationsResponse, error)
+// BatchTxConfirmations(context.Context, *BatchTxConfirmationsRequest) (*BatchTxConfirmationsResponse, error)
+// ContractCallTxConfirmations(context.Context, *ContractCallTxConfirmationsRequest) (*ContractCallTxConfirmationsResponse, error)
+// UnsignedSignerSetTxs(context.Context, *UnsignedSignerSetTxsRequest) (*UnsignedSignerSetTxsResponse, error)
+// UnsignedBatchTxs(context.Context, *UnsignedBatchTxsRequest) (*UnsignedBatchTxsResponse, error)
+// UnsignedContractCallTxs(context.Context, *UnsignedContractCallTxsRequest) (*UnsignedContractCallTxsResponse, error)
+// LastSubmittedEthereumEvent(context.Context, *LastSubmittedEthereumEventRequest) (*LastSubmittedEthereumEventResponse, error)
+// BatchTxFees(context.Context, *BatchTxFeesRequest) (*BatchTxFeesResponse, error)
+// ERC20ToDenom(context.Context, *ERC20ToDenomRequest) (*ERC20ToDenomResponse, error)
+// DenomToERC20(context.Context, *DenomToERC20Request) (*DenomToERC20Response, error)
+// BatchedSendToEthereums(context.Context, *BatchedSendToEthereumsRequest) (*BatchedSendToEthereumsResponse, error)
+// UnbatchedSendToEthereums(context.Context, *UnbatchedSendToEthereumsRequest) (*UnbatchedSendToEthereumsResponse, error)
+// DelegateKeysByValidator(context.Context, *DelegateKeysByValidatorRequest) (*DelegateKeysByValidatorResponse, error)
+// DelegateKeysByEthereumSigner(context.Context, *DelegateKeysByEthereumSignerRequest) (*DelegateKeysByEthereumSignerResponse, error)
+// DelegateKeysByOrchestrator(context.Context, *DelegateKeysByOrchestratorRequest) (*DelegateKeysByOrchestratorResponse, error)

@@ -73,3 +73,11 @@ func TestMsgServer_SubmitEthereumSignature(t *testing.T) {
 	_, err = msgServer.SubmitEthereumTxConfirmation(sdk.WrapSDKContext(ctx), msg)
 	require.NoError(t, err)
 }
+
+// TODO(levi) ensure coverage for:
+// SendToEthereum(context.Context, *MsgSendToEthereum) (*MsgSendToEthereumResponse, error)
+// CancelSendToEthereum(context.Context, *MsgCancelSendToEthereum) (*MsgCancelSendToEthereumResponse, error)
+// RequestBatchTx(context.Context, *MsgRequestBatchTx) (*MsgRequestBatchTxResponse, error)
+// SubmitEthereumTxConfirmation(context.Context, *MsgSubmitEthereumTxConfirmation) (*MsgSubmitEthereumTxConfirmationResponse, error)
+// SubmitEthereumEvent(context.Context, *MsgSubmitEthereumEvent) (*MsgSubmitEthereumEventResponse, error)
+// SetDelegateKeys(context.Context, *MsgDelegateKeys) (*MsgDelegateKeysResponse, error)
