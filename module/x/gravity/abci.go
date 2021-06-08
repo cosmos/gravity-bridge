@@ -17,7 +17,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	cleanupTimedOutLogicCalls(ctx, k)
 	createValsets(ctx, k)
 	pruneValsets(ctx, k, params)
-	// TODO: prune claims, attestations when they pass in the handler see issue #342
+	pruneAttestations(ctx, k)
 }
 
 func createValsets(ctx sdk.Context, k keeper.Keeper) {
@@ -349,5 +349,36 @@ func LogicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 		}
 		// then we set the latest slashed logic call block
 		k.SetLastSlashedLogicCallBlock(ctx, call.Block)
+	}
+}
+
+// Iterate over all attestations currently being voted on in order of nonce
+// and prune those that are older than the current nonce and no longer have any
+// use. This could be combined with create attestation and save some computation
+// but (A) pruning keeps the iteration small in the first place and (B) there is
+// already enough nuance in the other handler that it's best not to complicate it further
+func pruneAttestations(ctx sdk.Context, k keeper.Keeper) {
+	attmap := k.GetAttestationMapping(ctx)
+	// We make a slice with all the event nonces that are in the attestation mapping
+	keys := make([]uint64, 0, len(attmap))
+	for k := range attmap {
+		keys = append(keys, k)
+	}
+	// Then we sort it
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+	// This iterates over all keys (event nonces) in the attestation mapping. Each value contains
+	// a slice with one or more attestations at that event nonce. There can be multiple attestations
+	// at one event nonce when validators disagree about what event happened at that nonce.
+	for _, nonce := range keys {
+		// This iterates over all attestations at a particular event nonce.
+		// They are ordered by when the first attestation at the event nonce was received.
+		// This order is not important.
+		for _, att := range attmap[nonce] {
+			// we delete all attestations earlier than the current event nonce
+			if nonce < uint64(k.GetLastObservedEventNonce(ctx)) {
+				k.DeleteAttestation(ctx, att)
+			}
+		}
 	}
 }

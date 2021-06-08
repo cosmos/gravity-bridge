@@ -94,6 +94,7 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 
 				k.processAttestation(ctx, att, claim)
 				k.emitObservedEvent(ctx, att, claim)
+
 				break
 			}
 		}
@@ -161,9 +162,13 @@ func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []b
 }
 
 // DeleteAttestation deletes an attestation given an event nonce and claim
-func (k Keeper) DeleteAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
+func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation) {
+	claim, err := k.UnpackAttestationClaim(&att)
+	if err != nil {
+		panic("Bad Attestation in DeleteAttestation")
+	}
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetAttestationKeyWithHash(eventNonce, claimHash))
+	store.Delete(types.GetAttestationKeyWithHash(claim.GetEventNonce(), claim.ClaimHash()))
 }
 
 // GetAttestationMapping returns a mapping of eventnonce -> attestations at that nonce
