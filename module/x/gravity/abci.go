@@ -59,7 +59,7 @@ func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
 	// 3. If power change between validators of Current signer set and latest signer set request is > 5%
 	latestSignerSetTx := k.GetLatestSignerSetTx(ctx)
-	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
+	lastUnbondingHeight := k.GetLastUnbondingBlockHeight(ctx)
 	if latestSignerSetTx == nil {
 		k.CreateSignerSetTx(ctx)
 		return

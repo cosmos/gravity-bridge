@@ -344,7 +344,7 @@ func TestKeeper_GetLastObservedSignerSetTx(t *testing.T) {
 	})
 }
 
-func TestKeeper_GetLastUnBondingBlockHeight(t *testing.T) {
+func TestKeeper_GetLastUnbondingBlockHeight(t *testing.T) {
 	t.Run("read before there's any in state", func(t *testing.T) {
 		env := CreateTestEnv(t)
 		ctx := env.Context
@@ -370,14 +370,120 @@ func TestKeeper_GetLastUnBondingBlockHeight(t *testing.T) {
 	})
 }
 
-// TODO(levi) review/ensure coverage for:
-// GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses
+func TestKeeper_GetEthereumSignatures(t *testing.T) {
+	t.Run("read before there's anything in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
 
-// getEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) []byte
-// SetEthereumSignature(ctx sdk.Context, sig types.EthereumTxConfirmation, val sdk.ValAddress) []byte
-// deleteEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress)
+		storeIndexes := [][]byte{
+			types.MakeSignerSetTxKey(1),
+			types.MakeBatchTxKey(common.HexToAddress(""), 1), // weird that empty address is okay
+			types.MakeContractCallTxKey(nil, 0),
+		}
+		for _, storeIndex := range storeIndexes {
+			got := gk.GetEthereumSignatures(ctx, storeIndex)
+			require.Empty(t, got)
+		}
+	})
+
+	t.Run("read after there's one signer-set-tx-confirmation in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		ethAddr := common.HexToAddress("0x3146D2d6Eed46Afa423969f5dDC3152DfC359b09")
+		valAddr, err := sdk.ValAddressFromBech32("cosmosvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6z3plt4")
+		require.NoError(t, err)
+
+		const signerSetNonce = 10
+
+		{ // setup
+			signerSetTxConfirmation := &types.SignerSetTxConfirmation{
+				SignerSetNonce: signerSetNonce,
+				EthereumSigner: ethAddr.Hex(),
+				Signature:      []byte("fake-signature"),
+			}
+			key := gk.SetEthereumSignature(ctx, signerSetTxConfirmation, valAddr)
+			require.NotEmpty(t, key)
+		}
+
+		{ // validate
+			storeIndex := types.MakeSignerSetTxKey(signerSetNonce)
+			got := gk.GetEthereumSignatures(ctx, storeIndex)
+			require.Len(t, got, 1)
+		}
+	})
+
+	t.Run("read after there's one batch-tx-confirmation in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		ethAddr := common.HexToAddress("0x3146D2d6Eed46Afa423969f5dDC3152DfC359b09")
+		valAddr, err := sdk.ValAddressFromBech32("cosmosvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6z3plt4")
+		require.NoError(t, err)
+
+		const batchNonce = 10
+
+		{ // setup
+			batchTxConfirmation := &types.BatchTxConfirmation{
+				TokenContract:  "", // NOTE: empty & might be problematic
+				BatchNonce:     batchNonce,
+				EthereumSigner: ethAddr.Hex(),
+				Signature:      []byte("fake-signature"),
+			}
+			key := gk.SetEthereumSignature(ctx, batchTxConfirmation, valAddr)
+			require.NotEmpty(t, key)
+		}
+
+		{ // validate
+			storeIndex := types.MakeBatchTxKey(ethAddr, batchNonce)
+			got := gk.GetEthereumSignatures(ctx, storeIndex)
+			require.Equal(t, nil, got)
+		}
+	})
+
+	t.Run("read after there's one contract-call-tx-confirmation in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		ethAddr := common.HexToAddress("0x3146D2d6Eed46Afa423969f5dDC3152DfC359b09")
+
+		valAddr, err := sdk.ValAddressFromBech32("cosmosvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6z3plt4")
+		require.NoError(t, err)
+
+		const (
+			invalidationScope = "some-invalidation-scope"
+			invalidationNonce = 10
+		)
+
+		{ // setup
+			contractCallConfirmation := &types.ContractCallTxConfirmation{
+				InvalidationScope: []byte(invalidationScope),
+				InvalidationNonce: invalidationNonce,
+				EthereumSigner:    ethAddr.Hex(),
+				Signature:         []byte("fake-signature"),
+			}
+			key := gk.SetEthereumSignature(ctx, contractCallConfirmation, valAddr)
+			require.NotEmpty(t, key)
+		}
+
+		{ // validate
+			storeIndex := types.MakeContractCallTxKey([]byte(invalidationScope), invalidationNonce)
+			got := gk.GetEthereumSignatures(ctx, storeIndex)
+			require.Len(t, got, 1)
+		}
+	})
+}
+
+// TODO(levi) review/ensure coverage for:
 // GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[string][]byte
+// getEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) []byte
 // iterateEthereumSignatures(ctx sdk.Context, storeIndex []byte, cb func(sdk.ValAddress, []byte) bool)
+
+// GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses
 
 // SetOrchestratorValidatorAddress(ctx sdk.Context, val sdk.ValAddress, orch sdk.AccAddress)
 // GetOrchestratorValidatorAddress(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress

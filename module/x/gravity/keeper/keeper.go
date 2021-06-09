@@ -123,10 +123,6 @@ func (k Keeper) SetEthereumSignature(ctx sdk.Context, sig types.EthereumTxConfir
 	return key
 }
 
-// func (k Keeper) deleteEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) {
-// 	ctx.KVStore(k.storeKey).Delete(types.MakeEthereumSignatureKey(storeIndex, validator))
-// }
-
 // GetEthereumSignatures returns all etherum signatures for a given outgoing tx by store index
 func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[string][]byte {
 	var signatures = make(map[string][]byte)
