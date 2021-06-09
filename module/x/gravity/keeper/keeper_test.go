@@ -344,15 +344,33 @@ func TestKeeper_GetLastObservedSignerSetTx(t *testing.T) {
 	})
 }
 
+func TestKeeper_GetLastUnBondingBlockHeight(t *testing.T) {
+	t.Run("read before there's any in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		got := gk.GetLastUnbondingBlockHeight(ctx)
+		require.Zero(t, got)
+	})
+
+	t.Run("read after there's one in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		{ // setup
+			gk.setLastUnbondingBlockHeight(ctx, 10)
+		}
+
+		{ // validate
+			got := gk.GetLastUnbondingBlockHeight(ctx)
+			require.EqualValues(t, 10, got)
+		}
+	})
+}
+
 // TODO(levi) review/ensure coverage for:
-// (ctx sdk.Context) (out *types.SignerSetTx)
-// incrementLatestSignerSetTxNonce(ctx sdk.Context) uint64
-// setLastObservedSignerSetTx(ctx sdk.Context, valset types.SignerSetTx)
-
-// CurrentSignerSet(ctx sdk.Context) types.EthereumSigners
-
-// GetLastUnBondingBlockHeight(ctx sdk.Context) uint64
-// setLastUnBondingBlockHeight(ctx sdk.Context, unbondingBlockHeight uint64)
 // GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses
 
 // getEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) []byte

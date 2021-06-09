@@ -93,13 +93,13 @@ func (k Keeper) GetLatestSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 // LastUnbondingBlockHeight //
 //////////////////////////////
 
-// setLastUnBondingBlockHeight sets the last unbonding block height
-func (k Keeper) setLastUnBondingBlockHeight(ctx sdk.Context, unbondingBlockHeight uint64) {
+// setLastUnbondingBlockHeight sets the last unbonding block height
+func (k Keeper) setLastUnbondingBlockHeight(ctx sdk.Context, unbondingBlockHeight uint64) {
 	ctx.KVStore(k.storeKey).Set([]byte{types.LastUnBondingBlockHeightKey}, sdk.Uint64ToBigEndian(unbondingBlockHeight))
 }
 
-// GetLastUnBondingBlockHeight returns the last unbonding block height
-func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
+// GetLastUnbondingBlockHeight returns the last unbonding block height
+func (k Keeper) GetLastUnbondingBlockHeight(ctx sdk.Context) uint64 {
 	if bz := ctx.KVStore(k.storeKey).Get([]byte{types.LastUnBondingBlockHeightKey}); len(bz) == 0 {
 		return 0
 	} else {
