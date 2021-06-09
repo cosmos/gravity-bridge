@@ -183,7 +183,7 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 		),
 	})
 
-	return &types.MsgSendToEthereumResponse{}, nil
+	return &types.MsgSendToEthereumResponse{Id: txID}, nil
 }
 
 // RequestBatchTx handles MsgRequestBatchTx
