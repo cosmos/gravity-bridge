@@ -503,9 +503,5 @@ func TestKeeper_GetEthereumSignatures(t *testing.T) {
 }
 
 // TODO(levi) review/ensure coverage for:
+// PaginateOutgoingTxsByType
 // GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses
-
-// GetParams(ctx sdk.Context) (params types.Params)
-// setParams(ctx sdk.Context, ps types.Params)
-
-// PaginateOutgoingTxsByType(ctx sdk.Context, pageReq *query.PageRequest, prefixByte byte, cb func(key []byte, outgoing types.OutgoingTx) bool) (*query.PageResponse, error)
