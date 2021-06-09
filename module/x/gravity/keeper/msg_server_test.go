@@ -1,23 +1,20 @@
 package keeper
 
 import (
-	"encoding/hex"
-	"fmt"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ethereum/go-ethereum/common"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 )
 
 func TestMsgServer_SubmitEthereumSignature(t *testing.T) {
 	ethPrivKey, err := ethCrypto.GenerateKey()
 	require.NoError(t, err)
-
-	ethPubKey := fmt.Sprintf("0x%s", hex.EncodeToString(ethCrypto.CompressPubkey(&ethPrivKey.PublicKey)))
 
 	var (
 		env = CreateTestEnv(t)
@@ -26,7 +23,7 @@ func TestMsgServer_SubmitEthereumSignature(t *testing.T) {
 
 		orcAddr1, _ = sdk.AccAddressFromBech32("cosmos1dg55rtevlfxh46w88yjpdd08sqhh5cc3xhkcej")
 		valAddr1    = sdk.ValAddress(orcAddr1)
-		ethAddr1    = common.HexToAddress(ethPubKey)
+		ethAddr1    = crypto.PubkeyToAddress(ethPrivKey.PublicKey)
 
 		orcAddr2, _ = sdk.AccAddressFromBech32("cosmos164knshrzuuurf05qxf3q5ewpfnwzl4gj4m4dfy")
 		valAddr2    = sdk.ValAddress(orcAddr2)
@@ -78,6 +75,5 @@ func TestMsgServer_SubmitEthereumSignature(t *testing.T) {
 // SendToEthereum(context.Context, *MsgSendToEthereum) (*MsgSendToEthereumResponse, error)
 // CancelSendToEthereum(context.Context, *MsgCancelSendToEthereum) (*MsgCancelSendToEthereumResponse, error)
 // RequestBatchTx(context.Context, *MsgRequestBatchTx) (*MsgRequestBatchTxResponse, error)
-// SubmitEthereumTxConfirmation(context.Context, *MsgSubmitEthereumTxConfirmation) (*MsgSubmitEthereumTxConfirmationResponse, error)
 // SubmitEthereumEvent(context.Context, *MsgSubmitEthereumEvent) (*MsgSubmitEthereumEventResponse, error)
 // SetDelegateKeys(context.Context, *MsgDelegateKeys) (*MsgDelegateKeysResponse, error)
