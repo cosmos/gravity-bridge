@@ -410,8 +410,15 @@ func TestKeeper_GetEthereumSignatures(t *testing.T) {
 
 		{ // validate
 			storeIndex := types.MakeSignerSetTxKey(signerSetNonce)
-			got := gk.GetEthereumSignatures(ctx, storeIndex)
-			require.Len(t, got, 1)
+
+			{ // getEthereumSignature
+				got := gk.getEthereumSignature(ctx, storeIndex, valAddr)
+				require.Equal(t, []byte("fake-signature"), got)
+			}
+			{ // GetEthereumSignatures
+				got := gk.GetEthereumSignatures(ctx, storeIndex)
+				require.Len(t, got, 1)
+			}
 		}
 	})
 
@@ -442,8 +449,15 @@ func TestKeeper_GetEthereumSignatures(t *testing.T) {
 
 		{ // validate
 			storeIndex := types.MakeBatchTxKey(common.HexToAddress(tokenContract), batchNonce)
-			got := gk.GetEthereumSignatures(ctx, storeIndex)
-			require.Len(t, got, 1)
+
+			{ // getEthereumSignature
+				got := gk.getEthereumSignature(ctx, storeIndex, valAddr)
+				require.Equal(t, []byte("fake-signature"), got)
+			}
+			{ // GetEthereumSignatures
+				got := gk.GetEthereumSignatures(ctx, storeIndex)
+				require.Len(t, got, 1)
+			}
 		}
 	})
 
@@ -475,26 +489,21 @@ func TestKeeper_GetEthereumSignatures(t *testing.T) {
 
 		{ // validate
 			storeIndex := types.MakeContractCallTxKey([]byte(invalidationScope), invalidationNonce)
-			got := gk.GetEthereumSignatures(ctx, storeIndex)
-			require.Len(t, got, 1)
+
+			{ // getEthereumSignature
+				got := gk.getEthereumSignature(ctx, storeIndex, valAddr)
+				require.Equal(t, []byte("fake-signature"), got)
+			}
+			{ // GetEthereumSignatures
+				got := gk.GetEthereumSignatures(ctx, storeIndex)
+				require.Len(t, got, 1)
+			}
 		}
 	})
 }
 
 // TODO(levi) review/ensure coverage for:
-// GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[string][]byte
-// getEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) []byte
-// iterateEthereumSignatures(ctx sdk.Context, storeIndex []byte, cb func(sdk.ValAddress, []byte) bool)
-
 // GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses
-
-// SetOrchestratorValidatorAddress(ctx sdk.Context, val sdk.ValAddress, orch sdk.AccAddress)
-// GetOrchestratorValidatorAddress(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress
-// setValidatorEthereumAddress(ctx sdk.Context, validator sdk.ValAddress, ethAddr common.Address)
-// GetValidatorEthereumAddress(ctx sdk.Context, validator sdk.ValAddress) common.Address
-// setEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.Address, orch sdk.AccAddress)
-// GetEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.Address) sdk.AccAddress
-// getDelegateKeys(ctx sdk.Context) (out []*types.MsgDelegateKeys)
 
 // GetParams(ctx sdk.Context) (params types.Params)
 // setParams(ctx sdk.Context, ps types.Params)
