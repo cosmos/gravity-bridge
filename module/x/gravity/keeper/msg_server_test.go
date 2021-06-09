@@ -297,6 +297,33 @@ func TestMsgServer_SubmitEthereumEvent(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// TODO(levi) ensure coverage for:
-// SubmitEthereumEvent(context.Context, *MsgSubmitEthereumEvent) (*MsgSubmitEthereumEventResponse, error)
-// SetDelegateKeys(context.Context, *MsgDelegateKeys) (*MsgDelegateKeysResponse, error)
+
+func TestMsgServer_SetDelegateKeys(t *testing.T) {
+	ethPrivKey, err := ethCrypto.GenerateKey()
+	require.NoError(t, err)
+
+	var (
+		env = CreateTestEnv(t)
+		ctx = env.Context
+		gk  = env.GravityKeeper
+
+		orcAddr1, _ = sdk.AccAddressFromBech32("cosmos1dg55rtevlfxh46w88yjpdd08sqhh5cc3xhkcej")
+		valAddr1    = sdk.ValAddress(orcAddr1)
+		ethAddr1    = crypto.PubkeyToAddress(ethPrivKey.PublicKey)
+	)
+
+	// setup for getSignerValidator
+	gk.StakingKeeper = NewStakingKeeperMock(valAddr1)
+
+
+	msgServer := NewMsgServerImpl(gk)
+
+	msg := &types.MsgDelegateKeys{
+		ValidatorAddress: valAddr1.String(),
+		OrchestratorAddress: orcAddr1.String(),
+		EthereumAddress: ethAddr1.String(),
+	}
+
+	_, err = msgServer.SetDelegateKeys(sdk.WrapSDKContext(ctx), msg)
+	require.NoError(t, err)
+}
