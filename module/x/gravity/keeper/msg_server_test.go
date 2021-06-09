@@ -275,9 +275,9 @@ func TestMsgServer_SubmitEthereumEvent(t *testing.T) {
 	gk.setValidatorEthereumAddress(ctx, valAddr1, ethAddr1)
 
 	sendToCosmosEvent := &types.SendToCosmosEvent{
-		EventNonce: 1,
-		TokenContract: "test-token-contract-string",
-		Amount: sdk.NewInt(1000),
+		EventNonce:     1,
+		TokenContract:  "test-token-contract-string",
+		Amount:         sdk.NewInt(1000),
 		EthereumSender: ethAddr1.String(),
 		CosmosReceiver: orcAddr1.String(),
 		EthereumHeight: 200,
@@ -297,7 +297,6 @@ func TestMsgServer_SubmitEthereumEvent(t *testing.T) {
 	require.NoError(t, err)
 }
 
-
 func TestMsgServer_SetDelegateKeys(t *testing.T) {
 	ethPrivKey, err := ethCrypto.GenerateKey()
 	require.NoError(t, err)
@@ -315,13 +314,12 @@ func TestMsgServer_SetDelegateKeys(t *testing.T) {
 	// setup for getSignerValidator
 	gk.StakingKeeper = NewStakingKeeperMock(valAddr1)
 
-
 	msgServer := NewMsgServerImpl(gk)
 
 	msg := &types.MsgDelegateKeys{
-		ValidatorAddress: valAddr1.String(),
+		ValidatorAddress:    valAddr1.String(),
 		OrchestratorAddress: orcAddr1.String(),
-		EthereumAddress: ethAddr1.String(),
+		EthereumAddress:     ethAddr1.String(),
 	}
 
 	_, err = msgServer.SetDelegateKeys(sdk.WrapSDKContext(ctx), msg)
