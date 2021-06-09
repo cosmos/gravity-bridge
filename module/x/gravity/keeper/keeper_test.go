@@ -252,45 +252,75 @@ func TestLastSlashedValsetNonce(t *testing.T) {
 
 // ---
 
-func TestKeeper_UnsignedSignerSetTxs(t *testing.T) {
-	input := CreateTestEnv(t)
-	ctx := input.Context
-	_ = ctx
+func TestKeeper_GetLatestSignerSetTx(t *testing.T) {
+	t.Run("read before there's one in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		got := gk.GetLatestSignerSetTx(ctx)
+		require.Nil(t, got)
+	})
+
+	t.Run("read after there's one in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		{ // setup
+			gk.SetOutgoingTx(ctx, &types.SignerSetTx{
+				Nonce:   gk.incrementLatestSignerSetTxNonce(ctx),
+				Height:  1,
+				Signers: nil,
+			})
+		}
+
+		{ // validate
+			got := gk.GetLatestSignerSetTx(env.Context)
+			require.NotNil(t, got)
+			require.EqualValues(t, got.Height, gk.GetLatestSignerSetTxNonce(ctx))
+		}
+	})
 }
 
 // TODO(levi) review/ensure coverage for:
-// incrementLatestSignerSetTxNonce(ctx sdk.Context) uint64
-// GetLatestSignerSetTxNonce(ctx sdk.Context) uint64
 // GetLatestSignerSetTx(ctx sdk.Context) (out *types.SignerSetTx)
-// setLastUnBondingBlockHeight(ctx sdk.Context, unbondingBlockHeight uint64)
+// CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx
+// GetSignerSetTxs(ctx sdk.Context) (out []*types.SignerSetTx)
+// GetLastObservedSignerSetTx(ctx sdk.Context) (out *types.SignerSetTx)
+// incrementLatestSignerSetTxNonce(ctx sdk.Context) uint64
+// setLastObservedSignerSetTx(ctx sdk.Context, valset types.SignerSetTx)
+
+// CurrentSignerSet(ctx sdk.Context) types.EthereumSigners
+
 // GetLastUnBondingBlockHeight(ctx sdk.Context) uint64
+// setLastUnBondingBlockHeight(ctx sdk.Context, unbondingBlockHeight uint64)
+// GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses
+
 // getEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) []byte
 // SetEthereumSignature(ctx sdk.Context, sig types.EthereumTxConfirmation, val sdk.ValAddress) []byte
 // deleteEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress)
 // GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[string][]byte
 // iterateEthereumSignatures(ctx sdk.Context, storeIndex []byte, cb func(sdk.ValAddress, []byte) bool)
+
 // SetOrchestratorValidatorAddress(ctx sdk.Context, val sdk.ValAddress, orch sdk.AccAddress)
 // GetOrchestratorValidatorAddress(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress
 // setValidatorEthereumAddress(ctx sdk.Context, validator sdk.ValAddress, ethAddr common.Address)
 // GetValidatorEthereumAddress(ctx sdk.Context, validator sdk.ValAddress) common.Address
 // setEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.Address, orch sdk.AccAddress)
 // GetEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.Address) sdk.AccAddress
-// CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx
-// CurrentSignerSet(ctx sdk.Context) types.EthereumSigners
-// GetSignerSetTxs(ctx sdk.Context) (out []*types.SignerSetTx)
+// getDelegateKeys(ctx sdk.Context) (out []*types.MsgDelegateKeys)
+
 // GetParams(ctx sdk.Context) (params types.Params)
 // setParams(ctx sdk.Context, ps types.Params)
+
 // getBridgeContractAddress(ctx sdk.Context) string
 // getBridgeChainID(ctx sdk.Context) uint64
 // getGravityID(ctx sdk.Context) string
-// logger(ctx sdk.Context) log.Logger
-// getDelegateKeys(ctx sdk.Context) (out []*types.MsgDelegateKeys)
-// GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses
+
 // GetOutgoingTx(ctx sdk.Context, storeIndex []byte) (out types.OutgoingTx)
 // SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx)
 // DeleteOutgoingTx(ctx sdk.Context, storeIndex []byte)
 // PaginateOutgoingTxsByType(ctx sdk.Context, pageReq *query.PageRequest, prefixByte byte, cb func(key []byte, outgoing types.OutgoingTx) bool) (*query.PageResponse, error)
 // IterateOutgoingTxsByType(ctx sdk.Context, prefixByte byte, cb func(key []byte, outgoing types.OutgoingTx) (stop bool))
 // iterateOutgoingTxs(ctx sdk.Context, cb func(key []byte, outgoing types.OutgoingTx) bool)
-// GetLastObservedSignerSetTx(ctx sdk.Context) (out *types.SignerSetTx)
-// setLastObservedSignerSetTx(ctx sdk.Context, valset types.SignerSetTx)

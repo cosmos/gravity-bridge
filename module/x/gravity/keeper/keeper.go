@@ -82,10 +82,11 @@ func (k Keeper) GetLatestSignerSetTxNonce(ctx sdk.Context) uint64 {
 }
 
 // GetLatestSignerSetTx returns the latest validator set in state
-func (k Keeper) GetLatestSignerSetTx(ctx sdk.Context) (out *types.SignerSetTx) {
-	otx := k.GetOutgoingTx(ctx, types.MakeSignerSetTxKey(k.GetLatestSignerSetTxNonce(ctx)))
-	out, _ = otx.(*types.SignerSetTx)
-	return
+func (k Keeper) GetLatestSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
+	key := types.MakeSignerSetTxKey(k.GetLatestSignerSetTxNonce(ctx))
+	otx := k.GetOutgoingTx(ctx, key)
+	out, _ := otx.(*types.SignerSetTx)
+	return out
 }
 
 //////////////////////////////
@@ -122,9 +123,9 @@ func (k Keeper) SetEthereumSignature(ctx sdk.Context, sig types.EthereumTxConfir
 	return key
 }
 
-func (k Keeper) deleteEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) {
-	ctx.KVStore(k.storeKey).Delete(types.MakeEthereumSignatureKey(storeIndex, validator))
-}
+// func (k Keeper) deleteEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) {
+// 	ctx.KVStore(k.storeKey).Delete(types.MakeEthereumSignatureKey(storeIndex, validator))
+// }
 
 // GetEthereumSignatures returns all etherum signatures for a given outgoing tx by store index
 func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[string][]byte {
