@@ -424,11 +424,14 @@ func TestKeeper_GetEthereumSignatures(t *testing.T) {
 		valAddr, err := sdk.ValAddressFromBech32("cosmosvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6z3plt4")
 		require.NoError(t, err)
 
-		const batchNonce = 10
+		const (
+			batchNonce    = 10
+			tokenContract = "0x1111111111111111111111111111111111111111"
+		)
 
 		{ // setup
 			batchTxConfirmation := &types.BatchTxConfirmation{
-				TokenContract:  "", // NOTE: empty & might be problematic
+				TokenContract:  tokenContract,
 				BatchNonce:     batchNonce,
 				EthereumSigner: ethAddr.Hex(),
 				Signature:      []byte("fake-signature"),
@@ -438,9 +441,9 @@ func TestKeeper_GetEthereumSignatures(t *testing.T) {
 		}
 
 		{ // validate
-			storeIndex := types.MakeBatchTxKey(ethAddr, batchNonce)
+			storeIndex := types.MakeBatchTxKey(common.HexToAddress(tokenContract), batchNonce)
 			got := gk.GetEthereumSignatures(ctx, storeIndex)
-			require.Equal(t, nil, got)
+			require.Len(t, got, 1)
 		}
 	})
 
@@ -496,13 +499,4 @@ func TestKeeper_GetEthereumSignatures(t *testing.T) {
 // GetParams(ctx sdk.Context) (params types.Params)
 // setParams(ctx sdk.Context, ps types.Params)
 
-// getBridgeContractAddress(ctx sdk.Context) string
-// getBridgeChainID(ctx sdk.Context) uint64
-// getGravityID(ctx sdk.Context) string
-
-// GetOutgoingTx(ctx sdk.Context, storeIndex []byte) (out types.OutgoingTx)
-// SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx)
-// DeleteOutgoingTx(ctx sdk.Context, storeIndex []byte)
 // PaginateOutgoingTxsByType(ctx sdk.Context, pageReq *query.PageRequest, prefixByte byte, cb func(key []byte, outgoing types.OutgoingTx) bool) (*query.PageResponse, error)
-// IterateOutgoingTxsByType(ctx sdk.Context, prefixByte byte, cb func(key []byte, outgoing types.OutgoingTx) (stop bool))
-// iterateOutgoingTxs(ctx sdk.Context, cb func(key []byte, outgoing types.OutgoingTx) bool)
