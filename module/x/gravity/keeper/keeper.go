@@ -440,12 +440,18 @@ func (k Keeper) iterateOutgoingTxs(ctx sdk.Context, cb func(key []byte, outgoing
 }
 
 // GetLastObservedSignerSetTx retrieves the last observed validator set from the store
-func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) (out *types.SignerSetTx) {
-	k.cdc.MustUnmarshalBinaryBare(ctx.KVStore(k.storeKey).Get([]byte{types.LastObservedSignerSetKey}), out)
-	return
+func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
+	key := []byte{types.LastObservedSignerSetKey}
+	if val := ctx.KVStore(k.storeKey).Get(key); val != nil {
+		var out types.SignerSetTx
+		k.cdc.MustUnmarshalBinaryBare(val, &out)
+		return &out
+	}
+	return nil
 }
 
 // setLastObservedSignerSetTx updates the last observed validator set in the stor e
-func (k Keeper) setLastObservedSignerSetTx(ctx sdk.Context, valset types.SignerSetTx) {
-	ctx.KVStore(k.storeKey).Set([]byte{types.LastObservedSignerSetKey}, k.cdc.MustMarshalBinaryBare(&valset))
+func (k Keeper) setLastObservedSignerSetTx(ctx sdk.Context, signerSet types.SignerSetTx) {
+	key := []byte{types.LastObservedSignerSetKey}
+	ctx.KVStore(k.storeKey).Set(key, k.cdc.MustMarshalBinaryBare(&signerSet))
 }

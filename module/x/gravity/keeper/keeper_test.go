@@ -292,6 +292,7 @@ func TestKeeper_GetSignerSetTxs(t *testing.T) {
 		got := gk.GetSignerSetTxs(ctx)
 		require.Nil(t, got)
 	})
+
 	t.Run("read after there's one in state", func(t *testing.T) {
 		env := CreateTestEnv(t)
 		ctx := env.Context
@@ -313,8 +314,38 @@ func TestKeeper_GetSignerSetTxs(t *testing.T) {
 	})
 }
 
+func TestKeeper_GetLastObservedSignerSetTx(t *testing.T) {
+	t.Run("read before there's any in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		got := gk.GetLastObservedSignerSetTx(ctx)
+		require.Nil(t, got)
+	})
+
+	t.Run("read after there's one in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		{ // setup
+			gk.setLastObservedSignerSetTx(ctx, types.SignerSetTx{
+				Nonce:   1,
+				Height:  1,
+				Signers: nil,
+			})
+		}
+
+		{ // validate
+			got := gk.GetLastObservedSignerSetTx(ctx)
+			require.NotNil(t, got)
+		}
+	})
+}
+
 // TODO(levi) review/ensure coverage for:
-// GetLastObservedSignerSetTx(ctx sdk.Context) (out *types.SignerSetTx)
+// (ctx sdk.Context) (out *types.SignerSetTx)
 // incrementLatestSignerSetTxNonce(ctx sdk.Context) uint64
 // setLastObservedSignerSetTx(ctx sdk.Context, valset types.SignerSetTx)
 
