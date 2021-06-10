@@ -62,7 +62,7 @@ pub async fn update_gravity_delegate_addresses(
     };
 
     let msg = Msg::new(
-        "/gravity.v1.MsgSetOrchestratorAddress",
+        "/gravity.v1.MsgDelegateKeys",
         msg_set_orch_address,
     );
 
@@ -75,7 +75,7 @@ pub async fn update_gravity_delegate_addresses(
     let response = txrpc
         .broadcast_tx(BroadcastTxRequest {
             tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
+            mode: BroadcastMode::Block.into(),
         })
         .await?;
     let response = response.into_inner();
@@ -145,7 +145,7 @@ pub async fn send_valset_confirms(
     let response = txrpc
         .broadcast_tx(BroadcastTxRequest {
             tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
+            mode: BroadcastMode::Block.into(),
         })
         .await?;
     let response = response.into_inner();
@@ -194,7 +194,7 @@ pub async fn send_batch_confirm(
                 .as_bytes()
                 .to_vec(),
         };
-        let msg = Msg::new("/gravity.v1.MsgConfirmBatch", confirm);
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumTxConfirmation", confirm);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -206,7 +206,7 @@ pub async fn send_batch_confirm(
     let response = txrpc
         .broadcast_tx(BroadcastTxRequest {
             tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
+            mode: BroadcastMode::Block.into(),
         })
         .await?;
     let response = response.into_inner();
@@ -278,7 +278,7 @@ pub async fn send_logic_call_confirm(
     let response = txrpc
         .broadcast_tx(BroadcastTxRequest {
             tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
+            mode: BroadcastMode::Block.into(),
         })
         .await?;
     let response = response.into_inner();
@@ -318,9 +318,6 @@ pub async fn send_ethereum_claims(
             cosmos_receiver: deposit.destination.to_string(),
             ethereum_sender: deposit.sender.to_string(),
         };
-
-        println!(":==: send_ethereum_claims deposit {:?}", event);
-
         let size = Message::encoded_len(&event);
         let mut buf = BytesMut::with_capacity(size);
         Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
@@ -335,17 +332,27 @@ pub async fn send_ethereum_claims(
         unordered_msgs.insert(deposit.event_nonce, msg);
     }
     for withdraw in withdraws {
-        let claim = proto::BatchExecutedEvent {
+        let event = proto::BatchExecutedEvent {
             event_nonce: downcast_uint256(withdraw.event_nonce.clone()).unwrap(),
             batch_nonce: downcast_uint256(withdraw.batch_nonce.clone()).unwrap(),
             ethereum_height: downcast_uint256(withdraw.block_height).unwrap(),
             token_contract: withdraw.erc20.to_string(),
         };
-        let msg = Msg::new("/gravity.v1.MsgWithdrawClaim", claim);
-        unordered_msgs.insert(withdraw.event_nonce.clone(), msg);
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.BatchExecutedEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
+        unordered_msgs.insert(withdraw.event_nonce, msg);
     }
     for deploy in erc20_deploys {
-        let claim = proto::Erc20DeployedEvent {
+        let event = proto::Erc20DeployedEvent {
             event_nonce: downcast_uint256(deploy.event_nonce.clone()).unwrap(),
             ethereum_height: downcast_uint256(deploy.block_height).unwrap(),
             cosmos_denom: deploy.cosmos_denom,
@@ -354,18 +361,38 @@ pub async fn send_ethereum_claims(
             erc20_symbol: deploy.symbol,
             erc20_decimals: deploy.decimals as u64,
         };
-        let msg = Msg::new("/gravity.v1.MsgERC20DeployedClaim", claim);
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.Erc20DeployedEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
         unordered_msgs.insert(deploy.event_nonce, msg);
     }
     for call in logic_calls {
-        let claim = proto::ContractCallExecutedEvent {
+        let event = proto::ContractCallExecutedEvent {
             event_nonce: downcast_uint256(call.event_nonce.clone()).unwrap(),
             ethereum_height: downcast_uint256(call.block_height).unwrap(),
             invalidation_id: call.invalidation_id,
             invalidation_nonce: downcast_uint256(call.invalidation_nonce).unwrap(),
         };
-        let msg = Msg::new("/gravity.v1.MsgLogicCallExecutedClaim", claim);
-        unordered_msgs.insert(call.event_nonce.clone(), msg);
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.ContractCallExecutedEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
+        unordered_msgs.insert(call.event_nonce, msg);
     }
     for valset in valsets {
         let event = proto::SignerSetTxExecutedEvent {
@@ -374,9 +401,6 @@ pub async fn send_ethereum_claims(
             ethereum_height: downcast_uint256(valset.block_height).unwrap(),
             members: valset.members.iter().map(|v| v.into()).collect(),
         };
-
-        println!(":==: send_ethereum_claims valset {:?}", event);
-
         let size = Message::encoded_len(&event);
         let mut buf = BytesMut::with_capacity(size);
         Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
@@ -391,8 +415,6 @@ pub async fn send_ethereum_claims(
         unordered_msgs.insert(valset.event_nonce, msg);
     }
 
-    // println!(":==: send_ethereum_claims unordered_msgs {:?}", unordered_msgs);
-
     let mut keys = Vec::new();
     for (key, _) in unordered_msgs.iter() {
         keys.push(key.clone());
@@ -401,16 +423,12 @@ pub async fn send_ethereum_claims(
 
     let mut msgs = Vec::new();
     for i in keys {
-        println!(":==: send_ethereum_claims key {:?}", i);
         msgs.push(unordered_msgs.remove_entry(&i).unwrap().1);
     }
 
-
-    // println!(":==: send_ethereum_claims msgs (ordered) {:?}", msgs);
-
     let fee = Fee {
         amount: vec![fee],
-        gas_limit: 500_000_000u64,
+        gas_limit: 500_000_000u64 * (msgs.len() as u64),
         granter: None,
         payer: None,
     };
@@ -424,7 +442,7 @@ pub async fn send_ethereum_claims(
     let response = txrpc
         .broadcast_tx(BroadcastTxRequest {
             tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
+            mode: BroadcastMode::Block.into(),
         })
         .await?;
     let response = response.into_inner();
@@ -485,7 +503,7 @@ pub async fn send_to_eth(
         payer: None,
     };
 
-    let msg = Msg::new("/gravity.v1.MsgSendToEth", msg_send_to_eth);
+    let msg = Msg::new("/gravity.v1.MsgSendToEthereum", msg_send_to_eth);
 
     let args = contact.get_message_args(our_address, fee).await?;
     trace!("got optional tx info");
@@ -496,7 +514,7 @@ pub async fn send_to_eth(
     let response = txrpc
         .broadcast_tx(BroadcastTxRequest {
             tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
+            mode: BroadcastMode::Block.into(),
         })
         .await?;
     let response = response.into_inner();
@@ -526,7 +544,7 @@ pub async fn send_request_batch(
         payer: None,
     };
 
-    let msg = Msg::new("/gravity.v1.MsgRequestBatch", msg_request_batch);
+    let msg = Msg::new("/gravity.v1.MsgRequestBatchTx", msg_request_batch);
 
     let args = contact.get_message_args(our_address, fee).await?;
     trace!("got optional tx info");
@@ -537,7 +555,7 @@ pub async fn send_request_batch(
     let response = txrpc
         .broadcast_tx(BroadcastTxRequest {
             tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
+            mode: BroadcastMode::Block.into(),
         })
         .await?;
     let response = response.into_inner();

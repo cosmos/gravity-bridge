@@ -268,16 +268,15 @@ func (k Keeper) UnsignedContractCallTxs(c context.Context, req *types.UnsignedCo
 
 func (k Keeper) LastSubmittedEthereumEvent(c context.Context, req *types.LastSubmittedEthereumEventRequest) (*types.LastSubmittedEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	res := &types.LastSubmittedEthereumEventResponse{}
-
 	valAddr, err := k.getSignerValidator(ctx, req.Address)
 	if err != nil {
 		return nil, err
 	}
 
-	res.EventNonce = k.getLastEventNonceByValidator(ctx, valAddr)
-
-	return &types.LastSubmittedEthereumEventResponse{}, nil
+	res := &types.LastSubmittedEthereumEventResponse{
+		EventNonce: k.getLastEventNonceByValidator(ctx, valAddr),
+	}
+	return res, nil
 }
 
 func (k Keeper) BatchTxFees(c context.Context, req *types.BatchTxFeesRequest) (*types.BatchTxFeesResponse, error) {

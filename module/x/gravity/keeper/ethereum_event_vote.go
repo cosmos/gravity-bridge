@@ -24,7 +24,12 @@ func (k Keeper) recordEventVote(
 	lastEventNonce := k.getLastEventNonceByValidator(ctx, val)
 	expectedNonce := lastEventNonce + 1
 	if event.GetEventNonce() != expectedNonce {
-		return nil, sdkerrors.Wrapf(types.ErrInvalid, "non contiguous event nonce expected %v observed %v", expectedNonce, event.GetEventNonce())
+		return nil, sdkerrors.Wrapf(types.ErrInvalid,
+			"non contiguous event nonce expected %v observed %v for validator %v",
+			expectedNonce,
+			event.GetEventNonce(),
+			val,
+		)
 	}
 
 	// Tries to get an EthereumEventVoteRecord with the same eventNonce and event as the event that was submitted.

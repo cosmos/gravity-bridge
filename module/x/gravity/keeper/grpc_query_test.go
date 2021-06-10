@@ -214,6 +214,26 @@ func TestKeeper_ContractCallTxs(t *testing.T) {
 	})
 }
 
+func TestKeeper_LastSubmittedEthereumEvent(t *testing.T) {
+	// TODO(levi) test this
+	t.Run("read after there's something in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		{ // setup
+			//
+		}
+		{ // validate
+			req := &types.LastSubmittedEthereumEventRequest{}
+			res, err := gk.LastSubmittedEthereumEvent(sdk.WrapSDKContext(ctx), req)
+			require.NoError(t, err)
+			require.NotNil(t, res)
+			require.NotZero(t, res.EventNonce)
+		}
+	})
+}
+
 // TODO(levi) ensure coverage for:
 // ContractCallTx(context.Context, *ContractCallTxRequest) (*ContractCallTxResponse, error)
 // ContractCallTxs(context.Context, *ContractCallTxsRequest) (*ContractCallTxsResponse, error)
@@ -225,8 +245,6 @@ func TestKeeper_ContractCallTxs(t *testing.T) {
 // UnsignedSignerSetTxs(context.Context, *UnsignedSignerSetTxsRequest) (*UnsignedSignerSetTxsResponse, error)
 // UnsignedBatchTxs(context.Context, *UnsignedBatchTxsRequest) (*UnsignedBatchTxsResponse, error)
 // UnsignedContractCallTxs(context.Context, *UnsignedContractCallTxsRequest) (*UnsignedContractCallTxsResponse, error)
-
-// LastSubmittedEthereumEvent(context.Context, *LastSubmittedEthereumEventRequest) (*LastSubmittedEthereumEventResponse, error)
 
 // BatchTxFees(context.Context, *BatchTxFeesRequest) (*BatchTxFeesResponse, error)
 // ERC20ToDenom(context.Context, *ERC20ToDenomRequest) (*ERC20ToDenomResponse, error)
