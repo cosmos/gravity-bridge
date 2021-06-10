@@ -23,7 +23,8 @@ pub struct Erc20Token {
 impl Erc20Token {
     pub fn from_proto(input: gravity_proto::gravity::Erc20Token) -> Result<Self, GravityError> {
         Ok(Erc20Token {
-            amount: Uint256::from_bytes_be(&input.amount[..32]),
+            // amount: Uint256::from_bytes_be(&input.amount[..32]),
+            amount: Uint256::from_bytes_be(&input.amount),
             token_contract_address: EthAddress::parse_and_validate(&input.contract)?,
         })
     }

@@ -177,10 +177,10 @@ pub async fn send_batch_confirm(
     let mut messages = Vec::new();
 
     for batch in transaction_batches {
-        trace!("Submitting signature for batch {:?}", batch);
+        info!("Submitting signature for batch {:?}", batch);
         let message = encode_tx_batch_confirm(gravity_id.clone(), batch.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
-        trace!(
+        info!(
             "Sending batch update with address {} and sig {}",
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
@@ -189,16 +189,23 @@ pub async fn send_batch_confirm(
             token_contract: batch.token_contract.to_string(),
             batch_nonce: batch.nonce,
             ethereum_signer: our_eth_address.to_string(),
-            // TODO JEHAN: this will break
-            signature: bytes_to_hex_str(&eth_signature.to_bytes())
-                .as_bytes()
-                .to_vec(),
+            signature: eth_signature.to_bytes().to_vec(),
         };
-        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumTxConfirmation", confirm);
+        let size = Message::encoded_len(&confirm);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.BatchTxConfirmation".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
-    trace!("got optional tx info");
+    info!("got optional tx info");
 
     let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
@@ -246,12 +253,10 @@ pub async fn send_logic_call_confirm(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
+
         let confirm = proto::ContractCallTxConfirmation {
             ethereum_signer: our_eth_address.to_string(),
-            // TODO JEHAN: this will break
-            signature: bytes_to_hex_str(&eth_signature.to_bytes())
-                .as_bytes()
-                .to_vec(),
+            signature: eth_signature.to_bytes().to_vec(),
             // TODO JEHAN: this will break
             invalidation_scope: bytes_to_hex_str(&call.invalidation_id).as_bytes().to_vec(),
             invalidation_nonce: call.invalidation_nonce,

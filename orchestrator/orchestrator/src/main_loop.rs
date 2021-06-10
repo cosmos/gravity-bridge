@@ -279,10 +279,10 @@ pub async fn eth_signer_main_loop(
                     gravity_id.clone(),
                 )
                 .await;
-                trace!("Batch confirm result is {:?}", res);
+                info!("Batch confirm result is {:?}", res);
             }
-            Ok(None) => trace!("No unsigned batches! Everything good!"),
-            Err(e) => trace!(
+            Ok(None) => info!("No unsigned batches! Everything good!"),
+            Err(e) => info!(
                 "Failed to get unsigned Batches, check your Cosmos gRPC {:?}",
                 e
             ),

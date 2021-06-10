@@ -24,8 +24,10 @@ func NewEthereumSignature(hash []byte, privateKey *ecdsa.PrivateKey) ([]byte, er
 // ValidateEthereumSignature takes a message, an associated signature and public key and
 // returns an error if the signature isn't valid
 func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress common.Address) error {
+	/// signature to public key: invalid signature length: invalid
+	/// signature not matching: invalid: invalid
 	if len(signature) < 65 {
-		return sdkerrors.Wrap(ErrInvalid, "signature too short")
+		return sdkerrors.Wrapf(ErrInvalid, "signature too short %x", signature)
 	}
 
 	// Copy to avoid mutating signature slice by accident
@@ -52,11 +54,11 @@ func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress common.
 
 	pubkey, err := crypto.SigToPub(crypto.Keccak256Hash(append([]uint8(signaturePrefix), hash...)).Bytes(), sigCopy)
 	if err != nil {
-		return sdkerrors.Wrap(err, "signature to public key")
+		return sdkerrors.Wrapf(err, "signature to public key sig %x", sigCopy)
 	}
 
 	if addr := crypto.PubkeyToAddress(*pubkey); addr != ethAddress {
-		return sdkerrors.Wrap(ErrInvalid, "signature not matching")
+		return sdkerrors.Wrapf(ErrInvalid, "signature not matching addr %x sig %x", addr, sigCopy)
 	}
 
 	return nil
