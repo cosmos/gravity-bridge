@@ -373,7 +373,7 @@ pub async fn send_ethereum_claims(
         let wrapper = proto::MsgSubmitEthereumEvent {
             signer: our_address.to_string(),
             event: Some(Any {
-                type_url: "/gravity.v1.Erc20DeployedEvent".into(),
+                type_url: "/gravity.v1.ERC20DeployedEvent".into(),
                 value: buf.to_vec(),
             }),
         };
