@@ -1,5 +1,6 @@
 //! `cosmos subcommands` subcommand
 
+use crate::{application::APP, prelude::*};
 use abscissa_core::{Command, Options, Runnable};
 
 #[derive(Command, Debug, Options)]
@@ -47,5 +48,10 @@ impl Runnable for Gravity_keys {
     fn run(&self) {
         assert!(self.free.len() == 1);
         let key_name = self.free[0].clone();
+
+        abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
+            status_err!("executor exited with error: {}", e);
+            std::process::exit(1);
+        });
     }
 }

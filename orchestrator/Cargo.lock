@@ -42,6 +42,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "abscissa_tokio"
+version = "0.6.0-pre.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5483def0ba1533f8040c0288451373a3522f13be7386426bb81cf7605a806a50"
+dependencies = [
+ "abscissa_core",
+ "tokio 1.5.0",
+]
+
+[[package]]
 name = "actix"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1396,6 +1406,7 @@ name = "gorc"
 version = "0.1.0"
 dependencies = [
  "abscissa_core",
+ "abscissa_tokio",
  "actix-rt 2.2.0",
  "clarity",
  "cosmos_gravity",
@@ -3252,6 +3263,7 @@ dependencies = [
  "libc",
  "memchr",
  "mio 0.7.11",
+ "num_cpus",
  "once_cell",
  "parking_lot",
  "pin-project-lite 0.2.6",

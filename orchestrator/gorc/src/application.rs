@@ -59,8 +59,10 @@ impl Application for GorcApp {
     /// beyond the default ones provided by the framework, this is the place
     /// to do so.
     fn register_components(&mut self, command: &Self::Cmd) -> Result<(), FrameworkError> {
-        let framework_components = self.framework_components(command)?;
+        let mut framework_components = self.framework_components(command)?;
         let mut app_components = self.state.components_mut();
+        framework_components.push(Box::new(abscissa_tokio::TokioComponent::new()?));
+
         app_components.register(framework_components)
     }
 

@@ -1,5 +1,6 @@
 //! `cosmos subcommands` subcommand
 
+use crate::{application::APP, prelude::*};
 use abscissa_core::{Command, Options, Runnable};
 use clarity::Uint256;
 use deep_space::address::Address as CosmosAddress;
@@ -87,6 +88,11 @@ impl Runnable for SendToEth {
         let cosmos_address = cosmos_key.to_address("//TODO add to config file").unwrap();
 
         println!("Sending from Cosmos address {}", cosmos_address);
+
+        abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
+            status_err!("executor exited with error: {}", e);
+            std::process::exit(1);
+        });
     }
 }
 
@@ -106,5 +112,10 @@ impl Runnable for Send {
         let from_key = self.free[0].clone();
         let to_addr = self.free[1].clone();
         let coin_amount = self.free[2].clone();
+
+        abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
+            status_err!("executor exited with error: {}", e);
+            std::process::exit(1);
+        });
     }
 }

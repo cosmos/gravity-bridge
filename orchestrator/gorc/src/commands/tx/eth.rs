@@ -1,5 +1,6 @@
 //! `eth subcommands` subcommand
 
+use crate::{application::APP, prelude::*};
 use abscissa_core::{Command, Options, Runnable};
 
 #[derive(Command, Debug, Options)]
@@ -35,6 +36,11 @@ impl Runnable for SendToCosmos {
         let to_cosmos_addr = self.free[1].clone();
         let erc20_conract = self.free[2].clone();
         let erc20_amount = self.free[3].clone();
+
+        abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
+            status_err!("executor exited with error: {}", e);
+            std::process::exit(1);
+        });
     }
 }
 

@@ -42,14 +42,14 @@ pub static RUNNER: Lazy<CmdRunner> = Lazy::new(|| CmdRunner::default());
 // /// Use command-line argument value
 // #[test]
 // fn start_with_args() {
-    // let mut runner = RUNNER.clone();
-    // let mut cmd = runner
-    //     .args(&["start", "acceptance", "test"])
-    //     .capture_stdout()
-    //     .run();
+// let mut runner = RUNNER.clone();
+// let mut cmd = runner
+//     .args(&["start", "acceptance", "test"])
+//     .capture_stdout()
+//     .run();
 
-    // cmd.stdout().expect_line("Hello, acceptance test!");
-    // cmd.wait().unwrap().expect_success();
+// cmd.stdout().expect_line("Hello, acceptance test!");
+// cmd.wait().unwrap().expect_success();
 // }
 
 /// Use configured value
