@@ -3,15 +3,15 @@ package keeper
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"math"
 	"sort"
 	"strconv"
 
+	"github.com/cosmos/cosmos-sdk/types/query"
+
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -111,12 +111,12 @@ func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
 ///////////////////////////////
 
 // getEthereumSignature returns a valset confirmation by a nonce and validator address
-func (k Keeper) getEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) hexutil.Bytes {
+func (k Keeper) getEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) []byte {
 	return ctx.KVStore(k.storeKey).Get(types.MakeEthereumSignatureKey(storeIndex, validator))
 }
 
 // SetEthereumSignature sets a valset confirmation
-func (k Keeper) SetEthereumSignature(ctx sdk.Context, sig types.EthereumSignature, val sdk.ValAddress) []byte {
+func (k Keeper) SetEthereumSignature(ctx sdk.Context, sig types.EthereumTxConfirmation, val sdk.ValAddress) []byte {
 	key := types.MakeEthereumSignatureKey(sig.GetStoreIndex(), val)
 	ctx.KVStore(k.storeKey).Set(key, sig.GetSignature())
 	return key
@@ -127,9 +127,9 @@ func (k Keeper) deleteEthereumSignature(ctx sdk.Context, storeIndex []byte, vali
 }
 
 // GetEthereumSignatures returns all etherum signatures for a given outgoing tx by store index
-func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[string]hexutil.Bytes {
-	var signatures = make(map[string]hexutil.Bytes)
-	k.iterateEthereumSignatures(ctx, storeIndex, func(val sdk.ValAddress, h hexutil.Bytes) bool {
+func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[string][]byte {
+	var signatures = make(map[string][]byte)
+	k.iterateEthereumSignatures(ctx, storeIndex, func(val sdk.ValAddress, h []byte) bool {
 		signatures[val.String()] = h
 		return false
 	})
@@ -137,8 +137,7 @@ func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[st
 }
 
 // iterateEthereumSignatures iterates through all valset confirms by nonce in ASC order
-// MARK finish-batches: this is where the key is iterated in the old (presumed working) code
-func (k Keeper) iterateEthereumSignatures(ctx sdk.Context, storeIndex []byte, cb func(sdk.ValAddress, hexutil.Bytes) bool) {
+func (k Keeper) iterateEthereumSignatures(ctx sdk.Context, storeIndex []byte, cb func(sdk.ValAddress, []byte) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.EthereumSignatureKey}, storeIndex...))
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
@@ -236,7 +235,7 @@ func (k Keeper) CurrentSignerSet(ctx sdk.Context) types.EthereumSigners {
 		totalPower += p
 
 		ethereumSigners[i] = &types.EthereumSigner{Power: p}
-		if ethAddr := k.GetValidatorEthereumAddress(ctx, val); ethAddr.Hex() == "0x0000000000000000000000000000000000000000" {
+		if ethAddr := k.GetValidatorEthereumAddress(ctx, val); ethAddr.Hex() != "0x0000000000000000000000000000000000000000" {
 			ethereumSigners[i].EthereumAddress = ethAddr.Hex()
 		}
 	}
@@ -309,7 +308,7 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 }
 
 // getDelegateKeys iterates both the EthAddress and Orchestrator address indexes to produce
-// a vector of MsgSetOrchestratorAddress entires containing all the delgate keys for state
+// a vector of MsgDelegateKeys entries containing all the delgate keys for state
 // export / import. This may seem at first glance to be excessively complicated, why not combine
 // the EthAddress and Orchestrator address indexes and simply iterate one thing? The answer is that
 // even though we set the Eth and Orchestrator address in the same place we use them differently we
@@ -370,7 +369,10 @@ func (k Keeper) SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx) {
 	if err != nil {
 		panic(err)
 	}
-	ctx.KVStore(k.storeKey).Set(types.MakeOutgoingTxKey(outgoing.GetStoreIndex()), k.cdc.MustMarshalBinaryBare(any))
+	ctx.KVStore(k.storeKey).Set(
+		types.MakeOutgoingTxKey(outgoing.GetStoreIndex()),
+		k.cdc.MustMarshalBinaryBare(any),
+	)
 }
 
 // DeleteOutgoingTx deletes a given outgoingtx

@@ -26,13 +26,8 @@ pub async fn relayer_main_loop(
         let loop_start = Instant::now();
 
         let our_ethereum_address = ethereum_key.to_public_key().unwrap();
-        let current_valset = find_latest_valset(
-            &mut grpc_client,
-            our_ethereum_address,
-            gravity_contract_address,
-            &web3,
-        )
-        .await;
+        let current_valset =
+            find_latest_valset(&mut grpc_client, gravity_contract_address, &web3).await;
         if current_valset.is_err() {
             error!("Could not get current valset! {:?}", current_valset);
             continue;
