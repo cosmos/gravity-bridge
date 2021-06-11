@@ -2,6 +2,7 @@
 
 use crate::args::InitOpts;
 use clarity::PrivateKey as EthPrivateKey;
+use gravity_utils::types::GravityBridgeToolsConfig;
 use std::{
     fs::{self, create_dir},
     path::{Path, PathBuf},
@@ -17,18 +18,6 @@ pub const CONFIG_NAME: &str = "config.toml";
 pub const KEYS_NAME: &str = "keys.json";
 /// The folder name for the config
 pub const CONFIG_FOLDER: &str = ".gbt";
-
-/// Global configuration struct for Gravity bridge tools
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Default)]
-pub struct GravityBridgeToolsConfig {}
-
-/// Relayer configuration options
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Default)]
-pub struct Relayer {}
-
-/// Orchestrator configuration options
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Default)]
-pub struct Orchestrator {}
 
 /// The keys storage struct, including encrypted and un-encrypted local keys
 /// un-encrypted keys provide for orchestrator start and relayer start functions

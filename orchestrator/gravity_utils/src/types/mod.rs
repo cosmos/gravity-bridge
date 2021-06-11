@@ -1,6 +1,7 @@
 use clarity::Address as EthAddress;
 use num256::Uint256;
 mod batches;
+mod config;
 mod ethereum_events;
 pub mod event_signatures;
 mod logic_call;
@@ -9,6 +10,7 @@ mod valsets;
 use crate::error::GravityError;
 
 pub use batches::*;
+pub use config::*;
 pub use ethereum_events::*;
 pub use logic_call::*;
 pub use signatures::*;

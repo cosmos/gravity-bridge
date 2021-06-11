@@ -17,9 +17,11 @@ use deep_space::Contact;
 use deep_space::{client::ChainStatus, utils::FeeInfo};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_gravity::utils::get_gravity_id;
+use futures::future::join;
 use futures::future::join3;
 use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::types::GravityBridgeToolsConfig;
 use relayer::main_loop::relayer_main_loop;
 use std::process::exit;
 use std::time::Duration;
@@ -39,6 +41,7 @@ pub const ETH_ORACLE_LOOP_SPEED: Duration = Duration::from_secs(13);
 /// meaning they will occupy the same thread, but since they do
 /// very little actual cpu bound work and spend the vast majority
 /// of all execution time sleeping this shouldn't be an issue at all.
+#[allow(clippy::too_many_arguments)]
 pub async fn orchestrator_main_loop(
     cosmos_key: CosmosPrivateKey,
     ethereum_key: EthPrivateKey,
@@ -47,6 +50,7 @@ pub async fn orchestrator_main_loop(
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
     user_fee_amount: Coin,
+    config: GravityBridgeToolsConfig,
 ) {
     let fee = user_fee_amount;
 
@@ -73,7 +77,13 @@ pub async fn orchestrator_main_loop(
         grpc_client.clone(),
         gravity_contract_address,
     );
-    join3(a, b, c).await;
+
+    // if the relayer is not enabled we just don't start the future
+    if config.orchestrator.relayer_enabled {
+        join3(a, b, c).await;
+    } else {
+        join(a, b).await;
+    }
 }
 
 const DELAY: Duration = Duration::from_secs(5);

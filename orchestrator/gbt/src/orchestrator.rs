@@ -7,6 +7,7 @@ use gravity_utils::connection_prep::{
     check_delegate_addresses, check_for_eth, wait_for_cosmos_node_ready,
 };
 use gravity_utils::connection_prep::{check_for_fee, create_rpc_connections};
+use gravity_utils::types::GravityBridgeToolsConfig;
 use orchestrator::main_loop::orchestrator_main_loop;
 use orchestrator::main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
@@ -14,7 +15,12 @@ use std::cmp::min;
 use std::path::Path;
 use std::process::exit;
 
-pub async fn orchestrator(args: OrchestratorOpts, address_prefix: String, home_dir: &Path) {
+pub async fn orchestrator(
+    args: OrchestratorOpts,
+    address_prefix: String,
+    home_dir: &Path,
+    config: GravityBridgeToolsConfig,
+) {
     let fee = args.fees;
     let cosmos_grpc = args.cosmos_grpc;
     let ethereum_rpc = args.ethereum_rpc;
@@ -128,6 +134,7 @@ pub async fn orchestrator(args: OrchestratorOpts, address_prefix: String, home_d
         connections.grpc.unwrap(),
         contract_address,
         fee,
+        config,
     )
     .await;
 }

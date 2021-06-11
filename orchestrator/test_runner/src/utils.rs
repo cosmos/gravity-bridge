@@ -17,6 +17,7 @@ use futures::future::join_all;
 use gravity_proto::cosmos_sdk_proto::cosmos::params::v1beta1::ParamChange;
 use gravity_proto::cosmos_sdk_proto::cosmos::params::v1beta1::ParameterChangeProposal;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::types::GravityBridgeToolsConfig;
 use orchestrator::main_loop::orchestrator_main_loop;
 use rand::Rng;
 use std::thread;
@@ -240,6 +241,7 @@ pub async fn start_orchestrators(
                 grpc_client,
                 gravity_address,
                 get_fee(),
+                GravityBridgeToolsConfig::default(),
             );
             let system = System::new();
             system.block_on(fut);
