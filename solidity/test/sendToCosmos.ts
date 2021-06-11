@@ -65,7 +65,7 @@ async function runTest(opts: {}) {
       await signers[0].getAddress(),
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000, 
-      2
+      3
     );
 
   expect((await testERC20.functions.balanceOf(gravity.address))[0]).to.equal(2000);

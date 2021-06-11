@@ -20,6 +20,10 @@ use gravity_utils::message_signatures::{
 use gravity_utils::types::*;
 use std::{collections::HashMap, time::Duration};
 
+use bytes::BytesMut;
+use prost::Message;
+use prost_types::Any;
+
 pub const MEMO: &str = "Sent using Althea Orchestrator";
 pub const TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -113,13 +117,23 @@ pub async fn send_valset_confirms(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = proto::SignerSetTxSignature {
+
+        let confirm = proto::SignerSetTxConfirmation {
             ethereum_signer: our_eth_address.to_string(),
-            nonce: valset.nonce,
+            signer_set_nonce: valset.nonce,
             signature: eth_signature.to_bytes().to_vec(),
         };
-
-        let msg = Msg::new("/gravity.v1.MsgValsetConfirm", confirm);
+        let size = Message::encoded_len(&confirm);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumTxConfirmation {
+            signer: our_address.to_string(),
+            confirmation: Some(Any {
+                type_url: "/gravity.v1.SignerSetTxConfirmation".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -171,10 +185,11 @@ pub async fn send_batch_confirm(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = proto::BatchTxSignature {
+        let confirm = proto::BatchTxConfirmation {
             token_contract: batch.token_contract.to_string(),
-            nonce: batch.nonce,
+            batch_nonce: batch.nonce,
             ethereum_signer: our_eth_address.to_string(),
+            // TODO JEHAN: this will break
             signature: bytes_to_hex_str(&eth_signature.to_bytes())
                 .as_bytes()
                 .to_vec(),
@@ -231,15 +246,27 @@ pub async fn send_logic_call_confirm(
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        let confirm = proto::ContractCallTxSignature {
+        let confirm = proto::ContractCallTxConfirmation {
             ethereum_signer: our_eth_address.to_string(),
+            // TODO JEHAN: this will break
             signature: bytes_to_hex_str(&eth_signature.to_bytes())
                 .as_bytes()
                 .to_vec(),
+            // TODO JEHAN: this will break
             invalidation_scope: bytes_to_hex_str(&call.invalidation_id).as_bytes().to_vec(),
             invalidation_nonce: call.invalidation_nonce,
         };
-        let msg = Msg::new("/gravity.v1.MsgConfirmLogicCall", confirm);
+        let size = Message::encoded_len(&confirm);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumTxConfirmation {
+            signer: our_address.to_string(),
+            confirmation: Some(Any {
+                type_url: "/gravity.v1.ContractCallTxConfirmation".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -268,6 +295,7 @@ pub async fn send_ethereum_claims(
     withdraws: Vec<TransactionBatchExecutedEvent>,
     erc20_deploys: Vec<Erc20DeployedEvent>,
     logic_calls: Vec<LogicCallExecutedEvent>,
+    valsets: Vec<ValsetUpdatedEvent>,
     fee: Coin,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
@@ -282,17 +310,28 @@ pub async fn send_ethereum_claims(
     // We index the events by event nonce in an unordered hashmap and then play them back in order into a vec
     let mut unordered_msgs = HashMap::new();
     for deposit in deposits {
-        let amount: [u8; 32] = deposit.amount.into();
-        let amount: Vec<u8> = amount.into();
-        let claim = proto::SendToCosmosEvent {
+        let event = proto::SendToCosmosEvent {
             event_nonce: downcast_uint256(deposit.event_nonce.clone()).unwrap(),
             ethereum_height: downcast_uint256(deposit.block_height).unwrap(),
             token_contract: deposit.erc20.to_string(),
-            amount,
+            amount: deposit.amount.to_string(),
             cosmos_receiver: deposit.destination.to_string(),
             ethereum_sender: deposit.sender.to_string(),
         };
-        let msg = Msg::new("/gravity.v1.MsgDepositClaim", claim);
+
+        println!(":==: send_ethereum_claims deposit {:?}", event);
+
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.SendToCosmosEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
         unordered_msgs.insert(deposit.event_nonce, msg);
     }
     for withdraw in withdraws {
@@ -328,6 +367,32 @@ pub async fn send_ethereum_claims(
         let msg = Msg::new("/gravity.v1.MsgLogicCallExecutedClaim", claim);
         unordered_msgs.insert(call.event_nonce.clone(), msg);
     }
+    for valset in valsets {
+        let event = proto::SignerSetTxExecutedEvent {
+            event_nonce: downcast_uint256(valset.event_nonce.clone()).unwrap(),
+            signer_set_tx_nonce: downcast_uint256(valset.valset_nonce.clone()).unwrap(),
+            ethereum_height: downcast_uint256(valset.block_height).unwrap(),
+            members: valset.members.iter().map(|v| v.into()).collect(),
+        };
+
+        println!(":==: send_ethereum_claims valset {:?}", event);
+
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.SignerSetTxExecutedEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
+        unordered_msgs.insert(valset.event_nonce, msg);
+    }
+
+    // println!(":==: send_ethereum_claims unordered_msgs {:?}", unordered_msgs);
+
     let mut keys = Vec::new();
     for (key, _) in unordered_msgs.iter() {
         keys.push(key.clone());
@@ -336,8 +401,12 @@ pub async fn send_ethereum_claims(
 
     let mut msgs = Vec::new();
     for i in keys {
+        println!(":==: send_ethereum_claims key {:?}", i);
         msgs.push(unordered_msgs.remove_entry(&i).unwrap().1);
     }
+
+
+    // println!(":==: send_ethereum_claims msgs (ordered) {:?}", msgs);
 
     let fee = Fee {
         amount: vec![fee],

@@ -1,5 +1,4 @@
 use crate::happy_path::test_valset_update;
-use crate::utils::start_orchestrators;
 use crate::utils::ValidatorKeys;
 use clarity::Address as EthAddress;
 use deep_space::Contact;
@@ -11,8 +10,6 @@ pub async fn validator_set_stress_test(
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
 ) {
-    start_orchestrators(keys.clone(), gravity_address, false).await;
-
     for _ in 0u32..10 {
         test_valset_update(&web30, &keys, gravity_address).await;
     }

@@ -21,6 +21,9 @@ tokio = "1.4"
 web30 = "0.12"
 tonic = "0.4"
 cosmos-sdk-proto = "0.5"
+prost = "0.7"
+prost-types = "0.7"
+bytes = "1"
 
 [dev-dependencies]
 env_logger = "0.8"

@@ -5,9 +5,9 @@ authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
 
 # only becuase I like - more in names
-[[bin]]
-name = "test-runner"
-path = "src/main.rs"
+# [[bin]]
+# name = "test-runner"
+# path = "src/main.rs"
 
 [dependencies]
 ethereum_gravity = {path = "../ethereum_gravity"}

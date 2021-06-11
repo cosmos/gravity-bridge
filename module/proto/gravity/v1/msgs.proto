@@ -13,25 +13,25 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 // Msg defines the state transitions possible within gravity
 service Msg {
   rpc SendToEthereum(MsgSendToEthereum) returns (MsgSendToEthereumResponse) {
-    option (google.api.http).post = "/gravity/v1/send_to_ethereum";
+    // option (google.api.http).post = "/gravity/v1/send_to_ethereum";
   }
   rpc CancelSendToEthereum(MsgCancelSendToEthereum)
       returns (MsgCancelSendToEthereumResponse) {
-    option (google.api.http).post = "/gravity/v1/send_to_ethereum/cancel";
+    // option (google.api.http).post = "/gravity/v1/send_to_ethereum/cancel";
   }
   rpc RequestBatchTx(MsgRequestBatchTx) returns (MsgRequestBatchTxResponse) {
-    option (google.api.http).post = "/gravity/v1/batchtx/request";
+    // option (google.api.http).post = "/gravity/v1/batchtx/request";
   }
-  rpc SubmitEthereumSignature(MsgSubmitEthereumSignature)
-      returns (MsgSubmitEthereumSignatureResponse) {
-    option (google.api.http).post = "/gravity/v1/ethereum_signature";
+  rpc SubmitEthereumTxConfirmation(MsgSubmitEthereumTxConfirmation)
+      returns (MsgSubmitEthereumTxConfirmationResponse) {
+    // option (google.api.http).post = "/gravity/v1/ethereum_signature";
   }
   rpc SubmitEthereumEvent(MsgSubmitEthereumEvent)
       returns (MsgSubmitEthereumEventResponse) {
-    option (google.api.http).post = "/gravity/v1/ethereum_event";
+    // option (google.api.http).post = "/gravity/v1/ethereum_event";
   }
   rpc SetDelegateKeys(MsgDelegateKeys) returns (MsgDelegateKeysResponse) {
-    option (google.api.http).post = "/gravity/v1/delegate_keys";
+    // option (google.api.http).post = "/gravity/v1/delegate_keys";
   }
 }
 
@@ -69,51 +69,43 @@ message MsgRequestBatchTx {
 
 message MsgRequestBatchTxResponse {}
 
-// MsgSubmitEthereumSignature submits an ethereum signature for a given
+// MsgSubmitEthereumTxConfirmation submits an ethereum signature for a given
 // validator
-message MsgSubmitEthereumSignature {
+message MsgSubmitEthereumTxConfirmation {
   option (gogoproto.goproto_getters) = false;
 
   // TODO: can we make this take an array?
-  google.protobuf.Any signature = 1
-      [ (cosmos_proto.accepts_interface) = "EthereumSignature" ];
+  google.protobuf.Any confirmation = 1
+      [ (cosmos_proto.accepts_interface) = "EthereumTxConfirmation" ];
   string signer = 2;
 }
 
-// ContractCallTxSignature is a signature on behalf of a validator for a
+// ContractCallTxConfirmation is a signature on behalf of a validator for a
 // ContractCallTx.
-message ContractCallTxSignature {
-  bytes invalidation_scope = 1
-      [ (gogoproto.casttype) =
-            "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
+message ContractCallTxConfirmation {
+  bytes invalidation_scope = 1;
   uint64 invalidation_nonce = 2;
   string ethereum_signer = 3;
-  bytes signature = 4
-      [ (gogoproto.casttype) =
-            "github.com/ethereum/go-ethereum/common/hexutil.Bytes" ];
+  bytes signature = 4;
 }
 
-// BatchTxSignature is a signature on behalf of a validator for a BatchTx.
-message BatchTxSignature {
+// BatchTxConfirmation is a signature on behalf of a validator for a BatchTx.
+message BatchTxConfirmation {
   string token_contract = 1;
-  uint64 nonce = 2;
+  uint64 batch_nonce = 2;
   string ethereum_signer = 3;
-  bytes signature = 4
-      [ (gogoproto.casttype) =
-            "github.com/ethereum/go-ethereum/common/hexutil.Bytes" ];
+  bytes signature = 4;
 }
 
-// SignerSetTxSignature is a signature on behalf of a validator for a
+// SignerSetTxConfirmation is a signature on behalf of a validator for a
 // SignerSetTx
-message SignerSetTxSignature {
-  uint64 nonce = 1;
+message SignerSetTxConfirmation {
+  uint64 signer_set_nonce = 1;
   string ethereum_signer = 2;
-  bytes signature = 3
-      [ (gogoproto.casttype) =
-            "github.com/ethereum/go-ethereum/common/hexutil.Bytes" ];
+  bytes signature = 3;
 }
 
-message MsgSubmitEthereumSignatureResponse {}
+message MsgSubmitEthereumTxConfirmationResponse {}
 
 // MsgSubmitEthereumEvent
 message MsgSubmitEthereumEvent {
@@ -132,7 +124,7 @@ message SendToCosmosEvent {
 
   uint64 event_nonce = 1;
   string token_contract = 2;
-  bytes amount = 3 [
+  string amount = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

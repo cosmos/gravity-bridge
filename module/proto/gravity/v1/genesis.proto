@@ -109,7 +109,7 @@ message GenesisState {
   Params params = 1;
   uint64 last_observed_event_nonce = 2;
   repeated google.protobuf.Any outgoing_txs = 3;
-  repeated google.protobuf.Any signatures = 4;
+  repeated google.protobuf.Any confirmations = 4;
   repeated EthereumEventVoteRecord ethereum_event_vote_records = 9;
   repeated MsgDelegateKeys delegate_keys = 10;
   repeated ERC20ToDenom erc20_to_denoms = 11;

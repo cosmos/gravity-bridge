@@ -4,24 +4,37 @@
 
 // Building new Gravity rust proto definitions
 // run 'cargo run'
-// go to gravity_proto/prost
-// delete all files except gravity.v1.rs
-// re-write calls to super::super::cosmos as cosmos-sdk-proto::cosmos
 
-use std::path::Path;
-use std::path::PathBuf;
+use regex::Regex;
+use std::{
+    ffi::OsStr,
+    fs::{self, create_dir_all, remove_dir_all},
+    path::PathBuf,
+};
+use std::{io, path::Path};
 use walkdir::WalkDir;
+
+/// Protos belonging to these Protobuf packages will be excluded
+/// (i.e. because they are sourced from `tendermint-proto` or `cosmos-sdk-proto`)
+const EXCLUDED_PROTO_PACKAGES: &[&str] = &["gogoproto", "google", "tendermint", "cosmos.base"];
+/// Regex for locating instances of `cosmos-sdk-proto` in prost/tonic build output
+const COSMOS_SDK_PROTO_REGEX: &str = "(super::)+cosmos";
+
+/// A temporary directory for proto building
+const TMP_PATH: &str = "/tmp/gravity/";
+/// the output directory
+const OUT_PATH: &str = "../gravity_proto/src/prost/";
 
 // All paths must end with a / and either be absolute or include a ./ to reference the current
 // working directory.
-/// A temporary directory for proto building
 
 fn main() {
-    let out_path: PathBuf = "../gravity_proto/src/prost/".parse().unwrap();
-    compile_protos(&out_path);
+    let out_path = Path::new(&OUT_PATH);
+    let tmp_path = Path::new(&TMP_PATH);
+    compile_protos(out_path, tmp_path);
 }
 
-fn compile_protos(out_dir: &Path) {
+fn compile_protos(out_dir: &Path, tmp_dir: &Path) {
     println!(
         "[info] Compiling .proto files to Rust into '{}'...",
         out_dir.display()
@@ -62,9 +75,13 @@ fn compile_protos(out_dir: &Path) {
         );
     }
 
+    // create directories for temporary build dirs
+    fs::create_dir_all(tmp_dir)
+        .unwrap_or_else(|_| panic!("Failed to create {:?}", tmp_dir.to_str()));
+
     // Compile all proto files
     let mut config = prost_build::Config::default();
-    config.out_dir(out_dir);
+    config.out_dir(tmp_dir);
     config
         .compile_protos(&protos, &proto_include_paths)
         .unwrap();
@@ -74,10 +91,65 @@ fn compile_protos(out_dir: &Path) {
     tonic_build::configure()
         .build_client(true)
         .build_server(false)
-        .format(false)
-        .out_dir(out_dir)
+        .format(true)
+        .out_dir(tmp_dir)
         .compile(&protos, &proto_include_paths)
         .unwrap();
 
+    copy_generated_files(tmp_dir, out_dir);
+
     println!("[info ] => Done!");
+}
+
+fn copy_generated_files(from_dir: &Path, to_dir: &Path) {
+    println!("Copying generated files into '{}'...", to_dir.display());
+
+    // Remove old compiled files
+    remove_dir_all(&to_dir).unwrap_or_default();
+    create_dir_all(&to_dir).unwrap();
+
+    let mut filenames = Vec::new();
+
+    // Copy new compiled files (prost does not use folder structures)
+    let errors = WalkDir::new(from_dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file())
+        .map(|e| {
+            let filename = e.file_name().to_os_string().to_str().unwrap().to_string();
+            filenames.push(filename.clone());
+            copy_and_patch(e.path(), format!("{}/{}", to_dir.display(), &filename))
+        })
+        .filter_map(|e| e.err())
+        .collect::<Vec<_>>();
+
+    if !errors.is_empty() {
+        for e in errors {
+            eprintln!("[error] Error while copying compiled file: {}", e);
+        }
+
+        panic!("[error] Aborted.");
+    }
+}
+
+fn copy_and_patch(src: impl AsRef<Path>, dest: impl AsRef<Path>) -> io::Result<()> {
+    // Skip proto files belonging to `EXCLUDED_PROTO_PACKAGES`
+    for package in EXCLUDED_PROTO_PACKAGES {
+        if let Some(filename) = src.as_ref().file_name().and_then(OsStr::to_str) {
+            if filename.starts_with(&format!("{}.", package)) {
+                return Ok(());
+            }
+        }
+    }
+
+    let contents = fs::read_to_string(src)?;
+
+    // `prost-build` output references types from `tendermint-proto` crate
+    // relative paths, which we need to munge into `tendermint_proto` in
+    // order to leverage types from the upstream crate.
+    let contents = Regex::new(COSMOS_SDK_PROTO_REGEX)
+        .unwrap()
+        .replace_all(&contents, "cosmos_sdk_proto::cosmos");
+
+    fs::write(dest, contents.as_bytes())
 }

@@ -917,6 +917,7 @@ name = "cosmos_gravity"
 version = "0.1.0"
 dependencies = [
  "actix",
+ "bytes 1.0.1",
  "clarity",
  "cosmos-sdk-proto",
  "deep_space 2.1.1",
@@ -926,6 +927,8 @@ dependencies = [
  "gravity_utils",
  "log",
  "num256",
+ "prost",
+ "prost-types",
  "rand 0.8.3",
  "serde",
  "sha3",
@@ -1422,6 +1425,7 @@ dependencies = [
 name = "gravity_proto"
 version = "0.1.0"
 dependencies = [
+ "bytes 1.0.1",
  "cosmos-sdk-proto",
  "prost",
  "prost-types",
@@ -2407,6 +2411,7 @@ version = "0.1.0"
 dependencies = [
  "prost",
  "prost-build",
+ "regex",
  "tempdir",
  "tonic",
  "tonic-build",
