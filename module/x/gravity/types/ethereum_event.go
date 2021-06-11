@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"log"
 
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -112,7 +113,7 @@ func (sse *SignerSetTxExecutedEvent) Hash() tmbytes.HexBytes {
 
 func (stce *SendToCosmosEvent) Validate() error {
 	if stce.EventNonce == 0 {
-		return fmt.Errorf("nonce cannot be 0")
+		return fmt.Errorf("event nonce cannot be 0")
 	}
 	if !common.IsHexAddress(stce.TokenContract) {
 		return sdkerrors.Wrap(ErrInvalid, "ethereum contract address")
@@ -126,47 +127,29 @@ func (stce *SendToCosmosEvent) Validate() error {
 	if _, err := sdk.AccAddressFromBech32(stce.CosmosReceiver); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, stce.CosmosReceiver)
 	}
-	if stce.EthereumHeight == 0 {
-		return fmt.Errorf("ethereum height cannot be 0")
-	}
 	return nil
 }
 
 func (bee *BatchExecutedEvent) Validate() error {
 	if bee.EventNonce == 0 {
-		return fmt.Errorf("nonce cannot be 0")
+		return fmt.Errorf("event nonce cannot be 0")
 	}
 	if !common.IsHexAddress(bee.TokenContract) {
 		return sdkerrors.Wrap(ErrInvalid, "ethereum contract address")
-	}
-	if bee.EthereumHeight == 0 {
-		return fmt.Errorf("ethereum height cannot be 0")
-	}
-	if bee.BatchNonce == 0 {
-		return fmt.Errorf("batch nonce cannot be 0")
 	}
 	return nil
 }
 
 func (ccee *ContractCallExecutedEvent) Validate() error {
 	if ccee.EventNonce == 0 {
-		return fmt.Errorf("nonce cannot be 0")
-	}
-	if len(ccee.InvalidationId) != 32 {
-		return fmt.Errorf("invalidation id cannot be empty")
-	}
-	if ccee.InvalidationNonce == 0 {
-		return fmt.Errorf("invalidation nonce cannot be 0")
-	}
-	if ccee.EthereumHeight == 0 {
-		return fmt.Errorf("ethereum height cannot be 0")
+		return fmt.Errorf("event nonce cannot be 0")
 	}
 	return nil
 }
 
 func (e20de *ERC20DeployedEvent) Validate() error {
 	if e20de.EventNonce == 0 {
-		return fmt.Errorf("nonce cannot be 0")
+		return fmt.Errorf("event nonce cannot be 0")
 	}
 	if !common.IsHexAddress(e20de.TokenContract) {
 		return sdkerrors.Wrap(ErrInvalid, "ethereum contract address")
@@ -174,28 +157,23 @@ func (e20de *ERC20DeployedEvent) Validate() error {
 	if err := sdk.ValidateDenom(e20de.CosmosDenom); err != nil {
 		return err
 	}
-	if e20de.EthereumHeight == 0 {
-		return fmt.Errorf("ethereum height cannot be 0")
-	}
 	return nil
 }
 
 func (sse *SignerSetTxExecutedEvent) Validate() error {
+	log.Println("SignerSetTxExecutedEvent.Validate")
+
 	if sse.EventNonce == 0 {
-		return fmt.Errorf("nonce cannot be 0")
-	}
-	if sse.SignerSetTxNonce == 0 {
-		return fmt.Errorf("nonce cannot be 0")
-	}
-	if sse.EthereumHeight == 0 {
-		return fmt.Errorf("ethereum height cannot be 0")
+		log.Println("SignerSetTxExecutedEvent Validate error: nonce cannot be 0")
+		return fmt.Errorf("event nonce cannot be 0")
 	}
 	if sse.Members == nil {
+		log.Println("SignerSetTxExecutedEvent Validate error: members cannot be nil")
 		return fmt.Errorf("members cannot be nil")
 	}
-
 	for i, member := range sse.Members {
 		if err := member.ValidateBasic(); err != nil {
+			log.Println("SignerSetTxExecutedEvent Validate error: ", fmt.Sprintf("ethereum signer %d error: %s", i, err))
 			return fmt.Errorf("ethereum signer %d error: %w", i, err)
 		}
 	}
