@@ -58,11 +58,11 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 
 }
 
-// SubmitEthereumSignature handles MsgSubmitEthereumSignature
-func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubmitEthereumSignature) (*types.MsgSubmitEthereumSignatureResponse, error) {
+// SubmitEthereumTxConfirmation handles MsgSubmitEthereumTxConfirmation
+func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.MsgSubmitEthereumTxConfirmation) (*types.MsgSubmitEthereumTxConfirmationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	signature, err := types.UnpackSignature(msg.Signature)
+	confirmation, err := types.UnpackConfirmation(msg.Confirmation)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 		return nil, err
 	}
 
-	otx := k.GetOutgoingTx(ctx, signature.GetStoreIndex())
+	otx := k.GetOutgoingTx(ctx, confirmation.GetStoreIndex())
 	if otx == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find outgoing tx")
 	}
@@ -81,20 +81,28 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 	checkpoint := otx.GetCheckpoint([]byte(gravityID))
 
 	ethAddress := k.GetValidatorEthereumAddress(ctx, val)
-	if ethAddress != signature.GetSigner() {
+	if ethAddress != confirmation.GetSigner() {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "eth address does not match signer eth address")
 	}
 
-	if err = types.ValidateEthereumSignature(checkpoint, signature.GetSignature(), ethAddress); err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
+	if err = types.ValidateEthereumSignature(checkpoint, confirmation.GetSignature(), ethAddress); err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf(
+			"signature verification failed ethAddress %s gravityID %s checkpoint %s typeURL %s signature %s err %s",
+			ethAddress.Hex(),
+			gravityID,
+			hex.EncodeToString(checkpoint),
+			msg.Confirmation.TypeUrl,
+			hex.EncodeToString(confirmation.GetSignature()),
+			err,
+		))
 	}
 
 	// TODO: should validators be able to overwrite their signatures?
-	if k.getEthereumSignature(ctx, signature.GetStoreIndex(), val) != nil {
+	if k.getEthereumSignature(ctx, confirmation.GetStoreIndex(), val) != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature duplicate")
 	}
 
-	key := k.SetEthereumSignature(ctx, signature, val)
+	key := k.SetEthereumSignature(ctx, confirmation, val)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -104,7 +112,7 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 		),
 	)
 
-	return &types.MsgSubmitEthereumSignatureResponse{}, nil
+	return &types.MsgSubmitEthereumTxConfirmationResponse{}, nil
 }
 
 // func (k Keeper) ValidateEthereumSignature
@@ -112,6 +120,7 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 // SubmitEthereumEvent handles MsgSubmitEthereumEvent
 func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEthereumEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+
 	event, err := types.UnpackEvent(msg.Event)
 	if err != nil {
 		return nil, err
@@ -171,7 +180,7 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 		),
 	})
 
-	return &types.MsgSendToEthereumResponse{}, nil
+	return &types.MsgSendToEthereumResponse{Id: txID}, nil
 }
 
 // RequestBatchTx handles MsgRequestBatchTx

@@ -32,7 +32,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 func createBatchTxs(ctx sdk.Context, k keeper.Keeper) {
 	// TODO: this needs some more work, is super naieve
 	if ctx.BlockHeight()%10 == 0 {
-		var cm map[string]bool
+		cm := map[string]bool{}
 		k.IterateUnbatchedSendToEthereums(ctx, func(ste *types.SendToEthereum) bool {
 			cm[ste.Erc20Token.Contract] = true
 			return false
@@ -58,7 +58,7 @@ func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
 	// 3. If power change between validators of Current signer set and latest signer set request is > 5%
 	latestSignerSetTx := k.GetLatestSignerSetTx(ctx)
-	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
+	lastUnbondingHeight := k.GetLastUnbondingBlockHeight(ctx)
 	if latestSignerSetTx == nil {
 		k.CreateSignerSetTx(ctx)
 		return
@@ -96,6 +96,7 @@ func pruneSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 // an attestation that has not passed the threshold
 func eventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 	attmap := k.GetEthereumEventVoteRecordMapping(ctx)
+
 	// We make a slice with all the event nonces that are in the attestation mapping
 	keys := make([]uint64, 0, len(attmap))
 	for k := range attmap {

@@ -4,7 +4,6 @@ use std::time::{Duration, Instant};
 
 use crate::utils::get_user_key;
 use crate::utils::send_one_eth;
-use crate::utils::start_orchestrators;
 use crate::TOTAL_TIMEOUT;
 use crate::{get_fee, utils::ValidatorKeys};
 use clarity::Address as EthAddress;
@@ -26,7 +25,6 @@ pub async fn happy_path_test_v2(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    validator_out: bool,
 ) {
     let mut grpc_client = grpc_client;
     let starting_event_nonce = get_event_nonce(
@@ -66,8 +64,6 @@ pub async fn happy_path_test_v2(
         "Successfully deployed new ERC20 representing FooToken on Cosmos with event nonce {}",
         ending_event_nonce
     );
-
-    start_orchestrators(keys.clone(), gravity_address, validator_out).await;
 
     let start = Instant::now();
     // the erc20 representing the cosmos asset on Ethereum

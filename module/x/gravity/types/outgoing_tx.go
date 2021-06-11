@@ -90,7 +90,14 @@ func (u SignerSetTx) GetCheckpoint(gravityID []byte) []byte {
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, packErr := contractAbi.Pack("checkpoint", gravityIDFixed, checkpoint, big.NewInt(int64(u.Nonce)), memberAddresses, convertedPowers)
+	bytes, packErr := contractAbi.Pack(
+		"checkpoint",
+		gravityIDFixed,
+		checkpoint,
+		big.NewInt(int64(u.Nonce)),
+		memberAddresses,
+		convertedPowers,
+	)
 
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
@@ -140,7 +147,8 @@ func (b BatchTx) GetCheckpoint(gravityID []byte) []byte {
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedBatch, err := encodedBatch.Pack("submitBatch",
+	abiEncodedBatch, err := encodedBatch.Pack(
+		"submitBatch",
 		gravityIDFixed,
 		batchMethodName,
 		txAmounts,
@@ -206,7 +214,8 @@ func (c ContractCallTx) GetCheckpoint(gravityID []byte) []byte {
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedCall, err := encodedCall.Pack("checkpoint",
+	abiEncodedCall, err := encodedCall.Pack(
+		"checkpoint",
 		gravityIDFixed,
 		logicCallMethodName,
 		transferAmounts,

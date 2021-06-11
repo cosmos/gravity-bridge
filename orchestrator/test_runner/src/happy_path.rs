@@ -1,4 +1,4 @@
-use crate::get_chain_id;
+// use crate::get_chain_id;
 use crate::get_fee;
 use crate::utils::*;
 use crate::MINER_ADDRESS;
@@ -18,8 +18,8 @@ use ethereum_gravity::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::SendToCosmosEvent;
 use rand::Rng;
-use std::{env, process::Command, time::Duration};
-use std::{process::ExitStatus, time::Instant};
+use std::time::Duration;
+use std::time::Instant;
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -31,11 +31,9 @@ pub async fn happy_path_test(
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
     erc20_address: EthAddress,
-    validator_out: bool,
+    _validator_out: bool,
 ) {
     let mut grpc_client = grpc_client;
-
-    start_orchestrators(keys.clone(), gravity_address, validator_out).await;
 
     // bootstrapping tests finish here and we move into operational tests
 
@@ -47,13 +45,20 @@ pub async fn happy_path_test(
     // power can be reallocated to the down validator before things stop
     // working. We'll settle for testing that the initial valset (generated
     // with the first block) is successfully updated
-    if !validator_out {
-        for _ in 0u32..2 {
-            test_valset_update(&web30, &keys, gravity_address).await;
-        }
-    } else {
-        wait_for_nonzero_valset(&web30, gravity_address).await;
-    }
+
+    // TODO JEHAN: bring this back in once we have a gRPC library for delegating
+    // if !validator_out {
+    //     for _ in 0u32..2 {
+    //         test_valset_update(&web30, &keys, gravity_address).await;
+    //     }
+    // } else {
+    //     wait_for_nonzero_valset(&web30, gravity_address).await;
+    // }
+
+    // TODO JEHAN: take this out once the above has been brought back in
+    wait_for_nonzero_valset(&web30, gravity_address).await;
+
+    println!(":==: got past wait_for_nonzero_valset");
 
     // generate an address for coin sending tests, this ensures test imdepotency
     let mut rng = rand::thread_rng();
@@ -113,63 +118,63 @@ pub async fn happy_path_test(
 /// our re-delegation. This is actually not the best way to handle this problem
 /// ideally we would send the tx staking delegate command ourselves and never need
 /// to know what the binary name is
-pub fn chain_binary() -> Option<String> {
-    match env::var("CHAIN_BINARY") {
-        Ok(s) => Some(s),
-        _ => None,
-    }
-}
+// pub fn chain_binary() -> Option<String> {
+//     match env::var("CHAIN_BINARY") {
+//         Ok(s) => Some(s),
+//         _ => None,
+//     }
+// }
 
 /// This deals with the horrible error behavior of the Cosmos sdk command
 /// line, mainly that when the tx seq changes while creating the message
 /// it doesn't produce a failed output status or even print to stderror
 /// it logs to stdout and simply fails. This will retry every 5 seconds
 /// until the delegation succeeds
-pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
-    let args = [
-        "tx",
-        "staking",
-        "delegate",
-        // target address
-        delegate_address,
-        // amount, this should be about 4% of the total power to start
-        amount,
-        "--home=/validator1",
-        // this is defined in /tests/container-scripts/setup-validator.sh
-        &format!("--chain-id={}", get_chain_id()),
-        "--keyring-backend=test",
-        "--yes",
-        "--from=validator1",
-    ];
-    let mut cmd = if let Some(bin) = chain_binary() {
-        Command::new(bin)
-    } else {
-        Command::new("gravity")
-    };
+// pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
+//     let args = [
+//         "tx",
+//         "staking",
+//         "delegate",
+//         // target address
+//         delegate_address,
+//         // amount, this should be about 4% of the total power to start
+//         amount,
+//         "--home=/validator1",
+//         // this is defined in /tests/container-scripts/setup-validator.sh
+//         &format!("--chain-id={}", get_chain_id()),
+//         "--keyring-backend=test",
+//         "--yes",
+//         "--from=validator1",
+//     ];
+//     let mut cmd = if let Some(bin) = chain_binary() {
+//         Command::new(bin)
+//     } else {
+//         Command::new("gravity")
+//     };
 
-    let cmd = cmd.args(&args);
-    let mut output = cmd
-        .current_dir("/")
-        .output()
-        .expect("Failed to update stake to trigger validator set change");
-    let mut stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    while stdout.contains("account sequence mismatch") {
-        if stdout.contains("insufficient funds") {
-            panic!("Can't continue to produce validator sets! Not enough STAKE token")
-        }
-        output = cmd
-            .current_dir("/")
-            .output()
-            .expect("Failed to update stake to trigger validator set change");
-        stdout = String::from_utf8_lossy(&output.stdout).to_string();
-        delay_for(Duration::from_secs(5)).await;
-    }
-    info!("stdout: {}", stdout);
-    info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-    if !ExitStatus::success(&output.status) {
-        panic!("Delegation failed!")
-    }
-}
+//     let cmd = cmd.args(&args);
+//     let mut output = cmd
+//         .current_dir("/")
+//         .output()
+//         .expect("Failed to update stake to trigger validator set change");
+//     let mut stdout = String::from_utf8_lossy(&output.stdout).to_string();
+//     while stdout.contains("account sequence mismatch") {
+//         if stdout.contains("insufficient funds") {
+//             panic!("Can't continue to produce validator sets! Not enough STAKE token")
+//         }
+//         output = cmd
+//             .current_dir("/")
+//             .output()
+//             .expect("Failed to update stake to trigger validator set change");
+//         stdout = String::from_utf8_lossy(&output.stdout).to_string();
+//         delay_for(Duration::from_secs(5)).await;
+//     }
+//     info!("stdout: {}", stdout);
+//     info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+//     if !ExitStatus::success(&output.status) {
+//         panic!("Delegation failed!")
+//     }
+// }
 
 pub async fn wait_for_nonzero_valset(web30: &Web3, gravity_address: EthAddress) {
     let start = Instant::now();
@@ -178,7 +183,7 @@ pub async fn wait_for_nonzero_valset(web30: &Web3, gravity_address: EthAddress) 
         .expect("Failed to get current eth valset");
 
     while 0 == current_eth_valset_nonce {
-        info!("Validator set is not yet updated to 0>, waiting",);
+        info!("Validator set is not yet updated to >0, waiting");
         current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
             .await
             .expect("Failed to get current eth valset");
@@ -219,7 +224,8 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
         "Delegating {} to {} in order to generate a validator set update",
         amount, delegate_address
     );
-    delegate_tokens(delegate_address, amount).await;
+    // TODO JEHAN: Bring this back in once we have a gRPC endpoint for delegation
+    // delegate_tokens(delegate_address, amount).await;
 
     let mut current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
         .await
@@ -227,7 +233,7 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
 
     while starting_eth_valset_nonce == current_eth_valset_nonce {
         info!(
-            "Validator set is not yet updated to {}>, waiting",
+            "Validator set is not yet updated to >{}, waiting",
             starting_eth_valset_nonce
         );
         current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
@@ -238,6 +244,7 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
             panic!("Failed to update validator set");
         }
     }
+
     assert!(starting_eth_valset_nonce != current_eth_valset_nonce);
     info!("Validator set successfully updated!");
 }
@@ -455,6 +462,7 @@ async fn submit_duplicate_erc20_send(
             contact,
             c_key,
             vec![event.clone()],
+            vec![],
             vec![],
             vec![],
             vec![],

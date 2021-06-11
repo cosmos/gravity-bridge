@@ -27,12 +27,12 @@ func GetQueryCmd() *cobra.Command {
 		CmdSignerSetTxs(),
 		CmdBatchTxs(),
 		CmdContractCallTxs(),
-		CmdSignerSetTxEthereumSignatures(),
-		CmdBatchTxEthereumSignatures(),
-		CmdContractCallTxEthereumSignatures(),
-		CmdPendingSignerSetTxEthereumSignatures(),
-		CmdPendingBatchTxEthereumSignatures(),
-		CmdPendingContractCallTxEthereumSignatures(),
+		CmdSignerSetTxConfirmations(),
+		CmdBatchTxConfirmations(),
+		CmdContractCallTxConfirmations(),
+		CmdUnsignedSignerSetTxs(),
+		CmdUnsignedBatchTxs(),
+		CmdUnsignedContractCallTxs(),
 		CmdLastSubmittedEthereumEvent(),
 		CmdBatchTxFees(),
 		CmdERC20ToDenom(),
@@ -92,7 +92,7 @@ func CmdSignerSetTx() *cobra.Command {
 			}
 
 			req := types.SignerSetTxRequest{
-				Nonce: nonce,
+				SignerSetNonce: nonce,
 			}
 
 			res, err := queryClient.SignerSetTx(cmd.Context(), &req)
@@ -135,8 +135,8 @@ func CmdBatchTx() *cobra.Command {
 			}
 
 			req := types.BatchTxRequest{
-				ContractAddress: contractAddress,
-				Nonce:           nonce,
+				TokenContract: contractAddress,
+				BatchNonce:    nonce,
 			}
 
 			res, err := queryClient.BatchTx(cmd.Context(), &req)
@@ -273,9 +273,9 @@ func CmdContractCallTxs() *cobra.Command {
 	return cmd
 }
 
-func CmdSignerSetTxEthereumSignatures() *cobra.Command {
+func CmdSignerSetTxConfirmations() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "signer-set-tx-ethereum-signatures [nonce] [validator-or-orchestrator-address]",
+		Use:   "signer-set-tx-ethereum-signatures [nonce]",
 		Args:  cobra.ExactArgs(2),
 		Short: "", // TODO(levi) provide short description
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -285,16 +285,14 @@ func CmdSignerSetTxEthereumSignatures() *cobra.Command {
 			}
 
 			var ( // args
-				nonce   uint64 // TODO(levi) init and validate from args[0]
-				address string // TODO(levi) init and validate from args[1]
+				nonce uint64 // TODO(levi) init and validate from args[0]
 			)
 
-			req := types.SignerSetTxEthereumSignaturesRequest{
-				Nonce:   nonce,
-				Address: address,
+			req := types.SignerSetTxConfirmationsRequest{
+				SignerSetNonce: nonce,
 			}
 
-			res, err := queryClient.SignerSetTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.SignerSetTxConfirmations(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
@@ -307,9 +305,9 @@ func CmdSignerSetTxEthereumSignatures() *cobra.Command {
 	return cmd
 }
 
-func CmdBatchTxEthereumSignatures() *cobra.Command {
+func CmdBatchTxConfirmations() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "batch-tx-ethereum-signatures [nonce] [contract-address] (validator-or-orchestrator-address)",
+		Use:   "batch-tx-ethereum-signatures [nonce] [contract-address]",
 		Args:  cobra.MinimumNArgs(2),
 		Short: "", // TODO(levi) provide short description
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -321,7 +319,6 @@ func CmdBatchTxEthereumSignatures() *cobra.Command {
 			var ( // args
 				nonce           uint64
 				contractAddress string
-				address         string // TODO(levi) init and validate from args[2]
 			)
 
 			if nonce, err = parseNonce(args[0]); err != nil {
@@ -333,13 +330,12 @@ func CmdBatchTxEthereumSignatures() *cobra.Command {
 				return nil
 			}
 
-			req := types.BatchTxEthereumSignaturesRequest{
-				Nonce:           nonce,
-				ContractAddress: contractAddress,
-				Address:         address,
+			req := types.BatchTxConfirmationsRequest{
+				BatchNonce:    nonce,
+				TokenContract: contractAddress,
 			}
 
-			res, err := queryClient.BatchTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.BatchTxConfirmations(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
@@ -352,9 +348,9 @@ func CmdBatchTxEthereumSignatures() *cobra.Command {
 	return cmd
 }
 
-func CmdContractCallTxEthereumSignatures() *cobra.Command {
+func CmdContractCallTxConfirmations() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "contract-call-tx-ethereum-signatures [invalidation-scope] [invalidation-nonce] (validator-or-orchestrator-address)",
+		Use:   "contract-call-tx-ethereum-signatures [invalidation-scope] [invalidation-nonce]",
 		Args:  cobra.MinimumNArgs(2),
 		Short: "", // TODO(levi) provide short description
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -366,16 +362,14 @@ func CmdContractCallTxEthereumSignatures() *cobra.Command {
 			var ( // args
 				invalidationScope []byte // TODO(levi) init and validate from args[0]
 				invalidationNonce uint64 // TODO(levi) init and validate from args[1]
-				address           string // TODO(levi) init and validate from args[2]
 			)
 
-			req := types.ContractCallTxEthereumSignaturesRequest{
+			req := types.ContractCallTxConfirmationsRequest{
 				InvalidationNonce: invalidationNonce,
 				InvalidationScope: invalidationScope,
-				Address:           address,
 			}
 
-			res, err := queryClient.ContractCallTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.ContractCallTxConfirmations(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
@@ -388,7 +382,7 @@ func CmdContractCallTxEthereumSignatures() *cobra.Command {
 	return cmd
 }
 
-func CmdPendingSignerSetTxEthereumSignatures() *cobra.Command {
+func CmdUnsignedSignerSetTxs() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pending-signer-set-tx-ethereum-signatures [validator-or-orchestrator-address]",
 		Args:  cobra.ExactArgs(1),
@@ -403,11 +397,11 @@ func CmdPendingSignerSetTxEthereumSignatures() *cobra.Command {
 				address string // TODO(levi) init and validate from args[0]
 			)
 
-			req := types.PendingSignerSetTxEthereumSignaturesRequest{
+			req := types.UnsignedSignerSetTxsRequest{
 				Address: address,
 			}
 
-			res, err := queryClient.PendingSignerSetTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.UnsignedSignerSetTxs(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
@@ -420,7 +414,7 @@ func CmdPendingSignerSetTxEthereumSignatures() *cobra.Command {
 	return cmd
 }
 
-func CmdPendingBatchTxEthereumSignatures() *cobra.Command {
+func CmdUnsignedBatchTxs() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pending-batch-tx-ethereum-signatures [address]",
 		Args:  cobra.ExactArgs(1),
@@ -435,11 +429,11 @@ func CmdPendingBatchTxEthereumSignatures() *cobra.Command {
 				address string // TODO(levi) init and validate from args[0]
 			)
 
-			req := types.PendingBatchTxEthereumSignaturesRequest{
+			req := types.UnsignedBatchTxsRequest{
 				Address: address,
 			}
 
-			res, err := queryClient.PendingBatchTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.UnsignedBatchTxs(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
@@ -452,7 +446,7 @@ func CmdPendingBatchTxEthereumSignatures() *cobra.Command {
 	return cmd
 }
 
-func CmdPendingContractCallTxEthereumSignatures() *cobra.Command {
+func CmdUnsignedContractCallTxs() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pending-contract-call-tx-ethereum-signatures [address]",
 		Args:  cobra.ExactArgs(1),
@@ -467,11 +461,11 @@ func CmdPendingContractCallTxEthereumSignatures() *cobra.Command {
 				address string // TODO(levi) init and validate from args[0]
 			)
 
-			req := types.PendingContractCallTxEthereumSignaturesRequest{
+			req := types.UnsignedContractCallTxsRequest{
 				Address: address,
 			}
 
-			res, err := queryClient.PendingContractCallTxEthereumSignatures(cmd.Context(), &req)
+			res, err := queryClient.UnsignedContractCallTxs(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}

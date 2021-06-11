@@ -8,24 +8,24 @@ import (
 )
 
 var (
-	_ EthereumSignature = &SignerSetTxSignature{}
-	_ EthereumSignature = &ContractCallTxSignature{}
-	_ EthereumSignature = &BatchTxSignature{}
+	_ EthereumTxConfirmation = &SignerSetTxConfirmation{}
+	_ EthereumTxConfirmation = &ContractCallTxConfirmation{}
+	_ EthereumTxConfirmation = &BatchTxConfirmation{}
 )
 
 ///////////////
 // GetSigner //
 ///////////////
 
-func (u *SignerSetTxSignature) GetSigner() common.Address {
+func (u *SignerSetTxConfirmation) GetSigner() common.Address {
 	return common.HexToAddress(u.EthereumSigner)
 }
 
-func (u *ContractCallTxSignature) GetSigner() common.Address {
+func (u *ContractCallTxConfirmation) GetSigner() common.Address {
 	return common.HexToAddress(u.EthereumSigner)
 }
 
-func (u *BatchTxSignature) GetSigner() common.Address {
+func (u *BatchTxConfirmation) GetSigner() common.Address {
 	return common.HexToAddress(u.EthereumSigner)
 }
 
@@ -33,15 +33,15 @@ func (u *BatchTxSignature) GetSigner() common.Address {
 // GetStoreIndex //
 ///////////////////
 
-func (sstx *SignerSetTxSignature) GetStoreIndex() []byte {
-	return MakeSignerSetTxKey(sstx.Nonce)
+func (sstx *SignerSetTxConfirmation) GetStoreIndex() []byte {
+	return MakeSignerSetTxKey(sstx.SignerSetNonce)
 }
 
-func (btx *BatchTxSignature) GetStoreIndex() []byte {
-	return MakeBatchTxKey(common.HexToAddress(btx.TokenContract), btx.Nonce)
+func (btx *BatchTxConfirmation) GetStoreIndex() []byte {
+	return MakeBatchTxKey(common.HexToAddress(btx.TokenContract), btx.BatchNonce)
 }
 
-func (cctx *ContractCallTxSignature) GetStoreIndex() []byte {
+func (cctx *ContractCallTxConfirmation) GetStoreIndex() []byte {
 	return MakeContractCallTxKey(cctx.InvalidationScope, cctx.InvalidationNonce)
 }
 
@@ -49,8 +49,8 @@ func (cctx *ContractCallTxSignature) GetStoreIndex() []byte {
 // Validate //
 //////////////
 
-func (u *SignerSetTxSignature) Validate() error {
-	if u.Nonce == 0 {
+func (u *SignerSetTxConfirmation) Validate() error {
+	if u.SignerSetNonce == 0 {
 		return fmt.Errorf("nonce must be set")
 	}
 	if !common.IsHexAddress(u.EthereumSigner) {
@@ -62,7 +62,7 @@ func (u *SignerSetTxSignature) Validate() error {
 	return nil
 }
 
-func (u *ContractCallTxSignature) Validate() error {
+func (u *ContractCallTxConfirmation) Validate() error {
 	if u.InvalidationNonce == 0 {
 		return fmt.Errorf("invalidation nonce must be set")
 	}
@@ -78,8 +78,8 @@ func (u *ContractCallTxSignature) Validate() error {
 	return nil
 }
 
-func (u *BatchTxSignature) Validate() error {
-	if u.Nonce == 0 {
+func (u *BatchTxConfirmation) Validate() error {
+	if u.BatchNonce == 0 {
 		return fmt.Errorf("nonce must be set")
 	}
 	if !common.IsHexAddress(u.TokenContract) {

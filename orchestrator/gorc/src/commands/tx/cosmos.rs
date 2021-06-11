@@ -42,9 +42,6 @@ pub struct SendToEth {
 
     #[options(help = "print help message")]
     help: bool,
-
-    #[options(help = "numeber of times to sent to ethereum")]
-    times: Option<u32>,
 }
 
 fn parse_denom(s: &str) -> (String, String) {
@@ -149,31 +146,8 @@ impl Runnable for SendToEth {
         }
         println!("Cosmos balances {:?}", balances);
 
-        let times = if let Some (x)=self.times{
-            x
-        } else {
-            1
-        };
-
         if found.is_none() {
-            panic!("You don't have any {} tokens!", denom);
-        } else if amount.amount.clone() * times.into() >= found.clone().unwrap().amount
-            && times == 1
-        {
-            if is_cosmos_originated {
-                panic!("Your transfer of {} {} tokens is greater than your balance of {} tokens. Remember you need some to pay for fees!", print_atom(amount.amount), denom, print_atom(found.unwrap().amount.clone()));
-            } else {
-                panic!("Your transfer of {} {} tokens is greater than your balance of {} tokens. Remember you need some to pay for fees!", print_eth(amount.amount), denom, print_eth(found.unwrap().amount.clone()));
-            }
-        } else if amount.amount.clone() * times.into() >= found.clone().unwrap().amount {
-            if is_cosmos_originated {
-                panic!("Your transfer of {} * {} {} tokens is greater than your balance of {} tokens. Try to reduce the amount or the --times parameter", print_atom(amount.amount), times, denom, print_atom(found.unwrap().amount.clone()));
-            } else {
-                panic!("Your transfer of {} * {} {} tokens is greater than your balance of {} tokens. Try to reduce the amount or the --times parameter", print_eth(amount.amount), times, denom, print_eth(found.unwrap().amount.clone()));
-            }
-        }
-
-        for _ in 0..times {
+            panic!("You don't have any {} tokens!", denom);}
             println!(
                 "Locking {:?} / {} into the batch pool",
                 amount,
@@ -191,7 +165,6 @@ impl Runnable for SendToEth {
                 Ok(tx_id) => println!("Send to Eth txid {}", tx_id.txhash),
                 Err(e) => println!("Failed to send tokens! {:?}", e),
             }
-        }
         })
         .unwrap_or_else(|e| {
             status_err!("executor exited with error: {}", e);

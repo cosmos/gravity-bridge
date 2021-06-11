@@ -2,18 +2,17 @@ package types
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/gogo/protobuf/proto"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
-// EthereumSignature represents one validtors signature for a given
+// EthereumTxConfirmation represents one validtors signature for a given
 // outgoing ethereum transaction
-type EthereumSignature interface {
+type EthereumTxConfirmation interface {
 	proto.Message
 
 	GetSigner() common.Address
-	GetSignature() hexutil.Bytes
+	GetSignature() []byte
 	GetStoreIndex() []byte
 	Validate() error
 }
