@@ -18,33 +18,32 @@ import (
 var _ types.QueryServer = Keeper{}
 
 func (k Keeper) Params(c context.Context, req *types.ParamsRequest) (*types.ParamsResponse, error) {
-	var params types.Params
-	k.paramSpace.GetParamSet(sdk.UnwrapSDKContext(c), &params)
+	params := k.GetParams(sdk.UnwrapSDKContext(c))
 	return &types.ParamsResponse{Params: params}, nil
 }
 
 func (k Keeper) LatestSignerSetTx(c context.Context, req *types.LatestSignerSetTxRequest) (*types.SignerSetTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// TODO: audit once we finalize storage
-	var otx types.OutgoingTx
-
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.OutgoingTxKey}, types.SignerSetTxPrefixByte))
 	iter := store.ReverseIterator(nil, nil)
 	defer iter.Close()
 
+	if !iter.Valid() {
+		return nil, status.Errorf(codes.NotFound, "latest signer set not found")
+	}
+
 	var any cdctypes.Any
 	k.cdc.MustUnmarshalBinaryBare(iter.Value(), &any)
 
+	var otx types.OutgoingTx
 	if err := k.cdc.UnpackAny(&any, &otx); err != nil {
 		return nil, err
 	}
-
 	ss, ok := otx.(*types.SignerSetTx)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "couldn't cast to signer set for latest")
 	}
-
 	return &types.SignerSetTxResponse{SignerSet: ss}, nil
 }
 
@@ -269,16 +268,15 @@ func (k Keeper) UnsignedContractCallTxs(c context.Context, req *types.UnsignedCo
 
 func (k Keeper) LastSubmittedEthereumEvent(c context.Context, req *types.LastSubmittedEthereumEventRequest) (*types.LastSubmittedEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	res := &types.LastSubmittedEthereumEventResponse{}
-
 	valAddr, err := k.getSignerValidator(ctx, req.Address)
 	if err != nil {
 		return nil, err
 	}
 
-	res.EventNonce = k.getLastEventNonceByValidator(ctx, valAddr)
-
-	return &types.LastSubmittedEthereumEventResponse{}, nil
+	res := &types.LastSubmittedEthereumEventResponse{
+		EventNonce: k.getLastEventNonceByValidator(ctx, valAddr),
+	}
+	return res, nil
 }
 
 func (k Keeper) BatchTxFees(c context.Context, req *types.BatchTxFeesRequest) (*types.BatchTxFeesResponse, error) {

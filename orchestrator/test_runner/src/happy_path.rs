@@ -31,7 +31,7 @@ pub async fn happy_path_test(
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
     erc20_address: EthAddress,
-    validator_out: bool,
+    _validator_out: bool,
 ) {
     let mut grpc_client = grpc_client;
 

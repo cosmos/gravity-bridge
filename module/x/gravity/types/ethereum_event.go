@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"log"
 
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -161,19 +160,14 @@ func (e20de *ERC20DeployedEvent) Validate() error {
 }
 
 func (sse *SignerSetTxExecutedEvent) Validate() error {
-	log.Println("SignerSetTxExecutedEvent.Validate")
-
 	if sse.EventNonce == 0 {
-		log.Println("SignerSetTxExecutedEvent Validate error: nonce cannot be 0")
 		return fmt.Errorf("event nonce cannot be 0")
 	}
 	if sse.Members == nil {
-		log.Println("SignerSetTxExecutedEvent Validate error: members cannot be nil")
 		return fmt.Errorf("members cannot be nil")
 	}
 	for i, member := range sse.Members {
 		if err := member.ValidateBasic(); err != nil {
-			log.Println("SignerSetTxExecutedEvent Validate error: ", fmt.Sprintf("ethereum signer %d error: %s", i, err))
 			return fmt.Errorf("ethereum signer %d error: %w", i, err)
 		}
 	}

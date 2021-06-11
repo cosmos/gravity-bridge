@@ -82,7 +82,7 @@ message ContractCallTx {
 
 message ERC20Token {
   string contract = 1;
-  bytes amount = 2 [
+  string amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

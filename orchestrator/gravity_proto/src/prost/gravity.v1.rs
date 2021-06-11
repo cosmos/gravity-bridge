@@ -97,8 +97,8 @@ pub struct ContractCallTx {
 pub struct Erc20Token {
     #[prost(string, tag = "1")]
     pub contract: ::prost::alloc::string::String,
-    #[prost(bytes = "vec", tag = "2")]
-    pub amount: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "2")]
+    pub amount: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IdSet {

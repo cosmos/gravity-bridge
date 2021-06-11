@@ -88,7 +88,7 @@ export interface ContractCallTx {
 
 export interface ERC20Token {
   contract: string;
-  amount: Uint8Array;
+  amount: string;
 }
 
 export interface IDSet {
@@ -998,7 +998,7 @@ export const ContractCallTx = {
   },
 };
 
-const baseERC20Token: object = { contract: "" };
+const baseERC20Token: object = { contract: "", amount: "" };
 
 export const ERC20Token = {
   encode(
@@ -1008,8 +1008,8 @@ export const ERC20Token = {
     if (message.contract !== "") {
       writer.uint32(10).string(message.contract);
     }
-    if (message.amount.length !== 0) {
-      writer.uint32(18).bytes(message.amount);
+    if (message.amount !== "") {
+      writer.uint32(18).string(message.amount);
     }
     return writer;
   },
@@ -1018,7 +1018,6 @@ export const ERC20Token = {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseERC20Token } as ERC20Token;
-    message.amount = new Uint8Array();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1026,7 +1025,7 @@ export const ERC20Token = {
           message.contract = reader.string();
           break;
         case 2:
-          message.amount = reader.bytes();
+          message.amount = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -1038,14 +1037,15 @@ export const ERC20Token = {
 
   fromJSON(object: any): ERC20Token {
     const message = { ...baseERC20Token } as ERC20Token;
-    message.amount = new Uint8Array();
     if (object.contract !== undefined && object.contract !== null) {
       message.contract = String(object.contract);
     } else {
       message.contract = "";
     }
     if (object.amount !== undefined && object.amount !== null) {
-      message.amount = bytesFromBase64(object.amount);
+      message.amount = String(object.amount);
+    } else {
+      message.amount = "";
     }
     return message;
   },
@@ -1053,10 +1053,7 @@ export const ERC20Token = {
   toJSON(message: ERC20Token): unknown {
     const obj: any = {};
     message.contract !== undefined && (obj.contract = message.contract);
-    message.amount !== undefined &&
-      (obj.amount = base64FromBytes(
-        message.amount !== undefined ? message.amount : new Uint8Array()
-      ));
+    message.amount !== undefined && (obj.amount = message.amount);
     return obj;
   },
 
@@ -1070,7 +1067,7 @@ export const ERC20Token = {
     if (object.amount !== undefined && object.amount !== null) {
       message.amount = object.amount;
     } else {
-      message.amount = new Uint8Array();
+      message.amount = "";
     }
     return message;
   },
