@@ -101,6 +101,10 @@ $gravity $home3 keys add --dry-run=true --output=json orch | jq . >> $n3dir/orch
 
 find $home_dir -name orchestrator_key.json | xargs cat | jq -r '.mnemonic' > $CHAINDIR/orchestrator-phrases
 
+echo "Adding denom metadata to genesis"
+jq ".app_state.bank.denom_metadata += [{\"description\":\"footoken\",\"display\":\"mfootoken\",\"base\":\"footoken\",\"denom_units\":[{\"denom\":\"footoken\",\"exponent\":0,\"aliases\":[]},{\"denom\":\"mfootoken\",\"exponent\":3,\"aliases\":[]}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+jq ".app_state.bank.denom_metadata += [{\"description\":\"stake\",\"display\":\"mstake\",\"base\":\"stake\",\"denom_units\":[{\"denom\":\"stake\",\"exponent\":0,\"aliases\":[]},{\"denom\":\"mstake\",\"exponent\":3,\"aliases\":[]}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+
 echo "Adding orchestrator keys to genesis"
 n0orchKey="$(jq .address $n0dir/orchestrator_key.json)"
 n1orchKey="$(jq .address $n1dir/orchestrator_key.json)"
@@ -138,10 +142,10 @@ jq ".alloc |= . + {$(jq .address $n2dir/eth_key.json) : {\"balance\": \"0x133700
 jq ".alloc |= . + {$(jq .address $n3dir/eth_key.json) : {\"balance\": \"0x1337000000000000000000\"}}" $home_dir/ETHGenesis.json | sponge $home_dir/ETHGenesis.json
 
 echo "Creating gentxs"
-$gravity $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid &>/dev/null
-$gravity $home1 gentx --ip $n1name val 100000000000stake $(jq -r .address $n1dir/eth_key.json) $(jq -r .address $n1dir/orchestrator_key.json) $kbt $cid &>/dev/null
-$gravity $home2 gentx --ip $n2name val 100000000000stake $(jq -r .address $n2dir/eth_key.json) $(jq -r .address $n2dir/orchestrator_key.json) $kbt $cid &>/dev/null
-$gravity $home3 gentx --ip $n3name val 100000000000stake $(jq -r .address $n3dir/eth_key.json) $(jq -r .address $n3dir/orchestrator_key.json) $kbt $cid &>/dev/null
+$gravity $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid #&>/dev/null
+$gravity $home1 gentx --ip $n1name val 100000000000stake $(jq -r .address $n1dir/eth_key.json) $(jq -r .address $n1dir/orchestrator_key.json) $kbt $cid #&>/dev/null
+$gravity $home2 gentx --ip $n2name val 100000000000stake $(jq -r .address $n2dir/eth_key.json) $(jq -r .address $n2dir/orchestrator_key.json) $kbt $cid #&>/dev/null
+$gravity $home3 gentx --ip $n3name val 100000000000stake $(jq -r .address $n3dir/eth_key.json) $(jq -r .address $n3dir/orchestrator_key.json) $kbt $cid #&>/dev/null
 
 echo "Collecting gentxs in $n0name"
 cp $n1cfgDir/gentx/*.json $n0cfgDir/gentx/

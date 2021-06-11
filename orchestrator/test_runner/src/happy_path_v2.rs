@@ -36,7 +36,7 @@ pub async fn happy_path_test_v2(
     .unwrap();
 
     let token_to_send_to_eth = "footoken".to_string();
-    let token_to_send_to_eth_display_name = "mfootoken".to_string();
+    let token_to_send_to_eth_display_name = "gravitymfootoken".to_string();
 
     deploy_erc20(
         token_to_send_to_eth.clone(),
