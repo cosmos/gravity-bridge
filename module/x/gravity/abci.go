@@ -1,6 +1,7 @@
 package gravity
 
 import (
+	"log"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -95,7 +96,11 @@ func pruneSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 // "Observe" those who have passed the threshold. Break the loop once we see
 // an attestation that has not passed the threshold
 func eventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
+	log.Println(":==: eventVoteRecordTally")
+
 	attmap := k.GetEthereumEventVoteRecordMapping(ctx)
+	log.Println(":==: eventVoteRecordTally attmap:", attmap)
+
 	// We make a slice with all the event nonces that are in the attestation mapping
 	keys := make([]uint64, 0, len(attmap))
 	for k := range attmap {

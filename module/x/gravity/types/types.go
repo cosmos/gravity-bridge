@@ -17,9 +17,6 @@ import (
 
 // ValidateBasic performs stateless checks on validity
 func (b *EthereumSigner) ValidateBasic() error {
-	if b.Power == 0 {
-		return sdkerrors.Wrap(ErrInvalid, "msg does not include power")
-	}
 	if !common.IsHexAddress(b.EthereumAddress) {
 		return sdkerrors.Wrap(ErrInvalid, "ethereum address")
 	}

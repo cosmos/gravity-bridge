@@ -4,7 +4,6 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -80,15 +79,15 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	}
 
 	// reset signatures in state
-	for _, siga := range data.Signatures {
-		sig, err := types.UnpackSignature(siga)
+	for _, confa := range data.Confirmations {
+		conf, err := types.UnpackConfirmation(confa)
 		if err != nil {
 			panic("invalid etheruem signature in genesis")
 		}
 		// TODO: not currently an easy way to get the validator address from the
 		// etherum address here. once we implement the third index for keys
 		// this will be easy.
-		k.SetEthereumSignature(ctx, sig, sdk.ValAddress{})
+		k.SetEthereumSignature(ctx, conf, sdk.ValAddress{})
 	}
 }
 
@@ -98,7 +97,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
 		p                        = k.GetParams(ctx)
 		outgoingTxs              []*cdctypes.Any
-		ethereumSignatures       []*cdctypes.Any
+		ethereumTxConfirmations  []*cdctypes.Any
 		attmap                   = k.GetEthereumEventVoteRecordMapping(ctx)
 		ethereumEventVoteRecords []*types.EthereumEventVoteRecord
 		delegates                = k.getDelegateKeys(ctx)
@@ -124,9 +123,9 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		ota, _ := types.PackOutgoingTx(otx)
 		outgoingTxs = append(outgoingTxs, ota)
 		sstx, _ := otx.(*types.SignerSetTx)
-		k.iterateEthereumSignatures(ctx, sstx.GetStoreIndex(), func(val sdk.ValAddress, sig hexutil.Bytes) bool {
-			siga, _ := types.PackSignature(&types.SignerSetTxSignature{sstx.Nonce, k.GetValidatorEthereumAddress(ctx, val).Hex(), sig})
-			ethereumSignatures = append(ethereumSignatures, siga)
+		k.iterateEthereumSignatures(ctx, sstx.GetStoreIndex(), func(val sdk.ValAddress, sig []byte) bool {
+			siga, _ := types.PackConfirmation(&types.SignerSetTxConfirmation{sstx.Nonce, k.GetValidatorEthereumAddress(ctx, val).Hex(), sig})
+			ethereumTxConfirmations = append(ethereumTxConfirmations, siga)
 			return false
 		})
 		return false
@@ -137,9 +136,9 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		ota, _ := types.PackOutgoingTx(otx)
 		outgoingTxs = append(outgoingTxs, ota)
 		btx, _ := otx.(*types.BatchTx)
-		k.iterateEthereumSignatures(ctx, btx.GetStoreIndex(), func(val sdk.ValAddress, sig hexutil.Bytes) bool {
-			siga, _ := types.PackSignature(&types.BatchTxSignature{btx.TokenContract, btx.BatchNonce, k.GetValidatorEthereumAddress(ctx, val).Hex(), sig})
-			ethereumSignatures = append(ethereumSignatures, siga)
+		k.iterateEthereumSignatures(ctx, btx.GetStoreIndex(), func(val sdk.ValAddress, sig []byte) bool {
+			siga, _ := types.PackConfirmation(&types.BatchTxConfirmation{btx.TokenContract, btx.BatchNonce, k.GetValidatorEthereumAddress(ctx, val).Hex(), sig})
+			ethereumTxConfirmations = append(ethereumTxConfirmations, siga)
 			return false
 		})
 		return false
@@ -150,9 +149,9 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		ota, _ := types.PackOutgoingTx(otx)
 		outgoingTxs = append(outgoingTxs, ota)
 		btx, _ := otx.(*types.ContractCallTx)
-		k.iterateEthereumSignatures(ctx, btx.GetStoreIndex(), func(val sdk.ValAddress, sig hexutil.Bytes) bool {
-			siga, _ := types.PackSignature(&types.ContractCallTxSignature{btx.InvalidationScope, btx.InvalidationNonce, k.GetValidatorEthereumAddress(ctx, val).Hex(), sig})
-			ethereumSignatures = append(ethereumSignatures, siga)
+		k.iterateEthereumSignatures(ctx, btx.GetStoreIndex(), func(val sdk.ValAddress, sig []byte) bool {
+			siga, _ := types.PackConfirmation(&types.ContractCallTxConfirmation{btx.InvalidationScope, btx.InvalidationNonce, k.GetValidatorEthereumAddress(ctx, val).Hex(), sig})
+			ethereumTxConfirmations = append(ethereumTxConfirmations, siga)
 			return false
 		})
 		return false
@@ -162,7 +161,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		Params:                     &p,
 		LastObservedEventNonce:     lastobserved,
 		OutgoingTxs:                outgoingTxs,
-		Signatures:                 ethereumSignatures,
+		Confirmations:              ethereumTxConfirmations,
 		EthereumEventVoteRecords:   ethereumEventVoteRecords,
 		DelegateKeys:               delegates,
 		Erc20ToDenoms:              erc20ToDenoms,

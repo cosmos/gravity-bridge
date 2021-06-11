@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/binary"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -17,13 +18,16 @@ func (k Keeper) recordEventVote(
 	event types.EthereumEvent,
 	val sdk.ValAddress,
 ) (*types.EthereumEventVoteRecord, error) {
+	log.Println(":==: recordEventVote event:", event)
+
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	// We check the event nonce in processEthereumEvent as well,
 	// but checking it here gives individual eth signers a chance to retry,
 	// and prevents validators from submitting two claims with the same nonce
 	lastEventNonce := k.getLastEventNonceByValidator(ctx, val)
-	if event.GetEventNonce() != lastEventNonce+1 {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "non contiguous event nonce")
+	expectedNonce := lastEventNonce + 1
+	if event.GetEventNonce() != expectedNonce {
+		return nil, sdkerrors.Wrapf(types.ErrInvalid, "non contiguous event nonce expected %v observed %v", expectedNonce, event.GetEventNonce())
 	}
 
 	// Tries to get an EthereumEventVoteRecord with the same eventNonce and event as the event that was submitted.

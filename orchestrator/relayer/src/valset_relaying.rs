@@ -75,12 +75,16 @@ pub async fn relay_valsets(
                     break;
                 } else if let Err(e) = res {
                     last_error = Some(e);
+                    // TODO(levi) break or return??
                 }
             }
+            // TODO(levi) this isn't handling errors
         }
+        // TODO(levi) this isn't handling errors
 
         latest_nonce -= 1
     }
+    // TODO(levi) this isn't handling errors
 
     if latest_confirmed.is_none() {
         error!("We don't have a latest confirmed valset?");
