@@ -13,8 +13,6 @@ use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::service_client::Servic
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastMode;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastTxRequest;
 use gravity_proto::gravity as proto;
-use sha3;
-use sha3::Digest;
 
 use gravity_utils::message_signatures::{
     encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
@@ -115,10 +113,10 @@ pub async fn send_valset_confirms(
         let message = encode_valset_confirm(gravity_id.clone(), valset.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
         info!(
-            "Sending valset update address {} sig {} hash {:?}",
+            "Sending valset update address {} sig {} hash {}",
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes()),
-            sha3::Keccak256::digest(&message),
+            bytes_to_hex_str(&message),
         );
         let confirm = proto::SignerSetTxConfirmation {
             ethereum_signer: our_eth_address.to_string(),
@@ -183,10 +181,10 @@ pub async fn send_batch_confirm(
         let message = encode_tx_batch_confirm(gravity_id.clone(), batch.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
         info!(
-            "Sending batch update address {} sig {} hash {:?}",
+            "Sending batch update address {} sig {} hash {}",
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes()),
-            sha3::Keccak256::digest(&message),
+            bytes_to_hex_str(&message),
         );
         let confirm = proto::BatchTxConfirmation {
             token_contract: batch.token_contract.to_string(),
@@ -252,10 +250,10 @@ pub async fn send_logic_call_confirm(
         let message = encode_logic_call_confirm(gravity_id.clone(), call.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
         info!(
-            "Sending LogicCall update address {} sig {} hash {:?}",
+            "Sending LogicCall update address {} sig {} hash {}",
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes()),
-            sha3::Keccak256::digest(&message),
+            bytes_to_hex_str(&message),
         );
         let confirm = proto::ContractCallTxConfirmation {
             ethereum_signer: our_eth_address.to_string(),
