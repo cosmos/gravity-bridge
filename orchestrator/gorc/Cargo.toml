@@ -18,7 +18,7 @@ deep_space = "2.1"
 clarity = "0.4"
 actix-rt = "2.2"
 abscissa_tokio = "0.6.0-pre.1"
-
+web30 = "0.12"
 
 [dependencies.abscissa_core]
 version = "0.6.0-pre.1"

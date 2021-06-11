@@ -1,6 +1,6 @@
 //! `cosmos subcommands` subcommand
 
-use crate::{application::APP, prelude::*};
+use crate::{application::APP, prelude::*, utils::*};
 use abscissa_core::{Command, Options, Runnable};
 use clarity::Address as EthAddress;
 use clarity::Uint256;
@@ -11,8 +11,6 @@ use gravity_proto::gravity::DenomToErc20Request;
 use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
 use regex::Regex;
 use std::{process::exit, time::Duration, u128};
-
-const TIMEOUT: Duration = Duration::from_secs(60);
 
 pub fn one_eth() -> f64 {
     1000000000000000000f64
@@ -44,21 +42,6 @@ pub struct SendToEth {
 
     #[options(help = "print help message")]
     help: bool,
-}
-
-/// TODO revisit this for higher precision while
-/// still representing the number to the user as a float
-/// this takes a number like 0.37 eth and turns it into wei
-/// or any erc20 with arbitrary decimals
-pub fn fraction_to_exponent(num: f64, exponent: u8) -> Uint256 {
-    let mut res = num;
-    // in order to avoid floating point rounding issues we
-    // multiply only by 10 each time. this reduces the rounding
-    // errors enough to be ignored
-    for _ in 0..exponent {
-        res *= 10f64
-    }
-    (res as u128).into()
 }
 
 fn parse_denom(s: &str) -> (String, String) {
