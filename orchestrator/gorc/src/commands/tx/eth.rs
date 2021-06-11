@@ -29,9 +29,6 @@ pub struct SendToCosmos {
 
     #[options(help = "print help message")]
     help: bool,
-
-    #[options(help = "numeber of times to sent to cosmos")]
-    times: Option<u32>,
 }
 
 fn lookup_eth_key(key: String) -> EthPrivateKey {
@@ -91,42 +88,31 @@ impl Runnable for SendToCosmos {
                 .await
                 .expect("Failed to get balance, check ERC20 contract address");
 
-            let times = if let Some(x) = self.times { x } else { 1 };
-
             if erc20_balance == 0u8.into() {
                 panic!(
                     "You have zero {} tokens, please double check your sender and erc20 addresses!",
                     erc20_contract
                 );
-            } else if amount.clone() * times.into() > erc20_balance {
-                panic!(
-                    "Insufficient balance {} > {}",
-                    amount * times.into(),
-                    erc20_balance
-                );
             }
-
-            for _ in 0..times {
-                println!(
-                    "Sending {} / {} to Cosmos from {} to {}",
-                    amount, erc20_contract, ethereum_public_key, to_cosmos_addr
-                );
-                // we send some erc20 tokens to the gravity contract to register a deposit
-                let res = send_to_cosmos(
-                    erc20_contract,
-                    contract_address,
-                    amount.clone(),
-                    to_cosmos_addr,
-                    eth_key,
-                    Some(TIMEOUT),
-                    &web3,
-                    vec![],
-                )
-                .await;
-                match res {
-                    Ok(tx_id) => println!("Send to Cosmos txid: {:#066x}", tx_id),
-                    Err(e) => println!("Failed to send tokens! {:?}", e),
-                }
+            println!(
+                "Sending {} / {} to Cosmos from {} to {}",
+                amount, erc20_contract, ethereum_public_key, to_cosmos_addr
+            );
+            // we send some erc20 tokens to the gravity contract to register a deposit
+            let res = send_to_cosmos(
+                erc20_contract,
+                contract_address,
+                amount.clone(),
+                to_cosmos_addr,
+                eth_key,
+                Some(TIMEOUT),
+                &web3,
+                vec![],
+            )
+            .await;
+            match res {
+                Ok(tx_id) => println!("Send to Cosmos txid: {:#066x}", tx_id),
+                Err(e) => println!("Failed to send tokens! {:?}", e),
             }
         })
         .unwrap_or_else(|e| {
