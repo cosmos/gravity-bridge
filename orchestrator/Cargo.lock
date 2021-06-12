@@ -1419,6 +1419,7 @@ dependencies = [
  "regex",
  "serde",
  "thiserror",
+ "tokio 1.5.0",
  "web30",
 ]
 
