@@ -112,7 +112,6 @@ pub async fn get_oldest_unsigned_transaction_batch(
             address: address.to_string(),
         })
         .await?;
-    // TODO(levi) is this really getting the oldest; feels like newest?
     let batches = request.into_inner().batches;
     let batch = batches.get(0);
     match batch {

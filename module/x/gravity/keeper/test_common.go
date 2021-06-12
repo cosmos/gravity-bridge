@@ -222,6 +222,10 @@ func (input TestInput) AddSendToEthTxsToPool(t *testing.T, ctx sdk.Context, toke
 	}
 }
 
+func (input TestInput) AddBalanceToBank(ctx sdk.Context, addr sdk.AccAddress, balances sdk.Coins) error {
+	return input.BankKeeper.SetBalances(ctx, addr, balances)
+}
+
 // SetupFiveValChain does all the initialization for a 5 Validator chain using the keys here
 func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 	t.Helper()

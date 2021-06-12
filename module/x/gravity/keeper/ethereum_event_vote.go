@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/binary"
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -18,8 +17,6 @@ func (k Keeper) recordEventVote(
 	event types.EthereumEvent,
 	val sdk.ValAddress,
 ) (*types.EthereumEventVoteRecord, error) {
-	log.Println(":==: recordEventVote event:", event)
-
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	// We check the event nonce in processEthereumEvent as well,
 	// but checking it here gives individual eth signers a chance to retry,
@@ -27,7 +24,12 @@ func (k Keeper) recordEventVote(
 	lastEventNonce := k.getLastEventNonceByValidator(ctx, val)
 	expectedNonce := lastEventNonce + 1
 	if event.GetEventNonce() != expectedNonce {
-		return nil, sdkerrors.Wrapf(types.ErrInvalid, "non contiguous event nonce expected %v observed %v", expectedNonce, event.GetEventNonce())
+		return nil, sdkerrors.Wrapf(types.ErrInvalid,
+			"non contiguous event nonce expected %v observed %v for validator %v",
+			expectedNonce,
+			event.GetEventNonce(),
+			val,
+		)
 	}
 
 	// Tries to get an EthereumEventVoteRecord with the same eventNonce and event as the event that was submitted.
@@ -145,11 +147,6 @@ func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, c
 		k.cdc.MustUnmarshalBinaryBare(bz, &out)
 		return &out
 	}
-}
-
-// deleteEthereumEventVoteRecord deletes an attestation given an event nonce and claim
-func (k Keeper) deleteEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.EthereumEventVoteRecord) {
-	ctx.KVStore(k.storeKey).Delete(types.MakeEthereumEventVoteRecordKey(eventNonce, claimHash))
 }
 
 // GetEthereumEventVoteRecordMapping returns a mapping of eventnonce -> attestations at that nonce
