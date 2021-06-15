@@ -228,7 +228,7 @@ pub async fn get_block_delay(web3: &Web3) -> Uint256 {
         1 | 3 | 7 => 6u8.into(),
         // Rinkeby, Goerli, Dev, our own Gravity Ethereum testnet, and Kotti respectively
         // all non-pow chains
-        4 | 5 | 2018 | 15 | 6 => 0u8.into(),
+        4 | 5 | 2018 | 15 | 6 | 31337 => 0u8.into(),
         // assume the safe option (POW) where we don't know
         _ => 6u8.into(),
     }
