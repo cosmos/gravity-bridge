@@ -218,7 +218,7 @@ chmod +x $home_dir/*/startup.sh
 echo "Building ethereum and validator images"
 docker-compose build ethereum $n0name $n1name $n2name $n3name
 
-echo "Starting testnet"
+echo "Starting ethereum and validators"
 docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name &>/dev/null
 docker-compose start ethereum $n0name $n1name $n2name $n3name &>/dev/null
 
@@ -233,7 +233,6 @@ if [[ ! $contractAddress ]]; then
   exit 1
 fi
 echo "Contract address: $contractAddress"
-
 docker-compose logs --no-color --no-log-prefix contract_deployer > $CHAINDIR/contracts
 
 echo "Gathering keys for orchestrators"

@@ -19,6 +19,11 @@ RUN apk add --no-cache $PACKAGES
 # Set working directory for the build
 WORKDIR /go/src/github.com/althea-net/cosmos-gravity-bridge/module
 
+# Get dependancies - will also be cached if we won't change mod/sum
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
 # Add source files
 COPY . .
 
