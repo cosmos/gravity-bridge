@@ -3,7 +3,7 @@ use crate::get_fee;
 use crate::utils::*;
 use crate::MINER_ADDRESS;
 use crate::MINER_PRIVATE_KEY;
-use crate::STARTING_STAKE_PER_VALIDATOR;
+use crate::OPERATION_TIMEOUT;
 use crate::TOTAL_TIMEOUT;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
@@ -31,7 +31,7 @@ pub async fn happy_path_test(
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
     erc20_address: EthAddress,
-    _validator_out: bool,
+    validator_out: bool,
 ) {
     let mut grpc_client = grpc_client;
 
@@ -46,19 +46,13 @@ pub async fn happy_path_test(
     // working. We'll settle for testing that the initial valset (generated
     // with the first block) is successfully updated
 
-    // TODO JEHAN: bring this back in once we have a gRPC library for delegating
-    // if !validator_out {
-    //     for _ in 0u32..2 {
-    //         test_valset_update(&web30, &keys, gravity_address).await;
-    //     }
-    // } else {
-    //     wait_for_nonzero_valset(&web30, gravity_address).await;
-    // }
-
-    // TODO JEHAN: take this out once the above has been brought back in
-    wait_for_nonzero_valset(&web30, gravity_address).await;
-
-    println!(":==: got past wait_for_nonzero_valset");
+    if !validator_out {
+        for _ in 0u32..2 {
+            test_valset_update(&web30, contact, &keys, gravity_address).await;
+        }
+    } else {
+        wait_for_nonzero_valset(&web30, gravity_address).await;
+    }
 
     // generate an address for coin sending tests, this ensures test imdepotency
     let mut rng = rand::thread_rng();
@@ -113,69 +107,6 @@ pub async fn happy_path_test(
     .await;
 }
 
-/// for downstream test cases the binary name needs to be different, so we detect
-/// if a runtime env var is set and if so use that as the chain binary name for
-/// our re-delegation. This is actually not the best way to handle this problem
-/// ideally we would send the tx staking delegate command ourselves and never need
-/// to know what the binary name is
-// pub fn chain_binary() -> Option<String> {
-//     match env::var("CHAIN_BINARY") {
-//         Ok(s) => Some(s),
-//         _ => None,
-//     }
-// }
-
-/// This deals with the horrible error behavior of the Cosmos sdk command
-/// line, mainly that when the tx seq changes while creating the message
-/// it doesn't produce a failed output status or even print to stderror
-/// it logs to stdout and simply fails. This will retry every 5 seconds
-/// until the delegation succeeds
-// pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
-//     let args = [
-//         "tx",
-//         "staking",
-//         "delegate",
-//         // target address
-//         delegate_address,
-//         // amount, this should be about 4% of the total power to start
-//         amount,
-//         "--home=/validator1",
-//         // this is defined in /tests/container-scripts/setup-validator.sh
-//         &format!("--chain-id={}", get_chain_id()),
-//         "--keyring-backend=test",
-//         "--yes",
-//         "--from=validator1",
-//     ];
-//     let mut cmd = if let Some(bin) = chain_binary() {
-//         Command::new(bin)
-//     } else {
-//         Command::new("gravity")
-//     };
-
-//     let cmd = cmd.args(&args);
-//     let mut output = cmd
-//         .current_dir("/")
-//         .output()
-//         .expect("Failed to update stake to trigger validator set change");
-//     let mut stdout = String::from_utf8_lossy(&output.stdout).to_string();
-//     while stdout.contains("account sequence mismatch") {
-//         if stdout.contains("insufficient funds") {
-//             panic!("Can't continue to produce validator sets! Not enough STAKE token")
-//         }
-//         output = cmd
-//             .current_dir("/")
-//             .output()
-//             .expect("Failed to update stake to trigger validator set change");
-//         stdout = String::from_utf8_lossy(&output.stdout).to_string();
-//         delay_for(Duration::from_secs(5)).await;
-//     }
-//     info!("stdout: {}", stdout);
-//     info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-//     if !ExitStatus::success(&output.status) {
-//         panic!("Delegation failed!")
-//     }
-// }
-
 pub async fn wait_for_nonzero_valset(web30: &Web3, gravity_address: EthAddress) {
     let start = Instant::now();
     let mut current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
@@ -194,7 +125,12 @@ pub async fn wait_for_nonzero_valset(web30: &Web3, gravity_address: EthAddress) 
     }
 }
 
-pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_address: EthAddress) {
+pub async fn test_valset_update(
+    web30: &Web3,
+    contact: &Contact,
+    keys: &[ValidatorKeys],
+    gravity_address: EthAddress,
+) {
     // if we don't do this the orchestrators may run ahead of us and we'll be stuck here after
     // getting credit for two loops when we did one
     let starting_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
@@ -204,7 +140,10 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
 
     // now we send a valset request that the orchestrators will pick up on
     // in this case we send it as the first validator because they can pay the fee
-    info!("Sending in valset request");
+    info!(
+        "Sending in valset request (starting_eth_valset_nonce {})",
+        starting_eth_valset_nonce
+    );
 
     // this is hacky and not really a good way to test validator set updates in a highly
     // repeatable fashion. What we really need to do is be aware of the total staking state
@@ -213,19 +152,49 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
     // makes any difference, eventually it will fail because the change to the total staked
     // percentage is too small.
     let mut rng = rand::thread_rng();
-    let validator_to_change = rng.gen_range(0..keys.len());
-    let delegate_address = &keys[validator_to_change]
-        .validator_key
+    let keys_to_change = rng.gen_range(0..keys.len());
+    let keys_to_change = &keys[keys_to_change];
+
+    let validator_to_change = keys_to_change.validator_key;
+    let delegate_address = validator_to_change
         .to_address("cosmosvaloper")
         .unwrap()
         .to_string();
-    let amount = &format!("{}stake", STARTING_STAKE_PER_VALIDATOR / 4);
+
+    // should be about 4% of the total power to start
+    // let amount = crate::STARTING_STAKE_PER_VALIDATOR / 4; // 12.5B
+    let amount = crate::STAKE_SUPPLY_PER_VALIDATOR / 4; // 25B
+    let amount = deep_space::Coin {
+        amount: amount.into(),
+        denom: "stake".to_string(),
+    };
     info!(
         "Delegating {} to {} in order to generate a validator set update",
         amount, delegate_address
     );
-    // TODO JEHAN: Bring this back in once we have a gRPC endpoint for delegation
-    // delegate_tokens(delegate_address, amount).await;
+
+    loop {
+        let res = contact
+            .delegate_to_validator(
+                delegate_address.parse().unwrap(),
+                amount.clone(),
+                get_fee(),
+                keys_to_change.orch_key,
+                Some(OPERATION_TIMEOUT),
+            )
+            .await;
+
+        if res.is_err() {
+            warn!("Delegate to validator failed (will retry) {:?}", res);
+            if Instant::now() - start > TOTAL_TIMEOUT {
+                panic!("Delegate to validator timed out.");
+            }
+            continue; // retry
+        }
+
+        info!("Delegated {} to {}", amount, delegate_address);
+        break;
+    }
 
     let mut current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
         .await

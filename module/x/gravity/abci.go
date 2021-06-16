@@ -58,16 +58,27 @@ func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
 	// 3. If power change between validators of Current signer set and latest signer set request is > 5%
 	latestSignerSetTx := k.GetLatestSignerSetTx(ctx)
-	lastUnbondingHeight := k.GetLastUnbondingBlockHeight(ctx)
 	if latestSignerSetTx == nil {
 		k.CreateSignerSetTx(ctx)
 		return
 	}
+
+	lastUnbondingHeight := k.GetLastUnbondingBlockHeight(ctx)
+	blockHeight := uint64(ctx.BlockHeight())
 	powerDiff := types.EthereumSigners(k.CurrentSignerSet(ctx)).PowerDiff(latestSignerSetTx.Signers)
-	if (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (powerDiff > 0.05) {
+
+	shouldCreate := (lastUnbondingHeight == blockHeight) || (powerDiff > 0.05)
+	ctx.Logger().Info("considering signer set tx creation",
+		"blockHeight", blockHeight,
+		"lastUnbondingHeight", lastUnbondingHeight,
+		"latestSignerSetTx.Nonce", latestSignerSetTx.Nonce,
+		"powerDiff", powerDiff,
+		"shouldCreate", shouldCreate,
+	)
+
+	if shouldCreate {
 		k.CreateSignerSetTx(ctx)
 	}
-
 }
 
 func pruneSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {

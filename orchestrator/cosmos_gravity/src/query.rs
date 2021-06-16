@@ -6,8 +6,6 @@ use gravity_utils::error::GravityError;
 use gravity_utils::types::*;
 use tonic::transport::Channel;
 
-use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
-
 /// get the valset for a given nonce (block) height
 pub async fn get_valset(
     client: &mut GravityQueryClient<Channel>,
@@ -25,28 +23,6 @@ pub async fn get_valset(
     };
     Ok(valset)
 }
-
-/// get the current valset. You should never sign this valset
-/// valset requests create a consensus point around the block height
-/// that transaction got in. Without that consensus point everyone trying
-/// to sign the 'current' valset would run into slight differences and fail
-/// to produce a viable update.
-// pub async fn get_current_valset(
-//     client: &mut GravityQueryClient<Channel>,
-// ) -> Result<Valset, GravityError> {
-//     let request = client
-//         .signer_set_tx(SignerSetTxRequest { nonce: 0 })
-//         .await?;
-//     let valset = request.into_inner().signer_set;
-//     if let Some(valset) = valset {
-//         Ok(valset.into())
-//     } else {
-//         error!("Current valset returned None? This should be impossible");
-//         Err(GravityError::InvalidBridgeStateError(
-//             "Must have a current valset!".to_string(),
-//         ))
-//     }
-// }
 
 /// This hits the /pending_valset_requests endpoint and will provide
 /// an array of validator sets we have not already signed
@@ -67,22 +43,18 @@ pub async fn get_oldest_unsigned_valsets(
 
 /// this input views the last five signer set txs that have been made, useful if you're
 /// a relayer looking to ferry confirmations
-/// TODO: this is not going to work because it no longer embeds the signatures in the signer set
-pub async fn get_latest_valsets(
+pub async fn get_latest_valset(
     client: &mut GravityQueryClient<Channel>,
-) -> Result<Vec<Valset>, GravityError> {
-    let request = client
-        .signer_set_txs(SignerSetTxsRequest {
-            pagination: Some(PageRequest {
-                key: vec![],
-                offset: 0,
-                limit: 5,
-                count_total: false,
-            }),
-        })
+) -> Result<Option<Valset>, GravityError> {
+    let response = client
+        .latest_signer_set_tx(LatestSignerSetTxRequest {})
         .await?;
-    let valsets = request.into_inner().signer_sets;
-    Ok(valsets.iter().map(|v| v.clone().into()).collect())
+    let valset = response.into_inner().signer_set;
+    let valset = match valset {
+        Some(v) => Some(v.into()),
+        None => None,
+    };
+    Ok(valset)
 }
 
 /// get all valset confirmations for a given nonce

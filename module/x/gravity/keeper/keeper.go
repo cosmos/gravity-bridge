@@ -74,11 +74,10 @@ func (k Keeper) incrementLatestSignerSetTxNonce(ctx sdk.Context) uint64 {
 
 // GetLatestSignerSetTxNonce returns the latest valset nonce
 func (k Keeper) GetLatestSignerSetTxNonce(ctx sdk.Context) uint64 {
-	if bz := ctx.KVStore(k.storeKey).Get([]byte{types.LatestSignerSetTxNonceKey}); bz == nil {
-		return 0
-	} else {
+	if bz := ctx.KVStore(k.storeKey).Get([]byte{types.LatestSignerSetTxNonceKey}); bz != nil {
 		return binary.BigEndian.Uint64(bz)
 	}
+	return 0
 }
 
 // GetLatestSignerSetTx returns the latest validator set in state
@@ -193,8 +192,8 @@ func (k Keeper) GetEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.A
 // creates the signer set tx object, emits an event and sets the signer set in state
 func (k Keeper) CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	nonce := k.incrementLatestSignerSetTxNonce(ctx)
-	ss := k.CurrentSignerSet(ctx)
-	sstx := types.NewSignerSetTx(nonce, uint64(ctx.BlockHeight()), ss)
+	currSignerSet := k.CurrentSignerSet(ctx)
+	newSignerSetTx := types.NewSignerSetTx(nonce, uint64(ctx.BlockHeight()), currSignerSet)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeMultisigUpdateRequest,
@@ -204,8 +203,13 @@ func (k Keeper) CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 			sdk.NewAttribute(types.AttributeKeySignerSetNonce, fmt.Sprint(nonce)),
 		),
 	)
-	k.SetOutgoingTx(ctx, sstx)
-	return sstx
+	k.SetOutgoingTx(ctx, newSignerSetTx)
+	ctx.Logger().Info("SignerSetTx created",
+		"nonce", newSignerSetTx.Nonce,
+		"height", newSignerSetTx.Height,
+		"signers", len(newSignerSetTx.Signers),
+	)
+	return newSignerSetTx
 }
 
 // CurrentSignerSetTx gets powers from the store and normalizes them

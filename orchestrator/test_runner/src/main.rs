@@ -51,9 +51,9 @@ lazy_static! {
 /// this value reflects the contents of /tests/container-scripts/setup-validator.sh
 /// and is used to compute if a stake change is big enough to trigger a validator set
 /// update since we want to make several such changes intentionally
-pub const STAKE_SUPPLY_PER_VALIDATOR: u128 = 1000000000;
+pub const STAKE_SUPPLY_PER_VALIDATOR: u128 = 100000000000; // 100B
 /// this is the amount each validator bonds at startup
-pub const STARTING_STAKE_PER_VALIDATOR: u128 = STAKE_SUPPLY_PER_VALIDATOR / 2;
+pub const STARTING_STAKE_PER_VALIDATOR: u128 = STAKE_SUPPLY_PER_VALIDATOR / 2; // 50B
 
 lazy_static! {
     // this key is the private key for the public key defined in tests/assets/ETHGenesis.json
@@ -175,6 +175,7 @@ pub async fn main() {
             .await;
             return;
         } else if test_type == "BATCH_STRESS" {
+            info!("Starting batch stress test");
             let contact = Contact::new(
                 COSMOS_NODE_GRPC.as_str(),
                 TOTAL_TIMEOUT,
@@ -184,7 +185,7 @@ pub async fn main() {
             transaction_stress_test(&web30, &contact, keys, gravity_address, erc20_addresses).await;
             return;
         } else if test_type == "VALSET_STRESS" {
-            info!("Starting Valset update stress test");
+            info!("Starting valset stress test");
             validator_set_stress_test(&web30, &contact, keys, gravity_address).await;
             return;
         } else if test_type == "V2_HAPPY_PATH" {

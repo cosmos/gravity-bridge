@@ -37,7 +37,7 @@ func TestValsetConfirmHash(t *testing.T) {
 	assert.Equal(t, correctHash, hexHash)
 }
 
-func TestValsetPowerDiff(t *testing.T) {
+func TestEthereumSigners_PowerDiff(t *testing.T) {
 	specs := map[string]struct {
 		start EthereumSigners
 		diff  EthereumSigners

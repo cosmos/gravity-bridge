@@ -85,13 +85,9 @@ find $home_dir -name validator_key.json | xargs cat | jq -r '.mnemonic' > $CHAIN
 
 echo "Adding validator addresses to genesis files"
 $gravity $home0 add-genesis-account $($gravity $home0 keys show val -a $kbt) $coins &>/dev/null
-#$gravity $home0 add-genesis-account $($FED $home0 keys show feeder) $coins &>/dev/null
 $gravity $home0 add-genesis-account $($gravity $home1 keys show val -a $kbt) $coins &>/dev/null
-#$gravity $home0 add-genesis-account $($FED $home1 keys show feeder) $coins &>/dev/null
 $gravity $home0 add-genesis-account $($gravity $home2 keys show val -a $kbt) $coins &>/dev/null
-#$gravity $home0 add-genesis-account $($FED $home2 keys show feeder) $coins &>/dev/null
 $gravity $home0 add-genesis-account $($gravity $home3 keys show val -a $kbt) $coins &>/dev/null
-#$gravity $home0 add-genesis-account $($FED $home3 keys show feeder) $coins &>/dev/null
 
 echo "Generating orchestrator keys"
 $gravity $home0 keys add --dry-run=true --output=json orch | jq . >> $n0dir/orchestrator_key.json

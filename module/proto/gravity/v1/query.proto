@@ -19,8 +19,6 @@ service Query {
     // option (google.api.http).get = "/gravity/v1/params";
   }
 
-  // TODO(levi) ensure routes are REST-ish:
-
   // get info on individual outgoing data
   rpc SignerSetTx(SignerSetTxRequest) returns (SignerSetTxResponse) {
     // option (google.api.http).get = "/gravity/v1/signer_set";
@@ -43,12 +41,10 @@ service Query {
   }
   rpc BatchTxs(BatchTxsRequest) returns (BatchTxsResponse) {
     // option (google.api.http).get = "/gravity/v1/batch/batch_txs";
-    // TODO(levi) propose:         "/gravity/v1/batch_txs";
   }
   rpc ContractCallTxs(ContractCallTxsRequest)
       returns (ContractCallTxsResponse) {
     // option (google.api.http).get = "/gravity/v1/batch/contract_call_txs";
-    // TODO(levi) propose:         "/gravity/v1/contract_call_txs";
   }
 
   // ethereum signature queries so validators can construct valid etherum

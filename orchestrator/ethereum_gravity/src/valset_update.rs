@@ -155,8 +155,11 @@ fn encode_valset_payload(
         sig_arrays.r,
         sig_arrays.s,
     ];
-    let payload = clarity::abi::encode_call("updateValset(address[],uint256[],uint256,address[],uint256[],uint256,uint8[],bytes32[],bytes32[])",
-    tokens).unwrap();
+
+    let payload = clarity::abi::encode_call(
+        "updateValset(address[],uint256[],uint256,address[],uint256[],uint256,uint8[],bytes32[],bytes32[])",
+        tokens,
+    ).unwrap();
 
     Ok(payload)
 }

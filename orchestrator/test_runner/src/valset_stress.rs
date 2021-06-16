@@ -6,11 +6,11 @@ use web30::client::Web3;
 
 pub async fn validator_set_stress_test(
     web30: &Web3,
-    _contact: &Contact,
+    contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
 ) {
     for _ in 0u32..10 {
-        test_valset_update(&web30, &keys, gravity_address).await;
+        test_valset_update(&web30, contact, &keys, gravity_address).await;
     }
 }
