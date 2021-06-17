@@ -139,6 +139,17 @@ impl ValsetUpdatedEvent {
         }
         Ok(res)
     }
+    /// returns all values in the array with event nonces greater
+    /// than the provided value
+    pub fn filter_by_event_nonce(event_nonce: u64, input: &[Self]) -> Vec<Self> {
+        let mut ret = Vec::new();
+        for item in input {
+            if item.event_nonce > event_nonce.into() {
+                ret.push(item.clone())
+            }
+        }
+        ret
+    }
 }
 
 /// A parsed struct representing the Ethereum event fired by the Gravity contract when
