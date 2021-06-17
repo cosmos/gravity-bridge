@@ -804,12 +804,12 @@ dependencies = [
 
 [[package]]
 name = "clarity"
-version = "0.4.5"
+version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e6e4fd4d89ab771e35070d5a4233f944e7769f44e99ce2c4ea565bd29ac4a6d"
+checksum = "f9a71f164b576fc638513be84beb1b2173a18ce1639d2ac9c9054e46f361e4e0"
 dependencies = [
  "lazy_static",
- "num-bigint 0.3.2",
+ "num-bigint 0.4.0",
  "num-traits",
  "num256",
  "secp256k1 0.20.1",
@@ -1988,7 +1988,6 @@ dependencies = [
  "autocfg",
  "num-integer",
  "num-traits",
- "serde",
 ]
 
 [[package]]
@@ -2000,6 +1999,7 @@ dependencies = [
  "autocfg",
  "num-integer",
  "num-traits",
+ "serde",
 ]
 
 [[package]]

@@ -62,15 +62,15 @@ pub fn to_arrays(input: Vec<GravitySignature>) -> GravitySignatureArrays {
         addresses.push(val.eth_address);
         powers.push(val.power);
         v.push(val.v);
-        r.push(Token::Bytes(val.r.to_bytes_be()));
-        s.push(Token::Bytes(val.s.to_bytes_be()));
+        r.push(val.r);
+        s.push(val.s);
     }
     GravitySignatureArrays {
         addresses,
         powers,
         v: v.into(),
-        r: Token::Dynamic(r),
-        s: Token::Dynamic(s),
+        r: r.into(),
+        s: s.into(),
     }
 }
 
