@@ -6,6 +6,8 @@ use cosmos_gravity::{query::get_last_event_nonce, send::send_ethereum_claims};
 use deep_space::Contact;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::get_with_retry::get_block_number_with_retry;
+use gravity_utils::get_with_retry::get_net_version_with_retry;
 use gravity_utils::types::event_signatures::*;
 use gravity_utils::{
     error::GravityError,
@@ -17,9 +19,6 @@ use gravity_utils::{
 use tonic::transport::Channel;
 use web30::client::Web3;
 use web30::jsonrpc::error::Web3Error;
-
-use crate::get_with_retry::get_block_number_with_retry;
-use crate::get_with_retry::get_net_version_with_retry;
 
 pub async fn check_for_events(
     web3: &Web3,

@@ -16,6 +16,9 @@ use tonic::transport::Channel;
 use url::Url;
 use web30::client::Web3;
 
+use crate::get_with_retry::get_balances_with_retry;
+use crate::get_with_retry::get_eth_balances_with_retry;
+
 pub struct Connections {
     pub web3: Option<Web3>,
     pub grpc: Option<GravityQueryClient<Channel>>,
@@ -308,7 +311,8 @@ pub async fn check_delegate_addresses(
 
 /// Checks if a given Coin, used for fees is in the provided address in a sufficient quantity
 pub async fn check_for_fee(fee: &Coin, address: CosmosAddress, contact: &Contact) {
-    for balance in contact.get_balances(address).await.unwrap() {
+    let balances = get_balances_with_retry(address, contact).await;
+    for balance in balances {
         if balance.denom.contains(&fee.denom) {
             if balance.amount < fee.amount {
                 error!("You have specified a fee that is greater than your balance of that coin! {}{} > {}{} ", fee.amount, fee.denom, balance.amount, balance.denom);
@@ -324,7 +328,7 @@ pub async fn check_for_fee(fee: &Coin, address: CosmosAddress, contact: &Contact
 
 /// Checks the user has some Ethereum in their address to pay for things
 pub async fn check_for_eth(address: EthAddress, web3: &Web3) {
-    let balance = web3.eth_get_balance(address).await.unwrap();
+    let balance = get_eth_balances_with_retry(address, web3).await;
     if balance == 0u8.into() {
         error!("You don't have any Ethereum! You will need to send some to {} for this program to work. Dust will do for basic operations, more info about average relaying costs will be presented as the program runs", address);
         exit(1);

@@ -1,16 +1,14 @@
 //! Basic utility functions to stubbornly get data
+use clarity::Address as EthAddress;
 use clarity::Uint256;
-use cosmos_gravity::query::get_last_event_nonce;
-use deep_space::address::Address as CosmosAddress;
-use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use deep_space::{address::Address as CosmosAddress, Coin, Contact};
 use std::time::Duration;
 use tokio::time::sleep as delay_for;
-use tonic::transport::Channel;
 use web30::client::Web3;
 
 pub const RETRY_TIME: Duration = Duration::from_secs(5);
 
-/// gets the current block number, no matter how long it takes
+/// gets the current Ethereum block number, no matter how long it takes
 pub async fn get_block_number_with_retry(web3: &Web3) -> Uint256 {
     let mut res = web3.eth_block_number().await;
     while res.is_err() {
@@ -21,20 +19,24 @@ pub async fn get_block_number_with_retry(web3: &Web3) -> Uint256 {
     res.unwrap()
 }
 
-/// gets the last event nonce, no matter how long it takes.
-pub async fn get_last_event_nonce_with_retry(
-    client: &mut GravityQueryClient<Channel>,
-    our_cosmos_address: CosmosAddress,
-    prefix: String,
-) -> u64 {
-    let mut res = get_last_event_nonce(client, our_cosmos_address, prefix.clone()).await;
+/// gets the current Ethereum block number, no matter how long it takes
+pub async fn get_eth_balances_with_retry(address: EthAddress, web3: &Web3) -> Uint256 {
+    let mut res = web3.eth_get_balance(address).await;
     while res.is_err() {
-        error!(
-            "Failed to get last event nonce, is the Cosmos GRPC working? {:?}",
-            res
-        );
+        error!("Failed to get Eth balances! Is your Eth node working?");
         delay_for(RETRY_TIME).await;
-        res = get_last_event_nonce(client, our_cosmos_address, prefix.clone()).await;
+        res = web3.eth_block_number().await;
+    }
+    res.unwrap()
+}
+
+/// gets Cosmos balances, no matter how long it takes
+pub async fn get_balances_with_retry(address: CosmosAddress, contact: &Contact) -> Vec<Coin> {
+    let mut res = contact.get_balances(address).await;
+    while res.is_err() {
+        error!("Failed to get Cosmos balances! Is your Cosmos node working?");
+        delay_for(RETRY_TIME).await;
+        res = contact.get_balances(address).await;
     }
     res.unwrap()
 }
