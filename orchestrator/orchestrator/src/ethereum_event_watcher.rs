@@ -223,12 +223,16 @@ pub async fn get_block_delay(web3: &Web3) -> Uint256 {
     let net_version = get_net_version_with_retry(web3).await;
 
     match net_version {
-        // Mainline Ethereum, Ethereum classic, or the Ropsten, Mordor testnets
+        // Mainline Ethereum, Ethereum classic, or the Ropsten, Kotti, Mordor testnets
         // all POW Chains
-        1 | 3 | 7 => 6u8.into(),
-        // Rinkeby, Goerli, Dev, our own Gravity Ethereum testnet, and Kotti respectively
-        // all non-pow chains
-        4 | 5 | 2018 | 15 | 6 | 31337 => 0u8.into(),
+        1 | 3 | 6 | 7 => 6u8.into(),
+        // Dev, our own Gravity Ethereum testnet, and Hardhat respectively
+        // all single signer chains with no chance of any reorgs
+        2018 | 15 | 31337 => 0u8.into(),
+        // Rinkeby and Goerli use Clique (POA) Consensus, finality takes
+        // up to num validators blocks. Number is higher than Ethereum based
+        // on experience with operational issues
+        4 | 5 => 10u8.into(),
         // assume the safe option (POW) where we don't know
         _ => 6u8.into(),
     }
