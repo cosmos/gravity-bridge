@@ -2,7 +2,7 @@
 //! or a transaction batch update. It then responds to these events by performing actions on the Cosmos chain if required
 
 use clarity::{utils::bytes_to_hex_str, Address as EthAddress, Uint256};
-use cosmos_gravity::{query::get_last_event_nonce, send::send_ethereum_claims};
+use cosmos_gravity::{query::get_last_event_nonce_for_validator, send::send_ethereum_claims};
 use deep_space::Contact;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
@@ -106,8 +106,12 @@ pub async fn check_for_events(
         // block, so we also need this routine so make sure we don't send in the first event in this hypothetical
         // multi event block again. In theory we only send all events for every block and that will pass of fail
         // atomicly but lets not take that risk.
-        let last_event_nonce =
-            get_last_event_nonce(grpc_client, our_cosmos_address, contact.get_prefix()).await?;
+        let last_event_nonce = get_last_event_nonce_for_validator(
+            grpc_client,
+            our_cosmos_address,
+            contact.get_prefix(),
+        )
+        .await?;
         let valsets = ValsetUpdatedEvent::filter_by_event_nonce(last_event_nonce, &valsets);
         let deposits = SendToCosmosEvent::filter_by_event_nonce(last_event_nonce, &deposits);
         let withdraws =
@@ -167,8 +171,15 @@ pub async fn check_for_events(
                 fee,
             )
             .await?;
-            let new_event_nonce =
-                get_last_event_nonce(grpc_client, our_cosmos_address, contact.get_prefix()).await?;
+            let new_event_nonce = get_last_event_nonce_for_validator(
+                grpc_client,
+                our_cosmos_address,
+                contact.get_prefix(),
+            )
+            .await?;
+
+            info!("Current event nonce is {}", new_event_nonce);
+
             // since we can't actually trust that the above txresponse is correct we have to check here
             // we may be able to trust the tx response post grpc
             if new_event_nonce == last_event_nonce {
