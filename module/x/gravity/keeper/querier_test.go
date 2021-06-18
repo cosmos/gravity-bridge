@@ -157,7 +157,7 @@ func TestLastValsetRequests(t *testing.T) {
 		"limit at 5": {
 			expResp: []byte(`[
 {
-  "nonce": "105",
+  "nonce": "6",
   "height": "105",
   "reward_amount": "0",
   "reward_token": "0x0000000000000000000000000000000000000000",
@@ -189,7 +189,7 @@ func TestLastValsetRequests(t *testing.T) {
   ]
 },
 {
-  "nonce": "104",
+  "nonce": "5",
   "height": "104",
   "reward_amount": "0",
   "reward_token": "0x0000000000000000000000000000000000000000",
@@ -217,7 +217,7 @@ func TestLastValsetRequests(t *testing.T) {
   ]
 },
 {
-  "nonce": "103",
+  "nonce": "4",
   "height": "103",
   "reward_amount": "0",
   "reward_token": "0x0000000000000000000000000000000000000000",
@@ -241,7 +241,7 @@ func TestLastValsetRequests(t *testing.T) {
   ]
 },
 {
-  "nonce": "102",
+  "nonce": "3",
   "height": "102",
   "reward_amount": "0",
   "reward_token": "0x0000000000000000000000000000000000000000",
@@ -261,7 +261,7 @@ func TestLastValsetRequests(t *testing.T) {
   ]
 },
 {
-  "nonce": "101",
+  "nonce": "2",
   "height": "101",
   "reward_amount": "0",
   "reward_token": "0x0000000000000000000000000000000000000000",
@@ -314,7 +314,7 @@ func TestPendingValsetRequests(t *testing.T) {
 		"find valset": {
 			expResp: []byte(`[
                                   {
-                                    "nonce": "105",
+                                    "nonce": "6",
                                     "members": [
                                       {
                                         "power": "715827882",
@@ -346,7 +346,7 @@ func TestPendingValsetRequests(t *testing.T) {
                                     "reward_token": "0x0000000000000000000000000000000000000000"
                                   },
                                   {
-                                    "nonce": "104",
+                                    "nonce": "5",
                                     "members": [
                                       {
                                         "power": "858993459",
@@ -374,7 +374,7 @@ func TestPendingValsetRequests(t *testing.T) {
                                     "reward_token": "0x0000000000000000000000000000000000000000"
                                   },
                                   {
-                                    "nonce": "103",
+                                    "nonce": "4",
                                     "members": [
                                       {
                                         "power": "1073741823",
@@ -398,7 +398,7 @@ func TestPendingValsetRequests(t *testing.T) {
                                     "reward_token": "0x0000000000000000000000000000000000000000"
                                   },
                                   {
-                                    "nonce": "102",
+                                    "nonce": "3",
                                     "members": [
                                       {
                                         "power": "1431655765",
@@ -418,7 +418,7 @@ func TestPendingValsetRequests(t *testing.T) {
                                     "reward_token": "0x0000000000000000000000000000000000000000"
                                   },
                                   {
-                                    "nonce": "101",
+                                    "nonce": "2",
                                     "members": [
                                       {
                                         "power": "2147483647",
@@ -434,7 +434,7 @@ func TestPendingValsetRequests(t *testing.T) {
                                     "reward_token": "0x0000000000000000000000000000000000000000"
                                   },
                                   {
-                                    "nonce": "100",
+                                    "nonce": "1",
                                     "members": [
                                       {
                                         "power": "4294967295",
@@ -858,7 +858,7 @@ func TestQueryCurrentValset(t *testing.T) {
 	currentValset := input.GravityKeeper.GetCurrentValset(ctx)
 
 	bridgeVal := types.BridgeValidator{EthereumAddress: ethAddress, Power: 4294967295}
-	expectedValset := types.NewValset(1234567, 1234567, []*types.BridgeValidator{&bridgeVal}, sdk.NewIntFromUint64(0), "0x0000000000000000000000000000000000000000")
+	expectedValset := types.NewValset(1, 1234567, []*types.BridgeValidator{&bridgeVal}, sdk.NewIntFromUint64(0), "0x0000000000000000000000000000000000000000")
 	assert.Equal(t, expectedValset, currentValset)
 }
 

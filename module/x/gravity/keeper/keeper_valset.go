@@ -51,12 +51,6 @@ func (k Keeper) StoreValset(ctx sdk.Context, valset *types.Valset) {
 	k.SetLatestValsetNonce(ctx, valset.Nonce)
 }
 
-//  SetLatestValsetNonce sets the latest valset nonce
-func (k Keeper) SetLatestValsetNonce(ctx sdk.Context, nonce uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LatestValsetNonce, types.UInt64Bytes(nonce))
-}
-
 // StoreValsetUnsafe is for storing a valiator set at a given height
 func (k Keeper) StoreValsetUnsafe(ctx sdk.Context, valset *types.Valset) {
 	store := ctx.KVStore(k.storeKey)
@@ -84,6 +78,20 @@ func (k Keeper) GetLatestValsetNonce(ctx sdk.Context) uint64 {
 		return 0
 	}
 	return types.UInt64FromBytes(bytes)
+}
+
+//  SetLatestValsetNonce sets the latest valset nonce
+func (k Keeper) SetLatestValsetNonce(ctx sdk.Context, nonce uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.LatestValsetNonce, types.UInt64Bytes(nonce))
+}
+
+// IncrementLatestValsetNonce increments the latest valset nonce in the store and returns it
+func (k Keeper) IncrementLatestValsetNonce(ctx sdk.Context) uint64 {
+	var nonce uint64 = k.GetLatestValsetNonce(ctx)
+	nonce++
+	k.SetLatestValsetNonce(ctx, nonce)
+	return nonce
 }
 
 // GetValset returns a valset by nonce
@@ -164,11 +172,14 @@ func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
 	return types.UInt64FromBytes(bytes)
 }
 
-// GetUnSlashedValsets returns all the unslashed validator sets in state
-func (k Keeper) GetUnSlashedValsets(ctx sdk.Context, maxHeight uint64) (out []*types.Valset) {
+// GetUnSlashedValsets returns all the "ready-to-slash" unslashed validator sets in state (valsets at least signedValsetsWindow blocks old)
+func (k Keeper) GetUnSlashedValsets(ctx sdk.Context, signedValsetsWindow uint64) (out []*types.Valset) {
 	lastSlashedValsetNonce := k.GetLastSlashedValsetNonce(ctx)
-	k.IterateValsetBySlashedValsetNonce(ctx, lastSlashedValsetNonce, maxHeight, func(_ []byte, valset *types.Valset) bool {
-		if valset.Nonce > lastSlashedValsetNonce {
+	blockHeight := uint64(ctx.BlockHeight())
+	k.IterateValsetBySlashedValsetNonce(ctx, lastSlashedValsetNonce, func(_ []byte, valset *types.Valset) bool {
+		// Implicitly the unslashed valsets appear after the last slashed valset,
+		// however not all valsets are ready-to-slash since validators have a window
+		if valset.Nonce > lastSlashedValsetNonce && !(blockHeight < valset.Height+signedValsetsWindow) {
 			out = append(out, valset)
 		}
 		return false
@@ -177,9 +188,11 @@ func (k Keeper) GetUnSlashedValsets(ctx sdk.Context, maxHeight uint64) (out []*t
 }
 
 // IterateValsetBySlashedValsetNonce iterates through all valset by last slashed valset nonce in ASC order
-func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedValsetNonce uint64, maxHeight uint64, cb func([]byte, *types.Valset) bool) {
+func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedValsetNonce uint64, cb func([]byte, *types.Valset) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetRequestKey)
-	iter := prefixStore.Iterator(types.UInt64Bytes(lastSlashedValsetNonce), types.UInt64Bytes(maxHeight))
+	// Consider all valsets, including the most recent one
+	cutoffNonce := k.GetLatestValsetNonce(ctx) + 1
+	iter := prefixStore.Iterator(types.UInt64Bytes(lastSlashedValsetNonce), types.UInt64Bytes(cutoffNonce))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {

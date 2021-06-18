@@ -154,18 +154,12 @@ func cleanupTimedOutLogicCalls(ctx sdk.Context, k keeper.Keeper) {
 }
 
 func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
-
-	maxHeight := uint64(0)
-
 	// don't slash in the beginning before there aren't even SignedValsetsWindow blocks yet
-	if uint64(ctx.BlockHeight()) > params.SignedValsetsWindow {
-		maxHeight = uint64(ctx.BlockHeight()) - params.SignedValsetsWindow
-	} else {
-		// we can't slash anyone if SignedValsetWindow blocks have not passed
+	if uint64(ctx.BlockHeight()) <= params.SignedValsetsWindow {
 		return
 	}
 
-	unslashedValsets := k.GetUnSlashedValsets(ctx, maxHeight)
+	unslashedValsets := k.GetUnSlashedValsets(ctx, params.SignedValsetsWindow)
 
 	// unslashedValsets are sorted by nonce in ASC order
 	// Question: do we need to sort each time? See if this can be epoched
@@ -179,7 +173,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
 
 			//  Slash validator ONLY if he joined before valset is created
-			if exist && valSigningInfo.StartHeight < int64(vs.Height) {
+			if exist && uint64(valSigningInfo.StartHeight) < vs.Height {
 				// Check if validator has confirmed valset or not
 				found := false
 				for _, conf := range confirms {

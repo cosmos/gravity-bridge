@@ -21,7 +21,7 @@ func TestValsetCreationIfNotAvailable(t *testing.T) {
 
 	// EndBlocker should set a new validator set if not available
 	EndBlocker(ctx, pk)
-	require.NotNil(t, pk.GetValset(ctx, uint64(ctx.BlockHeight())))
+	require.NotNil(t, pk.GetValset(ctx, uint64(pk.GetLatestValsetNonce(ctx))))
 	valsets := pk.GetValsets(ctx)
 	require.True(t, len(valsets) == 1)
 }
@@ -29,6 +29,8 @@ func TestValsetCreationIfNotAvailable(t *testing.T) {
 func TestValsetCreationUponUnbonding(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
+
+	currentValsetNonce := pk.GetLatestValsetNonce(ctx)
 	pk.SetValsetRequest(ctx)
 
 	input.Context = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
@@ -41,7 +43,8 @@ func TestValsetCreationUponUnbonding(t *testing.T) {
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 	EndBlocker(input.Context, pk)
 
-	assert.Equal(t, uint64(input.Context.BlockHeight()), pk.GetLatestValsetNonce(ctx))
+	// TODO: Is this the right check to replace blockHeight == latestValsetNonce with?
+	assert.NotEqual(t, currentValsetNonce, pk.GetLatestValsetNonce(ctx))
 }
 
 func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
@@ -75,7 +78,8 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 	vs := pk.GetCurrentValset(ctx)
 	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
 	vs.Height = height
-	vs.Nonce = height
+	nonce := pk.GetLatestValsetNonce(ctx)
+	vs.Nonce = nonce
 	pk.StoreValsetUnsafe(ctx, vs)
 
 	for i, val := range keeper.AccAddrs {
@@ -125,7 +129,8 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 	ctx = ctx.WithBlockHeight(valsetRequestHeight)
 	vs := pk.GetCurrentValset(ctx)
 	vs.Height = uint64(valsetRequestHeight)
-	vs.Nonce = uint64(valsetRequestHeight)
+	nonce := pk.IncrementLatestValsetNonce(ctx)
+	vs.Nonce = nonce
 	pk.StoreValsetUnsafe(ctx, vs)
 
 	// Start Unbonding validators
@@ -230,7 +235,7 @@ func TestValsetEmission(t *testing.T) {
 
 	// EndBlocker should set a new validator set
 	EndBlocker(ctx, pk)
-	require.NotNil(t, pk.GetValset(ctx, uint64(ctx.BlockHeight())))
+	require.NotNil(t, pk.GetValset(ctx, uint64(pk.GetLatestValsetNonce(ctx))))
 	valsets := pk.GetValsets(ctx)
 	require.True(t, len(valsets) == 2)
 }

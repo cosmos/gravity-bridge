@@ -132,6 +132,8 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		rewardToken, rewardAmount = k.RewardToERC20Lookup(ctx, reward)
 	}
 
-	// TODO: make the nonce an incrementing one (i.e. fetch last nonce from state, increment, set here)
-	return types.NewValset(uint64(ctx.BlockHeight()), uint64(ctx.BlockHeight()), bridgeValidators, rewardAmount, rewardToken)
+	// Update the valset nonce for use in the new valset
+	var valsetNonce = k.IncrementLatestValsetNonce(ctx)
+
+	return types.NewValset(valsetNonce, uint64(ctx.BlockHeight()), bridgeValidators, rewardAmount, rewardToken)
 }
