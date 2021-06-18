@@ -1,8 +1,8 @@
 ![Gravity Bridge](./gravity-bridge.svg)
 
-Gravity bridge is Cosmos <-> Ethereum bridge designed to run on the [Cosmos Hub](https://github.com/cosmos/gaia) focused on maximum design simplicity and efficiency.
+Gravity bridge is a Cosmos <-> Ethereum bridge designed to run on the [Cosmos Hub](https://github.com/cosmos/gaia), focused on maximum design simplicity and efficiency.
 
-Gravity is currently can transfer ERC20 assets originating on Ethereum to a Cosmos based chain and back to Ethereum.
+Gravity is currently able to transfer ERC20 assets originating on Ethereum to a Cosmos based chain and back to Ethereum.
 
 The ability to transfer assets originating on Cosmos to an ERC20 representation on Ethereum is coming within a few months.
 
@@ -48,7 +48,7 @@ You can keep up with the latest development by watching our [public standups](ht
 ## Key design Components
 
 - A highly efficient way of mirroring Cosmos validator voting onto Ethereum. The Gravity solidity contract has validator set updates costing ~500,000 gas ($2 @ 20gwei), tested on a snapshot of the Cosmos Hub validator set with 125 validators. Verifying the votes of the validator set is the most expensive on chain operation Gravity has to perform. Our highly optimized Solidity code provides enormous cost savings. Existing bridges incur more than double the gas costs for signature sets as small as 8 signers.
-- Transactions from Cosmos to ethereum are batched, batches have a base cost of ~500,000 gas ($2 @ 20gwei). Batches may contain arbitrary numbers of transactions within the limits of ERC20 sends per block, allowing for costs to be heavily amortized on high volume bridges.
+- Transactions from Cosmos to Ethereum are batched. Batches have a base cost of ~500,000 gas ($2 @ 20gwei) and may contain an arbitrary number of transactions within the limits of ERC20 sends per block, allowing for costs to be heavily amortized on high-volume bridges.
 
 ## Operational parameters ensuring security
 
@@ -59,7 +59,7 @@ You can keep up with the latest development by watching our [public standups](ht
 
 We provide a one button integration test that deploys a full arbitrary validator Cosmos chain and testnet Geth chain for both development + validation. We believe having a in depth test environment reflecting the full deployment and production-like use of the code is essential to productive development.
 
-Currently on every commit we send hundreds of transactions, dozens of validator set updates, and several transaction batches in our test environment. This provides a high level of quality assurance for the Gravity bridge.
+Currently, on every commit, we send hundreds of transactions, dozens of validator set updates, and several transaction batches in our test environment. This provides a high level of quality assurance for the Gravity bridge.
 
 Because the tests build absolutely everything in this repository they do take a significant amount of time to run. You may wish to simply push to a branch and have Github CI take care of the actual running of the tests.
 
