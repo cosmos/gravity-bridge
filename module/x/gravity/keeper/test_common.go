@@ -159,13 +159,13 @@ var (
 	}
 
 	// InitTokens holds the number of tokens to initialize an account with
-	InitTokens = sdk.TokensFromConsensusPower(110)
+	InitTokens = sdk.TokensFromConsensusPower(110, sdk.NewIntFromUint64(10^6))
 
 	// InitCoins holds the number of coins to initialize an account with
 	InitCoins = sdk.NewCoins(sdk.NewCoin(TestingStakeParams.BondDenom, InitTokens))
 
 	// StakingAmount holds the staking power to start a validator with
-	StakingAmount = sdk.TokensFromConsensusPower(10)
+	StakingAmount = sdk.TokensFromConsensusPower(10, sdk.NewIntFromUint64(10^6))
 
 	// StakingCoins holds the staking coins to start a validator with
 	StakingCoins = sdk.NewCoins(sdk.NewCoin(TestingStakeParams.BondDenom, StakingAmount))
@@ -177,6 +177,7 @@ var (
 		MaxEntries:        10,
 		HistoricalEntries: 10000,
 		BondDenom:         "stake",
+		PowerReduction:    sdk.NewIntFromUint64(10 ^ 6),
 	}
 
 	// TestingGravityParams is a set of gravity params for testing
@@ -209,7 +210,7 @@ type TestInput struct {
 	BankKeeper     bankkeeper.BaseKeeper
 	GovKeeper      govkeeper.Keeper
 	Context        sdk.Context
-	Marshaler      codec.Marshaler
+	Marshaler      codec.Codec
 	LegacyAmino    *codec.LegacyAmino
 }
 
@@ -223,7 +224,17 @@ func (input TestInput) AddSendToEthTxsToPool(t *testing.T, ctx sdk.Context, toke
 }
 
 func (input TestInput) AddBalanceToBank(ctx sdk.Context, addr sdk.AccAddress, balances sdk.Coins) error {
-	return input.BankKeeper.SetBalances(ctx, addr, balances)
+
+	err := input.BankKeeper.MintCoins(ctx, types.ModuleName, balances)
+	if err != nil {
+		return err
+	}
+	err = input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, balances)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SetupFiveValChain does all the initialization for a 5 Validator chain using the keys here
@@ -243,16 +254,19 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 			input.Context,
 			authtypes.NewBaseAccount(AccAddrs[i], AccPubKeys[i], uint64(i), 0),
 		)
-
 		// Set the balance for the account
-		input.BankKeeper.SetBalances(input.Context, acc.GetAddress(), InitCoins)
+
+		err := input.BankKeeper.MintCoins(input.Context, types.ModuleName, InitCoins)
+		require.NoError(t, err)
+		err = input.BankKeeper.SendCoinsFromModuleToAccount(input.Context, types.ModuleName, acc.GetAddress(), InitCoins)
+		require.NoError(t, err)
 
 		// Set the account in state
 		input.AccountKeeper.SetAccount(input.Context, acc)
 
 		// Create a validator for that account using some of the tokens in the account
 		// and the staking handler
-		_, err := sh(
+		_, err = sh(
 			input.Context,
 			NewTestMsgCreateValidator(ValAddrs[i], ConsPubKeys[i], StakingAmount),
 		)
@@ -326,7 +340,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 	// this is also used to initialize module accounts for all the map keys
 	maccPerms := map[string][]string{
 		authtypes.FeeCollectorName:     nil,
-		distrtypes.ModuleName:          nil,
+		distrtypes.ModuleName:          {authtypes.Minter},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
@@ -362,21 +376,27 @@ func CreateTestEnv(t *testing.T) TestInput {
 
 	// set genesis items required for distribution
 	distKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
+	// accountKeeper.SetModuleAccount(ctx, stakingKeeper.GetNotBondedPool(ctx))
+	// accountKeeper.SetModuleAccount(ctx, stakingKeeper.GetBondedPool(ctx))
 
 	// total supply to track this
 	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100000000))
-	bankKeeper.SetSupply(ctx, banktypes.NewSupply(totalSupply))
+
+	bankKeeper.MintCoins(ctx, distrtypes.ModuleName, totalSupply)
 
 	// set up initial accounts
 	for name, perms := range maccPerms {
 		mod := authtypes.NewEmptyModuleAccount(name, perms...)
 		if name == stakingtypes.NotBondedPoolName {
-			err = bankKeeper.SetBalances(ctx, mod.GetAddress(), totalSupply)
+
+			err = bankKeeper.SendCoinsFromModuleToModule(ctx, distrtypes.ModuleName, mod.Name, totalSupply)
 			require.NoError(t, err)
+
 		} else if name == distrtypes.ModuleName {
 			// some big pot to pay out
-			err = bankKeeper.SetBalances(ctx, mod.GetAddress(), sdk.NewCoins(sdk.NewInt64Coin("stake", 500000)))
+			err = bankKeeper.SendCoinsFromModuleToModule(ctx, distrtypes.ModuleName, mod.Name, sdk.NewCoins(sdk.NewInt64Coin("stake", 500000)))
 			require.NoError(t, err)
+
 		}
 		accountKeeper.SetModuleAccount(ctx, mod)
 	}
@@ -459,7 +479,7 @@ func MakeTestCodec() *codec.LegacyAmino {
 }
 
 // MakeTestMarshaler creates a proto codec for use in testing
-func MakeTestMarshaler() codec.Marshaler {
+func MakeTestMarshaler() codec.Codec {
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	std.RegisterInterfaces(interfaceRegistry)
 	ModuleBasics.RegisterInterfaces(interfaceRegistry)
@@ -529,6 +549,10 @@ func NewStakingKeeperWeightedMock(t ...MockStakingValidatorData) *StakingKeeperM
 type StakingKeeperMock struct {
 	BondedValidators []stakingtypes.Validator
 	ValidatorPower   map[string]int64
+}
+
+func (s *StakingKeeperMock) PowerReduction(ctx sdk.Context) sdk.Int {
+	return sdk.NewIntFromUint64(10 ^ 6)
 }
 
 // GetBondedValidatorsByPower implements the interface for staking keeper required by gravity

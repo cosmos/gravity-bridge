@@ -103,7 +103,7 @@ func (k Keeper) cancelSendToEthereum(ctx sdk.Context, id uint64, s string) error
 }
 
 func (k Keeper) setUnbatchedSendToEthereum(ctx sdk.Context, ste *types.SendToEthereum) {
-	ctx.KVStore(k.storeKey).Set(types.MakeSendToEthereumKey(ste.Id, ste.Erc20Fee), k.cdc.MustMarshalBinaryBare(ste))
+	ctx.KVStore(k.storeKey).Set(types.MakeSendToEthereumKey(ste.Id, ste.Erc20Fee), k.cdc.MustMarshal(ste))
 }
 
 func (k Keeper) deleteUnbatchedSendToEthereum(ctx sdk.Context, id uint64, fee types.ERC20Token) {
@@ -115,7 +115,7 @@ func (k Keeper) iterateUnbatchedSendToEthereumsByContract(ctx sdk.Context, contr
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var ste types.SendToEthereum
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ste)
+		k.cdc.MustUnmarshal(iter.Value(), &ste)
 		if cb(&ste) {
 			break
 		}
@@ -127,7 +127,7 @@ func (k Keeper) IterateUnbatchedSendToEthereums(ctx sdk.Context, cb func(*types.
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var ste types.SendToEthereum
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ste)
+		k.cdc.MustUnmarshal(iter.Value(), &ste)
 		if cb(&ste) {
 			break
 		}

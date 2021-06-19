@@ -77,7 +77,7 @@ func TestHandleMsgSendToEthereum(t *testing.T) {
 
 func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 	var (
-		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myOrchestratorAddr sdk.AccAddress = make([]byte, AddrLen)
 		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
 		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
 		myNonce                           = uint64(1)
@@ -285,10 +285,10 @@ func TestMsgSubmitEthreumEventSendToCosmosMultiValidator(t *testing.T) {
 func TestMsgSetDelegateAddresses(t *testing.T) {
 	var (
 		ethAddress                    = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
-		cosmosAddress  sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		cosmosAddress  sdk.AccAddress = bytes.Repeat([]byte{0x1}, AddrLen)
 		ethAddress2                   = "0x26126048c706fB45a5a6De8432F428e794d0b952"
-		cosmosAddress2 sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
-		valAddress     sdk.ValAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		cosmosAddress2 sdk.AccAddress = bytes.Repeat([]byte{0x2}, AddrLen)
+		valAddress     sdk.ValAddress = bytes.Repeat([]byte{0x2}, AddrLen)
 		blockTime                     = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
 		blockTime2                    = time.Date(2020, 9, 15, 15, 20, 10, 0, time.UTC)
 		blockHeight    int64          = 200

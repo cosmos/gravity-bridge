@@ -44,7 +44,7 @@ func (a EthereumEventProcessor) Handle(ctx sdk.Context, eve types.EthereumEvent)
 
 		// Check if denom exists
 		// TODO: document that peggy chains require denom metadata set
-		metadata := a.keeper.bankKeeper.GetDenomMetaData(ctx, event.CosmosDenom)
+		metadata, _ := a.keeper.bankKeeper.GetDenomMetaData(ctx, event.CosmosDenom)
 		if metadata.Base == "" {
 			return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("denom not found %s", event.CosmosDenom))
 		}

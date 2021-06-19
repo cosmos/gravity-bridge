@@ -12,6 +12,8 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
+const Addrlen = 20
+
 func TestCurrentValsetNormalization(t *testing.T) {
 	specs := map[string]struct {
 		srcPowers []uint64
@@ -35,7 +37,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 			for i, v := range spec.srcPowers {
 				operators[i] = MockStakingValidatorData{
 					// any unique addr
-					Operator: bytes.Repeat([]byte{byte(i)}, sdk.AddrLen),
+					Operator: bytes.Repeat([]byte{byte(i)}, Addrlen),
 					Power:    int64(v),
 				}
 			}

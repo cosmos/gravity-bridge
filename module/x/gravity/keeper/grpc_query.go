@@ -34,7 +34,7 @@ func (k Keeper) LatestSignerSetTx(c context.Context, req *types.LatestSignerSetT
 	}
 
 	var any cdctypes.Any
-	k.cdc.MustUnmarshalBinaryBare(iter.Value(), &any)
+	k.cdc.MustUnmarshal(iter.Value(), &any)
 
 	var otx types.OutgoingTx
 	if err := k.cdc.UnpackAny(&any, &otx); err != nil {
@@ -342,7 +342,7 @@ func (k Keeper) UnbatchedSendToEthereums(c context.Context, req *types.Unbatched
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SendToEthereumKey})
 	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
 		var ste types.SendToEthereum
-		k.cdc.MustUnmarshalBinaryBare(value, &ste)
+		k.cdc.MustUnmarshal(value, &ste)
 		if ste.Sender == req.SenderAddress {
 			res.SendToEthereums = append(res.SendToEthereums, &ste)
 			return true, nil

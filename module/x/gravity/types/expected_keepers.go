@@ -24,6 +24,7 @@ type StakingKeeper interface {
 	ValidatorByConsAddr(sdk.Context, sdk.ConsAddress) stakingtypes.ValidatorI
 	Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec)
 	Jail(sdk.Context, sdk.ConsAddress)
+	PowerReduction(sdk.Context) sdk.Int
 }
 
 // BankKeeper defines the expected bank keeper methods
@@ -33,7 +34,8 @@ type BankKeeper interface {
 	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
 	BurnCoins(ctx sdk.Context, name string, amt sdk.Coins) error
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	GetDenomMetaData(ctx sdk.Context, denom string) bank.Metadata
+	GetDenomMetaData(ctx sdk.Context, denom string) (bank.Metadata, bool)
+	GetSupply(ctx sdk.Context, denom string) sdk.Coin
 }
 
 type SlashingKeeper interface {

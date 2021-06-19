@@ -38,12 +38,14 @@ type testingVars struct {
 	t                  *testing.T
 }
 
+const AddrLen = 20
+
 func initializeTestingVars(t *testing.T) *testingVars {
 	var tv testingVars
 
 	tv.t = t
 
-	tv.myOrchestratorAddr = make([]byte, sdk.AddrLen)
+	tv.myOrchestratorAddr = make([]byte, AddrLen)
 	tv.myValAddr = sdk.ValAddress(tv.myOrchestratorAddr) // revisit when proper mapping is impl in keeper
 
 	tv.erc20 = common.HexToAddress("0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e").Hex()
@@ -151,7 +153,7 @@ func lockCoinsInModule(tv *testingVars) {
 
 func acceptDepositEvent(tv *testingVars) {
 	var (
-		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myOrchestratorAddr sdk.AccAddress = make([]byte, AddrLen)
 		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
 		myNonce                           = uint64(2)
 		anyETHAddr                        = "0xf9613b532673Cc223aBa451dFA8539B87e1F666D"

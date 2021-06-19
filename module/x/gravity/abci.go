@@ -246,7 +246,7 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 			if valInfo.exist && valInfo.sigs.StartHeight < int64(otx.GetCosmosHeight()) {
 				if _, ok := signatures[valInfo.val.GetOperator().String()]; !ok {
 					if !valInfo.val.IsJailed() {
-						k.StakingKeeper.Slash(ctx, valInfo.cons, ctx.BlockHeight(), valInfo.val.ConsensusPower(), params.SlashFractionBatch)
+						k.StakingKeeper.Slash(ctx, valInfo.cons, ctx.BlockHeight(), valInfo.val.ConsensusPower(k.StakingKeeper.PowerReduction(ctx)), params.SlashFractionBatch)
 						k.StakingKeeper.Jail(ctx, valInfo.cons)
 					}
 				}
@@ -261,7 +261,7 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 					if _, found := signatures[valInfo.val.GetOperator().String()]; !found {
 						if !valInfo.val.IsJailed() {
 							// TODO: do we want to slash jailed validators
-							k.StakingKeeper.Slash(ctx, valInfo.cons, ctx.BlockHeight(), valInfo.val.ConsensusPower(), params.SlashFractionSignerSetTx)
+							k.StakingKeeper.Slash(ctx, valInfo.cons, ctx.BlockHeight(), valInfo.val.ConsensusPower(k.StakingKeeper.PowerReduction(ctx)), params.SlashFractionSignerSetTx)
 							k.StakingKeeper.Jail(ctx, valInfo.cons)
 						}
 					}

@@ -8,11 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const AddrLen = 20
+
 func TestValidateMsgDelegateKeys(t *testing.T) {
 	var (
 		ethAddress                   = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
-		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-		valAddress    sdk.ValAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, AddrLen)
+		valAddress    sdk.ValAddress = bytes.Repeat([]byte{0x1}, AddrLen)
 	)
 	specs := map[string]struct {
 		srcCosmosAddr sdk.AccAddress

@@ -135,7 +135,7 @@ func (k Keeper) processEthereumEvent(ctx sdk.Context, event types.EthereumEvent)
 
 // setEthereumEventVoteRecord sets the attestation in the store
 func (k Keeper) setEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, claimHash []byte, eventVoteRecord *types.EthereumEventVoteRecord) {
-	ctx.KVStore(k.storeKey).Set(types.MakeEthereumEventVoteRecordKey(eventNonce, claimHash), k.cdc.MustMarshalBinaryBare(eventVoteRecord))
+	ctx.KVStore(k.storeKey).Set(types.MakeEthereumEventVoteRecordKey(eventNonce, claimHash), k.cdc.MustMarshal(eventVoteRecord))
 }
 
 // GetEthereumEventVoteRecord return a vote record given a nonce
@@ -144,7 +144,7 @@ func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, c
 		return nil
 	} else {
 		var out types.EthereumEventVoteRecord
-		k.cdc.MustUnmarshalBinaryBare(bz, &out)
+		k.cdc.MustUnmarshal(bz, &out)
 		return &out
 	}
 }
@@ -174,7 +174,7 @@ func (k Keeper) iterateEthereumEventVoteRecords(ctx sdk.Context, cb func([]byte,
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		att := &types.EthereumEventVoteRecord{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), att)
+		k.cdc.MustUnmarshal(iter.Value(), att)
 		// cb returns true to stop early
 		if cb(iter.Key(), att) {
 			return
@@ -206,7 +206,7 @@ func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.Latest
 		}
 	}
 	height := types.LatestEthereumBlockHeight{}
-	k.cdc.MustUnmarshalBinaryBare(bytes, &height)
+	k.cdc.MustUnmarshal(bytes, &height)
 	return height
 }
 
@@ -217,7 +217,7 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 		EthereumHeight: ethereumHeight,
 		CosmosHeight:   uint64(ctx.BlockHeight()),
 	}
-	store.Set([]byte{types.LastEthereumBlockHeightKey}, k.cdc.MustMarshalBinaryBare(&height))
+	store.Set([]byte{types.LastEthereumBlockHeightKey}, k.cdc.MustMarshal(&height))
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce
