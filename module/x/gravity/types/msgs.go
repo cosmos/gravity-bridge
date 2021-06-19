@@ -39,6 +39,7 @@ func (msg *MsgDelegateKeys) Type() string { return "delegate_keys" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgDelegateKeys) ValidateBasic() (err error) {
+	fmt.Println(msg)
 	if _, err = sdk.ValAddressFromBech32(msg.ValidatorAddress); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.ValidatorAddress)
 	}

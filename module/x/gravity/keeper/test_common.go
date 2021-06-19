@@ -380,7 +380,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 	// accountKeeper.SetModuleAccount(ctx, stakingKeeper.GetBondedPool(ctx))
 
 	// total supply to track this
-	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100000000))
+	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 10000000000))
 
 	bankKeeper.MintCoins(ctx, distrtypes.ModuleName, totalSupply)
 
@@ -390,11 +390,6 @@ func CreateTestEnv(t *testing.T) TestInput {
 		if name == stakingtypes.NotBondedPoolName {
 
 			err = bankKeeper.SendCoinsFromModuleToModule(ctx, distrtypes.ModuleName, mod.Name, totalSupply)
-			require.NoError(t, err)
-
-		} else if name == distrtypes.ModuleName {
-			// some big pot to pay out
-			err = bankKeeper.SendCoinsFromModuleToModule(ctx, distrtypes.ModuleName, mod.Name, sdk.NewCoins(sdk.NewInt64Coin("stake", 500000)))
 			require.NoError(t, err)
 
 		}

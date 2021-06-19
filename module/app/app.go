@@ -28,6 +28,7 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -89,6 +90,7 @@ import (
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gravityparams "github.com/cosmos/gravity-bridge/module/app/params"
 	"github.com/cosmos/gravity-bridge/module/x/gravity"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
@@ -220,6 +222,10 @@ func NewGravityApp(
 	homePath string, invCheckPeriod uint, encodingConfig gravityparams.EncodingConfig,
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
 ) *Gravity {
+
+	sdk.GetConfig().SetAddressVerifier(VerifyAddressFormat)
+	sdk.GetConfig().Seal()
+
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
@@ -736,4 +742,21 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 
 	return paramsKeeper
+}
+
+func VerifyAddressFormat(bz []byte) error {
+
+	if len(bz) == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownAddress, "addresses cannot be empty")
+	}
+
+	if len(bz) > address.MaxAddrLen {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "address max length is %d, got %d", address.MaxAddrLen, len(bz))
+	}
+	if len(bz) != 20 {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "address length is %d, got %d", 20, len(bz))
+
+	}
+
+	return nil
 }

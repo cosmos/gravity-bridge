@@ -26,6 +26,9 @@ func TestAddToOutgoingPool(t *testing.T) {
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
 
+	err = input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
+	require.NoError(t, err)
+
 	err = input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, allVouchers)
 	require.NoError(t, err)
 
