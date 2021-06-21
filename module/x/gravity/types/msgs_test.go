@@ -68,7 +68,6 @@ func TestValidateMsgDelegateKeys(t *testing.T) {
 	}
 	for test_msg, spec := range specs {
 		t.Run(test_msg, func(t *testing.T) {
-			fmt.Println(test_msg)
 			msg := NewMsgDelegateKeys(spec.srcValAddr, spec.srcCosmosAddr, spec.srcETHAddr)
 			// when
 			err := msg.ValidateBasic()
