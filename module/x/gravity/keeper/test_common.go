@@ -376,12 +376,9 @@ func CreateTestEnv(t *testing.T) TestInput {
 
 	// set genesis items required for distribution
 	distKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
-	// accountKeeper.SetModuleAccount(ctx, stakingKeeper.GetNotBondedPool(ctx))
-	// accountKeeper.SetModuleAccount(ctx, stakingKeeper.GetBondedPool(ctx))
 
 	// total supply to track this
 	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 10000000000))
-
 	bankKeeper.MintCoins(ctx, distrtypes.ModuleName, totalSupply)
 
 	// set up initial accounts
