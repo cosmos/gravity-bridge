@@ -19,10 +19,11 @@ type EthereumEventProcessor struct {
 
 func (a EthereumEventProcessor) DetectMaliciousSupply(ctx sdk.Context, denom string, amount sdk.Int) (err error) {
 	currentSupply := a.bankKeeper.GetSupply(ctx, denom)
-	newSupply := new(big.Int).Add(currentSupply.AmountOf(denom).BigInt(), amount.BigInt())
+	newSupply := new(big.Int).Add(currentSupply.Amount.BigInt(), amount.BigInt())
 	if newSupply.BitLen() > 256 {
 		return sdkerrors.Wrapf(types.ErrSupplyOverflow, "malicious supply of %s detected", denom)
 	}
+	return nil
 }
 
 // Handle is the entry point for EthereumEvent processing
