@@ -3,7 +3,7 @@ module github.com/cosmos/gravity-bridge/module
 go 1.15
 
 require (
-	github.com/cosmos/cosmos-sdk v0.43.0-beta1
+	github.com/cosmos/cosmos-sdk v0.43.0-beta1.0.20210622201134-b7f7c45bf4fc
 	github.com/cosmos/ibc-go v1.0.0-beta1
 	github.com/ethereum/go-ethereum v1.9.23
 	github.com/gogo/protobuf v1.3.3
@@ -23,6 +23,6 @@ require (
 	google.golang.org/protobuf v1.26.0
 )
 
-replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.2-alpha.regen.4
+replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 replace github.com/gogo/grpc => google.golang.org/grpc v1.33.2
