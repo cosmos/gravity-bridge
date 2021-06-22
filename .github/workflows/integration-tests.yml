@@ -12,53 +12,40 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run all up happy-path test
-        run: testnet/start.sh
+        run: make e2e_happy_path
   validator-out:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Run all up test with a validator out
-        run: testnet/start.sh
-        env:
-          TEST_TYPE: VALIDATOR_OUT
+        run: make e2e_validator_out
   valset-stress:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Run all up valset stress test
-        run: testnet/start.sh
-        env:
-          TEST_TYPE: VALSET_STRESS
+        run: make e2e_valset_stress
   batch-stress:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Run all up batch stress test
-        run: testnet/start.sh
-        env:
-          TEST_TYPE: BATCH_STRESS
+        run: make e2e_batch_stress
   v2-happy-path:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Run all up batch stress test
-        run: testnet/start.sh
-        env:
-          TEST_TYPE: V2_HAPPY_PATH
+        run: make e2e_v2_happy_path
   arbitrary-logic:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Run all up arbitrary logic test
-        run: testnet/start.sh
-        env:
-          TEST_TYPE: ARBITRARY_LOGIC
-          ALCHEMY_ID: ${{ secrets.ALCHEMY_ID }}
+        run: make e2e_arbitrary_logic
   orchestrator-keys:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Run all up arbitrary logic test
-        run: testnet/start.sh
-        env:
-          TEST_TYPE: ORCHESTRATOR_KEYS
+        run: make e2e_orchestrator_keys
