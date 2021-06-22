@@ -44,7 +44,7 @@ services:
       - DENOM
       - ETH_PRIVATE_KEY
       - RUST_BACKTRACE=1
-      - RUST_LOG
+      - RUST_LOG=INFO
       - VALIDATOR
 
   gravity1:
@@ -126,5 +126,5 @@ services:
       - ./testdata:/testdata
     environment:
       - RUST_BACKTRACE=1
-      - RUST_LOG
+      - RUST_LOG=INFO
       - TEST_TYPE
