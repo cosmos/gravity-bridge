@@ -9,18 +9,6 @@ CHAINDIR="$PROJECT_DIR/testdata"
 gravity=gravity
 home_dir="$CHAINDIR/$CHAINID"
 
-# Find or install rust binary
-#binaryFound=$(which register-delegate-keys 2>/dev/null || echo FALSE)
-#echo "$binaryFound"
-#if [ $binaryFound == "FALSE" ]
-#then
-#  pushd orchestrator/register_delegate_keys
-#  cargo install --path .
-#  popd
-#else
-#  echo "found binary at $(which register-delegate-keys)"
-#fi
-
 # stop processes
 export DOCKER_SCAN_SUGGEST=false
 docker-compose down
@@ -72,22 +60,22 @@ echo "Initializing genesis files"
 coins="100000000000stake,100000000000footoken"
 
 # Initialize the 3 home directories and add some keys
-$gravity $home0 $cid init n0 &>/dev/null
+$gravity $home0 $cid init n0
 $gravity $home0 keys add val $kbt --output json | jq . >> $n0dir/validator_key.json
-$gravity $home1 $cid init n1 &>/dev/null
+$gravity $home1 $cid init n1
 $gravity $home1 keys add val $kbt --output json | jq . >> $n1dir/validator_key.json
-$gravity $home2 $cid init n2 &>/dev/null
+$gravity $home2 $cid init n2
 $gravity $home2 keys add val $kbt --output json | jq . >> $n2dir/validator_key.json
-$gravity $home3 $cid init n3 &>/dev/null
+$gravity $home3 $cid init n3
 $gravity $home3 keys add val $kbt --output json | jq . >> $n3dir/validator_key.json
 
 find $home_dir -name validator_key.json | xargs cat | jq -r '.mnemonic' > $CHAINDIR/validator-phrases
 
 echo "Adding validator addresses to genesis files"
-$gravity $home0 add-genesis-account $($gravity $home0 keys show val -a $kbt) $coins &>/dev/null
-$gravity $home0 add-genesis-account $($gravity $home1 keys show val -a $kbt) $coins &>/dev/null
-$gravity $home0 add-genesis-account $($gravity $home2 keys show val -a $kbt) $coins &>/dev/null
-$gravity $home0 add-genesis-account $($gravity $home3 keys show val -a $kbt) $coins &>/dev/null
+$gravity $home0 add-genesis-account $($gravity $home0 keys show val -a $kbt) $coins
+$gravity $home0 add-genesis-account $($gravity $home1 keys show val -a $kbt) $coins
+$gravity $home0 add-genesis-account $($gravity $home2 keys show val -a $kbt) $coins
+$gravity $home0 add-genesis-account $($gravity $home3 keys show val -a $kbt) $coins
 
 echo "Generating orchestrator keys"
 $gravity $home0 keys add --dry-run=true --output=json orch | jq . >> $n0dir/orchestrator_key.json
@@ -138,16 +126,16 @@ jq ".alloc |= . + {$(jq .address $n2dir/eth_key.json) : {\"balance\": \"0x133700
 jq ".alloc |= . + {$(jq .address $n3dir/eth_key.json) : {\"balance\": \"0x1337000000000000000000\"}}" $home_dir/ETHGenesis.json | sponge $home_dir/ETHGenesis.json
 
 echo "Creating gentxs"
-$gravity $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid &>/dev/null
-$gravity $home1 gentx --ip $n1name val 100000000000stake $(jq -r .address $n1dir/eth_key.json) $(jq -r .address $n1dir/orchestrator_key.json) $kbt $cid &>/dev/null
-$gravity $home2 gentx --ip $n2name val 100000000000stake $(jq -r .address $n2dir/eth_key.json) $(jq -r .address $n2dir/orchestrator_key.json) $kbt $cid &>/dev/null
-$gravity $home3 gentx --ip $n3name val 100000000000stake $(jq -r .address $n3dir/eth_key.json) $(jq -r .address $n3dir/orchestrator_key.json) $kbt $cid &>/dev/null
+$gravity $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid
+$gravity $home1 gentx --ip $n1name val 100000000000stake $(jq -r .address $n1dir/eth_key.json) $(jq -r .address $n1dir/orchestrator_key.json) $kbt $cid
+$gravity $home2 gentx --ip $n2name val 100000000000stake $(jq -r .address $n2dir/eth_key.json) $(jq -r .address $n2dir/orchestrator_key.json) $kbt $cid
+$gravity $home3 gentx --ip $n3name val 100000000000stake $(jq -r .address $n3dir/eth_key.json) $(jq -r .address $n3dir/orchestrator_key.json) $kbt $cid
 
 echo "Collecting gentxs in $n0name"
 cp $n1cfgDir/gentx/*.json $n0cfgDir/gentx/
 cp $n2cfgDir/gentx/*.json $n0cfgDir/gentx/
 cp $n3cfgDir/gentx/*.json $n0cfgDir/gentx/
-$gravity $home0 collect-gentxs &>/dev/null
+$gravity $home0 collect-gentxs
 
 echo "Distributing genesis file into $n1name, $n2name, $n3name"
 cp $n0cfgDir/genesis.json $n1cfgDir/genesis.json
