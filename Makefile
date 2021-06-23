@@ -2,6 +2,7 @@
 e2e_setup:
 	docker-compose down
 	sudo rm -fr testdata
+	make -C module install
 
 e2e_happy_path: e2e_setup
 	./testnet/start.sh
