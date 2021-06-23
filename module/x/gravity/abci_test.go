@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/keeper"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 func TestSignerSetTxCreationIfNotAvailable(t *testing.T) {

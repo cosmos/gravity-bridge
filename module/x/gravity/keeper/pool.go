@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 // createSendToEthereum

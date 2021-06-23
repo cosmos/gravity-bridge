@@ -131,6 +131,8 @@ github.com/cosmos/cosmos-sdk v0.42.4-0.20210623214207-eb0fc466c99b/go.mod h1:xiL
 github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d/go.mod h1:tSxLoYXyBmiFeKpvmq4dzayMdCjCnu8uqmCysIGBT2Y=
 github.com/cosmos/go-bip39 v1.0.0 h1:pcomnQdrdH22njcAatO0yWojsUnCO3y2tNoV1cb6hHY=
 github.com/cosmos/go-bip39 v1.0.0/go.mod h1:RNJv0H/pOIVgxw6KS7QeX2a0Uo0aKUlfhZ4xuwvCdJw=
+github.com/peggyjv/gravity-bridge/module v0.0.0-20210322173118-25d77b5f9b46 h1:XXCzKCfiWWnn6sjNISC/pv+GbfEd03bCpu0IXCnS9TA=
+github.com/peggyjv/gravity-bridge/module v0.0.0-20210322173118-25d77b5f9b46/go.mod h1:jEI1pLV70xW9prKdBnKroKWIpYXjcVyn4BQQcwXHs40=
 github.com/cosmos/iavl v0.15.0-rc3.0.20201009144442-230e9bdf52cd/go.mod h1:3xOIaNNX19p0QrX0VqWa6voPRoJRGGYtny+DH8NEPvE=
 github.com/cosmos/iavl v0.15.0-rc5/go.mod h1:WqoPL9yPTQ85QBMT45OOUzPxG/U/JcJoN7uMjgxke/I=
 github.com/cosmos/iavl v0.15.3 h1:xE9r6HW8GeKeoYJN4zefpljZ1oukVScP/7M8oj6SUts=

@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 	"github.com/stretchr/testify/require"
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"

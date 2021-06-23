@@ -8,7 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 // EthereumEventProcessor processes `accepted` EthereumEvents

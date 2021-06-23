@@ -11,7 +11,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 type msgServer struct {

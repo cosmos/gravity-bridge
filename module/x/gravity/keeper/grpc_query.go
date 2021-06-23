@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 var _ types.QueryServer = Keeper{}

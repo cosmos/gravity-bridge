@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/keeper"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 func TestHandleMsgSendToEthereum(t *testing.T) {

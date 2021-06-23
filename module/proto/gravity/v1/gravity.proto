@@ -7,7 +7,7 @@ import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
+option go_package = "github.com/peggyjv/gravity-bridge/module/x/gravity/types";
 
 // EthereumEventVoteRecord is an event that is pending of confirmation by 2/3 of
 // the signer set. The event is then attested and executed in the state machine
