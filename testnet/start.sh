@@ -59,17 +59,17 @@ echo "Initializing genesis files"
 # Build genesis file incl account for passed address
 coins="100000000000stake,100000000000footoken"
 
-# Initialize the 3 home directories and add some keys
+# Initialize the home directories and add some keys
 $gravity $home0 $cid init n0
-$gravity $home0 keys add val $kbt --output json | jq . >> $n0dir/validator_key.json
+$gravity $home0 keys add val $kbt --output json 2>&1 | jq . | sponge $n0dir/validator_key.json
 $gravity $home1 $cid init n1
-$gravity $home1 keys add val $kbt --output json | jq . >> $n1dir/validator_key.json
+$gravity $home1 keys add val $kbt --output json 2>&1 | jq . | sponge $n1dir/validator_key.json
 $gravity $home2 $cid init n2
-$gravity $home2 keys add val $kbt --output json | jq . >> $n2dir/validator_key.json
+$gravity $home2 keys add val $kbt --output json 2>&1 | jq . | sponge $n2dir/validator_key.json
 $gravity $home3 $cid init n3
-$gravity $home3 keys add val $kbt --output json | jq . >> $n3dir/validator_key.json
+$gravity $home3 keys add val $kbt --output json 2>&1 | jq . | sponge $n3dir/validator_key.json
 
-find $home_dir -name validator_key.json | xargs cat | jq -r '.mnemonic' > $CHAINDIR/validator-phrases
+find $home_dir -name validator_key.json | xargs cat | jq -r '.mnemonic' | sponge $CHAINDIR/validator-phrases
 
 echo "Adding validator addresses to genesis files"
 $gravity $home0 add-genesis-account $($gravity $home0 keys show val -a $kbt) $coins
@@ -78,12 +78,12 @@ $gravity $home0 add-genesis-account $($gravity $home2 keys show val -a $kbt) $co
 $gravity $home0 add-genesis-account $($gravity $home3 keys show val -a $kbt) $coins
 
 echo "Generating orchestrator keys"
-$gravity $home0 keys add --dry-run=true --output=json orch | jq . >> $n0dir/orchestrator_key.json
-$gravity $home1 keys add --dry-run=true --output=json orch | jq . >> $n1dir/orchestrator_key.json
-$gravity $home2 keys add --dry-run=true --output=json orch | jq . >> $n2dir/orchestrator_key.json
-$gravity $home3 keys add --dry-run=true --output=json orch | jq . >> $n3dir/orchestrator_key.json
+$gravity $home0 keys add --dry-run=true --output=json orch 2>&1 | jq . | sponge $n0dir/orchestrator_key.json
+$gravity $home1 keys add --dry-run=true --output=json orch 2>&1 | jq . | sponge $n1dir/orchestrator_key.json
+$gravity $home2 keys add --dry-run=true --output=json orch 2>&1 | jq . | sponge $n2dir/orchestrator_key.json
+$gravity $home3 keys add --dry-run=true --output=json orch 2>&1 | jq . | sponge $n3dir/orchestrator_key.json
 
-find $home_dir -name orchestrator_key.json | xargs cat | jq -r '.mnemonic' > $CHAINDIR/orchestrator-phrases
+find $home_dir -name orchestrator_key.json | xargs cat | jq -r '.mnemonic' | sponge $CHAINDIR/orchestrator-phrases
 
 echo "Adding denom metadata to genesis"
 jq ".app_state.bank.denom_metadata += [{\"description\":\"footoken\",\"display\":\"mfootoken\",\"base\":\"footoken\",\"denom_units\":[{\"denom\":\"footoken\",\"exponent\":0,\"aliases\":[]},{\"denom\":\"mfootoken\",\"exponent\":6,\"aliases\":[]}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
@@ -109,12 +109,12 @@ cp $n0cfgDir/genesis.json $n2cfgDir/genesis.json
 cp $n0cfgDir/genesis.json $n3cfgDir/genesis.json
 
 echo "Generating ethereum keys"
-$gravity $home0 eth_keys add --output=json --dry-run=true | jq . >> $n0dir/eth_key.json
-$gravity $home1 eth_keys add --output=json --dry-run=true | jq . >> $n1dir/eth_key.json
-$gravity $home2 eth_keys add --output=json --dry-run=true | jq . >> $n2dir/eth_key.json
-$gravity $home3 eth_keys add --output=json --dry-run=true | jq . >> $n3dir/eth_key.json
+$gravity $home0 eth_keys add --output=json --dry-run=true | jq . | sponge $n0dir/eth_key.json
+$gravity $home1 eth_keys add --output=json --dry-run=true | jq . | sponge $n1dir/eth_key.json
+$gravity $home2 eth_keys add --output=json --dry-run=true | jq . | sponge $n2dir/eth_key.json
+$gravity $home3 eth_keys add --output=json --dry-run=true | jq . | sponge $n3dir/eth_key.json
 
-find testdata -name eth_key.json | xargs cat | jq -r '.private_key' > $CHAINDIR/validator-eth-keys
+find testdata -name eth_key.json | xargs cat | jq -r '.private_key' | sponge $CHAINDIR/validator-eth-keys
 
 echo "Copying ethereum genesis file"
 cp tests/assets/ETHGenesis.json $home_dir
