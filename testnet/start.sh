@@ -59,15 +59,17 @@ echo "Initializing genesis files"
 # Build genesis file incl account for passed address
 coins="100000000000stake,100000000000footoken"
 
-# Initialize the home directories and add some keys
-$gravity $home0 $cid init n0
+echo add some keys
 $gravity $home0 keys add val $kbt --output json 2>&1 | jq . | sponge $n0dir/validator_key.json
-$gravity $home1 $cid init n1
 $gravity $home1 keys add val $kbt --output json 2>&1 | jq . | sponge $n1dir/validator_key.json
-$gravity $home2 $cid init n2
 $gravity $home2 keys add val $kbt --output json 2>&1 | jq . | sponge $n2dir/validator_key.json
-$gravity $home3 $cid init n3
 $gravity $home3 keys add val $kbt --output json 2>&1 | jq . | sponge $n3dir/validator_key.json
+
+echo Initialize home directories
+$gravity $home0 $cid init n0
+$gravity $home1 $cid init n1
+$gravity $home2 $cid init n2
+$gravity $home3 $cid init n3
 
 find $home_dir -name validator_key.json | xargs cat | jq -r '.mnemonic' | sponge $CHAINDIR/validator-phrases
 
@@ -86,8 +88,8 @@ $gravity $home3 keys add --dry-run=true --output=json orch 2>&1 | jq . | sponge 
 find $home_dir -name orchestrator_key.json | xargs cat | jq -r '.mnemonic' | sponge $CHAINDIR/orchestrator-phrases
 
 echo "Adding denom metadata to genesis"
-jq ".app_state.bank.denom_metadata += [{\"description\":\"footoken\",\"display\":\"mfootoken\",\"base\":\"footoken\",\"denom_units\":[{\"denom\":\"footoken\",\"exponent\":0,\"aliases\":[]},{\"denom\":\"mfootoken\",\"exponent\":6,\"aliases\":[]}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
-jq ".app_state.bank.denom_metadata += [{\"description\":\"stake\",\"display\":\"mstake\",\"base\":\"stake\",\"denom_units\":[{\"denom\":\"stake\",\"exponent\":0,\"aliases\":[]},{\"denom\":\"mstake\",\"exponent\":3,\"aliases\":[]}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+jq ".app_state.bank.denom_metadata += [{\"name\":\"footoken\",\"symbol\":\"FOO\",\"description\":\"footoken\",\"display\":\"mfootoken\",\"base\":\"footoken\",\"denom_units\":[{\"denom\":\"footoken\",\"exponent\":0,\"aliases\":[]},{\"denom\":\"mfootoken\",\"exponent\":6,\"aliases\":[]}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+jq ".app_state.bank.denom_metadata += [{\"name\":\"stake\",\"symbol\":\"STK\",\"description\":\"stake\",\"display\":\"mstake\",\"base\":\"stake\",\"denom_units\":[{\"denom\":\"stake\",\"exponent\":0,\"aliases\":[]},{\"denom\":\"mstake\",\"exponent\":3,\"aliases\":[]}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
 
 echo "Adding orchestrator keys to genesis"
 n0orchKey="$(jq .address $n0dir/orchestrator_key.json)"
