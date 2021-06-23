@@ -215,8 +215,8 @@ echo "Building ethereum and validator images"
 docker-compose build ethereum $n0name $n1name $n2name $n3name
 
 echo "Starting ethereum and validators"
-docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name &>/dev/null
-docker-compose start ethereum $n0name $n1name $n2name $n3name &>/dev/null
+docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name
+docker-compose start ethereum $n0name $n1name $n2name $n3name
 
 echo "Waiting for cosmos cluster to sync"
 sleep 10
