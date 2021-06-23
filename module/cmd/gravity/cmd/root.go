@@ -52,6 +52,8 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		Use:   "gravity",
 		Short: "Stargate Gravity App",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			initClientCtx = client.ReadHomeFlag(initClientCtx, cmd)
+
 			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
 				return err
 			}
