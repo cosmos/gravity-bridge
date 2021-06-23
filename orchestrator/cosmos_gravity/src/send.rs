@@ -240,7 +240,7 @@ pub async fn send_logic_call_confirm(
     contact.wait_for_tx(response, TIMEOUT).await
 }
 
-#[allow(clippy::clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments)]
 pub async fn send_ethereum_claims(
     contact: &Contact,
     private_key: PrivateKey,

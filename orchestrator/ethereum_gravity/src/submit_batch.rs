@@ -163,7 +163,7 @@ fn encode_batch_payload(
         amounts,
         destinations,
         fees,
-        new_batch_nonce.clone().into(),
+        new_batch_nonce.into(),
         batch.token_contract.into(),
         batch.batch_timeout.into(),
     ];

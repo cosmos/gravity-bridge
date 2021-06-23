@@ -108,7 +108,7 @@ async fn get_batches_and_signatures(
     for (_key, value) in possible_batches.iter_mut() {
         value.reverse();
     }
-    return possible_batches;
+    possible_batches
 }
 
 /// Attempts to submit batches with valid signatures, checking the state

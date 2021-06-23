@@ -69,14 +69,13 @@ pub async fn cosmos_to_eth(args: CosmosToEthOpts, address_prefix: String) {
     if found.is_none() {
         error!("You don't have any {} tokens!", gravity_coin.denom);
         exit(1);
-    } else if amount.amount.clone() >= found.clone().unwrap().amount {
+    } else if amount.amount.clone() >= found.unwrap().amount {
         if is_cosmos_originated {
             error!("Your transfer of {} {} tokens is greater than your balance of {} tokens. Remember you need some to pay for fees!", print_atom(amount.amount), gravity_coin.denom, print_atom(found.unwrap().amount.clone()));
-            exit(1);
         } else {
             error!("Your transfer of {} {} tokens is greater than your balance of {} tokens. Remember you need some to pay for fees!", print_eth(amount.amount), gravity_coin.denom, print_eth(found.unwrap().amount.clone()));
-            exit(1);
         }
+        exit(1);
     }
 
     info!(
