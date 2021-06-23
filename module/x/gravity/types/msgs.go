@@ -692,7 +692,11 @@ func (msg *MsgCancelSendToEth) GetSigners() []sdk.AccAddress {
 // ======================================================
 
 // ValidateBasic performs stateless checks
-func (e *MsgSubmitBadSignatureEvidence) ValidateBasic() error {
+func (e *MsgSubmitBadSignatureEvidence) ValidateBasic() (err error) {
+	_, err = sdk.AccAddressFromBech32(e.Sender)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -703,7 +707,11 @@ func (msg MsgSubmitBadSignatureEvidence) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgSubmitBadSignatureEvidence) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{}
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic("Invalid signer for MsgSubmitBadSignatureEvidence")
+	}
+	return []sdk.AccAddress{acc}
 }
 
 // Type should return the action

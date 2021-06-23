@@ -267,6 +267,7 @@ message MsgCancelSendToEthResponse {}
 message MsgSubmitBadSignatureEvidence {
   google.protobuf.Any subject   = 1;
   string              signature = 2;
+  string              sender    = 3;
 }
 
 message MsgSubmitBadSignatureEvidenceResponse {}
