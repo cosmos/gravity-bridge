@@ -2,17 +2,21 @@ name: Integration tests
 
 on:
   push:
-    branches: [master, main]
+    branches: [ master, main ]
   pull_request:
-    branches: [master, main]
+    branches: [ master, main ]
 
 jobs:
   happy-path:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
       - uses: actions/checkout@v2
       - name: Run all up happy-path test
-        run: make e2e_happy_path
+        run: cd testnet && go test -c && cd .. && ./testnet/testnet.test -test.run BasicChainDynamicKeys -test.failfast
   validator-out:
     runs-on: ubuntu-latest
     steps:

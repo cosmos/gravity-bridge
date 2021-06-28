@@ -23,16 +23,17 @@ service Query {
   rpc SignerSetTx(SignerSetTxRequest) returns (SignerSetTxResponse) {
     // option (google.api.http).get = "/gravity/v1/signer_set";
   }
-  rpc LatestSignerSetTx(LatestSignerSetTxRequest) returns (SignerSetTxResponse) {
+  rpc LatestSignerSetTx(LatestSignerSetTxRequest)
+      returns (SignerSetTxResponse) {
     // option (google.api.http).get = "/gravity/v1/signer_set/latest";
   }
   rpc BatchTx(BatchTxRequest) returns (BatchTxResponse) {
     // option (google.api.http).get =
-        // "/gravity/v1/batch_txs/{token_contract}/{nonce}";
+    // "/gravity/v1/batch_txs/{token_contract}/{nonce}";
   }
   rpc ContractCallTx(ContractCallTxRequest) returns (ContractCallTxResponse) {
     // option (google.api.http).get =
-        // "/gravity/v1/contract_call_txs/{invalidation_id}/{invalidation_nonce}";
+    // "/gravity/v1/contract_call_txs/{invalidation_id}/{invalidation_nonce}";
   }
 
   // get collections of outgoing traffic from the bridge
@@ -54,16 +55,17 @@ service Query {
   rpc SignerSetTxConfirmations(SignerSetTxConfirmationsRequest)
       returns (SignerSetTxConfirmationsResponse) {
     // option (google.api.http).get =
-        // "/gravity/v1/signer_sets/ethereum_signatures";
+    // "/gravity/v1/signer_sets/ethereum_signatures";
   }
   rpc BatchTxConfirmations(BatchTxConfirmationsRequest)
       returns (BatchTxConfirmationsResponse) {
-    // option (google.api.http).get = "/gravity/v1/batch_txs/ethereum_signatures";
+    // option (google.api.http).get =
+    // "/gravity/v1/batch_txs/ethereum_signatures";
   }
   rpc ContractCallTxConfirmations(ContractCallTxConfirmationsRequest)
       returns (ContractCallTxConfirmationsResponse) {
     // option (google.api.http).get =
-        // "/gravity/v1/logic_calls/ethereum_signatures";
+    // "/gravity/v1/logic_calls/ethereum_signatures";
   }
 
   // ^^^^^^^^^^^^ seem okay for now ^^^^^^
@@ -71,25 +73,25 @@ service Query {
   // pending ethereum signature queries for orchestrators to figure out which
   // signatures they are missing
   // TODO: can/should we group this into one endpoint?
-  rpc UnsignedSignerSetTxs(
-      UnsignedSignerSetTxsRequest)
+  rpc UnsignedSignerSetTxs(UnsignedSignerSetTxsRequest)
       returns (UnsignedSignerSetTxsResponse) {
-    // option (google.api.http).get = "/gravity/v1/SignerSetTxs/{address}/pending";
+    // option (google.api.http).get =
+    // "/gravity/v1/SignerSetTxs/{address}/pending";
   }
   rpc UnsignedBatchTxs(UnsignedBatchTxsRequest)
       returns (UnsignedBatchTxsResponse) {
     // option (google.api.http).get = "/gravity/v1/batches/{address}/pending";
   }
-  rpc UnsignedContractCallTxs(
-      UnsignedContractCallTxsRequest)
+  rpc UnsignedContractCallTxs(UnsignedContractCallTxsRequest)
       returns (UnsignedContractCallTxsResponse) {
     // option (google.api.http).get =
-        // "/gravity/v1/ContractCallTxs/{address}/pending";
+    // "/gravity/v1/ContractCallTxs/{address}/pending";
   }
 
   rpc LastSubmittedEthereumEvent(LastSubmittedEthereumEventRequest)
       returns (LastSubmittedEthereumEventResponse) {
-    // option (google.api.http).get = "/gravity/v1/oracle/event_nonce/{address}";
+    // option (google.api.http).get =
+    // "/gravity/v1/oracle/event_nonce/{address}";
   }
 
   // Queries the fees for all pending batches, results are returned in sdk.Coin
@@ -101,12 +103,12 @@ service Query {
   // Query for info about denoms tracked by gravity
   rpc ERC20ToDenom(ERC20ToDenomRequest) returns (ERC20ToDenomResponse) {
     // option (google.api.http).get =
-        // "/gravity/v1/cosmos_originated/erc20_to_denom";
+    // "/gravity/v1/cosmos_originated/erc20_to_denom";
   }
   // Query for info about denoms tracked by gravity
   rpc DenomToERC20(DenomToERC20Request) returns (DenomToERC20Response) {
     // option (google.api.http).get =
-        // "/gravity/v1/cosmos_originated/denom_to_erc20";
+    // "/gravity/v1/cosmos_originated/denom_to_erc20";
   }
   // Query for batch send to ethereums
   rpc BatchedSendToEthereums(BatchedSendToEthereumsRequest)
@@ -123,17 +125,22 @@ service Query {
   rpc DelegateKeysByValidator(DelegateKeysByValidatorRequest)
       returns (DelegateKeysByValidatorResponse) {
     // option (google.api.http).get =
-        // "/gravity/v1/delegate_keys/validator/{validator}";
+    // "/gravity/v1/delegate_keys/validator/{validator}";
   }
   rpc DelegateKeysByEthereumSigner(DelegateKeysByEthereumSignerRequest)
       returns (DelegateKeysByEthereumSignerResponse) {
     // option (google.api.http).get =
-        // "/gravity/v1/delegate_keys/ethereum/{ethereum_signer}";
+    // "/gravity/v1/delegate_keys/ethereum/{ethereum_signer}";
   }
   rpc DelegateKeysByOrchestrator(DelegateKeysByOrchestratorRequest)
       returns (DelegateKeysByOrchestratorResponse) {
     // option (google.api.http).get =
-        // "/gravity/v1/delegate_keys/orchestrator/{orchestrator}";
+    // "/gravity/v1/delegate_keys/orchestrator/{orchestrator}";
+  }
+
+  rpc DelegateKeys(DelegateKeysRequest) returns (DelegateKeysResponse) {
+    // option (google.api.http).get =
+    // "/gravity/v1/delegate_keys";
   }
 }
 
@@ -142,9 +149,7 @@ message ParamsRequest {}
 message ParamsResponse { Params params = 1 [ (gogoproto.nullable) = false ]; }
 
 //  rpc SignerSetTx
-message SignerSetTxRequest {
-  uint64 signer_set_nonce = 1;
-}
+message SignerSetTxRequest { uint64 signer_set_nonce = 1; }
 message LatestSignerSetTxRequest {}
 message SignerSetTxResponse { SignerSetTx signer_set = 1; }
 
@@ -163,9 +168,7 @@ message ContractCallTxRequest {
 message ContractCallTxResponse { ContractCallTx logic_call = 1; }
 
 // rpc SignerSetTxConfirmations
-message SignerSetTxConfirmationsRequest {
-  uint64 signer_set_nonce = 1;
-}
+message SignerSetTxConfirmationsRequest { uint64 signer_set_nonce = 1; }
 message SignerSetTxConfirmationsResponse {
   repeated SignerSetTxConfirmation signatures = 1;
 }
@@ -207,9 +210,7 @@ message UnsignedSignerSetTxsRequest {
   // orchestartor address or the cooresponding validator address
   string address = 1;
 }
-message UnsignedSignerSetTxsResponse {
-  repeated SignerSetTx signer_sets = 1;
-}
+message UnsignedSignerSetTxsResponse { repeated SignerSetTx signer_sets = 1; }
 
 message UnsignedBatchTxsRequest {
   // NOTE: this is an sdk.AccAddress and can represent either the
@@ -223,9 +224,7 @@ message UnsignedBatchTxsResponse {
 
 //  rpc UnsignedContractCallTxs
 message UnsignedContractCallTxsRequest { string address = 1; }
-message UnsignedContractCallTxsResponse {
-  repeated ContractCallTx calls = 1;
-}
+message UnsignedContractCallTxsResponse { repeated ContractCallTx calls = 1; }
 
 message BatchTxFeesRequest {}
 message BatchTxFeesResponse {
@@ -283,6 +282,9 @@ message DelegateKeysByOrchestratorResponse {
   string validator_address = 1;
   string ethereum_signer = 2;
 }
+
+message DelegateKeysRequest {}
+message DelegateKeysResponse { repeated MsgDelegateKeys delegate_keys = 1; }
 
 // NOTE: if there is no sender address, return all
 message BatchedSendToEthereumsRequest {

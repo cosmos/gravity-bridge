@@ -135,10 +135,6 @@ pub async fn main() {
     // addresses of deployed ERC20 token contracts to be used for testing
     let erc20_addresses = contracts.erc20_addresses;
 
-    // before we start the orchestrators send them some funds so they can pay
-    // for things
-    send_eth_to_orchestrators(&keys, &web30).await;
-
     assert!(check_cosmos_balance(
         &get_test_token_name(),
         keys[0]

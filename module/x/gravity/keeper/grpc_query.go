@@ -401,3 +401,14 @@ func (k Keeper) DelegateKeysByOrchestrator(c context.Context, req *types.Delegat
 	}
 	return res, nil
 }
+
+func (k Keeper) DelegateKeys(c context.Context, req *types.DelegateKeysRequest) (*types.DelegateKeysResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	delegateKeys := k.getDelegateKeys(ctx)
+
+	res := &types.DelegateKeysResponse{
+		DelegateKeys: delegateKeys,
+	}
+	return res, nil
+}
+

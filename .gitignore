@@ -6,6 +6,7 @@ tests/dockerfile/gravity.tar.gz
 solidity/dist
 testdata/
 orchestrator/bins
+out/
 
 # IDE files
 .idea/
@@ -14,3 +15,5 @@ orchestrator/bins
 cache
 artifacts
 *.test
+
+.DS_Store

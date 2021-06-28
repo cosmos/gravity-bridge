@@ -39,6 +39,18 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, val.String())
 	}
 
+	// check ethereum address is not currently used
+	validators := k.getValidatorsByEthereumAddress(ctx, eth)
+	if len(validators) > 0 {
+		return nil, sdkerrors.Wrap(fmt.Errorf("ethereum address %s in use", eth.String()), fmt.Sprintf("%s", validators))
+	}
+
+	// check orchestrator is not currently used
+	ethAddrs := k.getEthereumAddressesByOrchestrator(ctx, orch)
+	if len(ethAddrs) > 0 {
+		return nil, sdkerrors.Wrap(fmt.Errorf("orchestrator address %s in use", orch.String()), fmt.Sprintf("%s", ethAddrs))
+	}
+
 	// set the three indexes
 	k.SetOrchestratorValidatorAddress(ctx, val, orch)
 	k.setValidatorEthereumAddress(ctx, val, eth)

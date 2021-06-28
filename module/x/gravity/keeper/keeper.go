@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"math"
@@ -174,6 +175,20 @@ func (k Keeper) GetValidatorEthereumAddress(ctx sdk.Context, validator sdk.ValAd
 	return common.BytesToAddress(ctx.KVStore(k.storeKey).Get(types.MakeValidatorEthereumAddressKey(validator)))
 }
 
+func (k Keeper) getValidatorsByEthereumAddress(ctx sdk.Context, ethAddr common.Address) (vals []sdk.ValAddress) {
+	iter := ctx.KVStore(k.storeKey).Iterator(nil, nil)
+
+	for ; iter.Valid(); iter.Next() {
+		if common.BytesToAddress(iter.Value()) == ethAddr {
+			valBs := bytes.TrimPrefix(iter.Key(), []byte{types.ValidatorEthereumAddressKey})
+			val := sdk.ValAddress(valBs)
+			vals = append(vals, val)
+		}
+	}
+
+	return
+}
+
 ////////////////////////
 // ETH -> ORC ADDRESS //
 ////////////////////////
@@ -187,6 +202,21 @@ func (k Keeper) setEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.A
 func (k Keeper) GetEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.Address) sdk.AccAddress {
 	return sdk.AccAddress(ctx.KVStore(k.storeKey).Get(types.MakeEthereumOrchestratorAddressKey(ethAddr)))
 }
+
+func (k Keeper) getEthereumAddressesByOrchestrator(ctx sdk.Context, orch sdk.AccAddress) (ethAddrs []common.Address) {
+	iter := ctx.KVStore(k.storeKey).Iterator(nil, nil)
+
+	for ; iter.Valid(); iter.Next() {
+		if sdk.AccAddress(iter.Value()).String() == orch.String() {
+			ethBs := bytes.TrimPrefix(iter.Key(), []byte{types.EthereumOrchestratorAddressKey})
+			ethAddr := common.BytesToAddress(ethBs)
+			ethAddrs = append(ethAddrs, ethAddr)
+		}
+	}
+
+	return
+}
+
 
 // CreateSignerSetTx gets the current signer set from the staking keeper, increments the nonce,
 // creates the signer set tx object, emits an event and sets the signer set in state
@@ -212,7 +242,7 @@ func (k Keeper) CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	return newSignerSetTx
 }
 
-// CurrentSignerSetTx gets powers from the store and normalizes them
+// CurrentSignerSet gets powers from the store and normalizes them
 // into an integer percentage with a resolution of uint32 Max meaning
 // a given validators 'gravity power' is computed as
 // Cosmos power / total cosmos power = x / uint32 Max

@@ -41,6 +41,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdDelegateKeysByValidator(),
 		CmdDelegateKeysByEthereumSigner(),
 		CmdDelegateKeysByOrchestrator(),
+		CmdDelegateKeys(),
 	)
 
 	return gravityQueryCmd
@@ -643,9 +644,7 @@ func CmdDelegateKeysByValidator() *cobra.Command {
 				return err
 			}
 
-			var ( // args
-				validatorAddress string // TODO(levi) init and validate from args[0]
-			)
+			validatorAddress := args[0]
 
 			req := types.DelegateKeysByValidatorRequest{
 				ValidatorAddress: validatorAddress,
@@ -675,9 +674,7 @@ func CmdDelegateKeysByEthereumSigner() *cobra.Command {
 				return err
 			}
 
-			var ( // args
-				ethereumSigner string // TODO(levi) init and validate from args[0]
-			)
+			ethereumSigner := args[0] // TODO(levi) init and validate from args[0]
 
 			req := types.DelegateKeysByEthereumSignerRequest{
 				EthereumSigner: ethereumSigner,
@@ -707,9 +704,7 @@ func CmdDelegateKeysByOrchestrator() *cobra.Command {
 				return err
 			}
 
-			var ( // args
-				orcAddr string // TODO(levi) init and validate from args[0]
-			)
+			orcAddr := args[0]
 
 			req := types.DelegateKeysByOrchestratorRequest{
 				OrchestratorAddress: orcAddr,
@@ -727,6 +722,34 @@ func CmdDelegateKeysByOrchestrator() *cobra.Command {
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
+
+
+func CmdDelegateKeys() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "all-delegate-keys",
+		Args:  cobra.NoArgs,
+		Short: "", // TODO(levi) provide short description
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, queryClient, err := newContextAndQueryClient(cmd)
+			if err != nil {
+				return err
+			}
+
+			req := types.DelegateKeysRequest{}
+
+			res, err := queryClient.DelegateKeys(cmd.Context(), &req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
 
 func newContextAndQueryClient(cmd *cobra.Command) (client.Context, types.QueryClient, error) {
 	clientCtx, err := client.GetClientQueryContext(cmd)
