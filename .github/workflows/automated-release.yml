@@ -4,244 +4,86 @@ on:
     tags:
       - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
 
-name: Automated release build
+name: Automated Release
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    name: Build and upload release assets
+  release:
+    name: build-release-assets
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [14.x]
     steps:
-      - name: Set up Go 1.x
+      # Setup Golang Environemnt
+      - name: setup-go
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.13
-        id: go
-
-      - name: Checkout code
+          go-version: ^1.16
+      # Setup Rust Environment
+      - name: setup-rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      # Setup Node Environment
+      - name: setup-node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      # Checkout repository code
+      - name: checkout-code
         uses: actions/checkout@v2
-
-      # build the code before creating the release, GO and Solidity first for faster failures
-      - name: Build GO
-        run: |
-          cd module
-          make
-
-      - name: Set ENV var for GOPATH
-        run: |
-          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
-
-      - name: Build Solidity artifacts
-        run: cd solidity && npm ci && npm run typechain
-
-      - name: Build contract deployment script into a static binary
-        run: cd solidity && npm ci && npm run compile-deployer
-
-      - name: Build Rust x86_64
-        run: |
-          cargo install cross
-          cd orchestrator
-          cross build --target x86_64-unknown-linux-musl --release --all
-
-      # now that the code has built create the release and start uploading
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      # Golang Cache
+      - name: go-cache
+        uses: actions/cache@v2
+        with: 
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('module/go.sum') }}
+      # Rust Cache
+      - name: rust-cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            orchestrator/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('orchestrator/Cargo.lock') }}
+      # Node Cache
+      - name: node-cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('solidity/package-lock.json') }}
+      # Build Go Artifacts
+      - name: build-go
+        run: cd module && make build
+      # Build Node and Solidity Artifacts
+      - name: build-node-solidity
+        run: cd solidity && npm ci && npm run typechain && npm run compile-deployer
+      # Build Rust Artifacts
+      - name: build-rust
+        run: cd orchestrator && cargo install cross &&  cross build --target x86_64-unknown-linux-musl --release --all
+      # Create Release and Upload artifacts
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            orchestrator/target/x86_64-unknown-linux-musl/release/client
+            orchestrator/target/x86_64-unknown-linux-musl/release/orchestrator
+            orchestrator/target/x86_64-unknown-linux-musl/release/relayer
+            orchestrator/target/x86_64-unknown-linux-musl/release/register-delegate-keys
+            orchestrator/target/x86_64-unknown-linux-musl/release/test-runner
+            module/build/gravity
+            solidity/artifacts/contracts/Gravity.sol/Gravity.json
+            solidity/artifacts/contracts/TestERC20A.sol/TestERC20A.json
+            solidity/artifacts/contracts/TestERC20B.sol/TestERC20B.json
+            solidity/artifacts/contracts/TestERC20C.sol/TestERC20C.json
+            solidity/contract-deployer
+            LICENSE
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: true
-
-      # the 5 Rust binaries, a loop would make this much more compact
-      - name: Upload Rust client
-        id: upload-rust-release-client
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/client
-          asset_name: client
-          asset_content_type: application/bin
-      - name: Upload Rust Orchestrator
-        id: upload-rust-release-orchestrator
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/orchestrator
-          asset_name: orchestrator
-          asset_content_type: application/bin
-      - name: Upload Rust Relayer
-        id: upload-rust-release-relayer
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/relayer
-          asset_name: relayer
-          asset_content_type: application/bin
-      - name: Upload Rust register-delegate-keys
-        id: upload-rust-release-key-delegator
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/register-delegate-keys
-          asset_name: register-delegate-keys
-          asset_content_type: application/bin
-      - name: Upload Rust test runner
-        id: upload-rust-test-runner
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/test-runner
-          asset_name: test-runner
-          asset_content_type: application/bin
-
-      - name: Upload Go Release Asset
-        id: upload-go-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.GOPATH }}/bin/gravity
-          asset_name: gravity
-          asset_content_type: application/bin
-
-      # next we upload the contract artifact, in a production situation a previous version will
-      # already be deployed on Ethereum and this won't be very useful, but as any chain leads up
-      # to launch it's nice to have a version history for the contract itself and see what if any
-      # changes are made that may go unnoticed due to tooling
-      - name: Upload Gravity Ethereum artifacts
-        id: upload-solidity-artifacts
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: solidity/artifacts/contracts/Gravity.sol/Gravity.json
-          asset_name: Gravity.json
-          asset_content_type: application/bin
-
-      - name: Upload Gravity Ethereum test artifact A
-        id: upload-solidity-test-a
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: solidity/artifacts/contracts/TestERC20A.sol/TestERC20A.json
-          asset_name: TestERC20A.json
-          asset_content_type: application/bin
-      - name: Upload Gravity Ethereum test artifact B
-        id: upload-solidity-test-b
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: solidity/artifacts/contracts/TestERC20B.sol/TestERC20B.json
-          asset_name: TestERC20B.json
-          asset_content_type: application/bin
-      - name: Upload Gravity Ethereum test artifact C
-        id: upload-solidity-test-c
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: solidity/artifacts/contracts/TestERC20C.sol/TestERC20C.json
-          asset_name: TestERC20C.json
-          asset_content_type: application/bin
-
-      - name: Upload contract deployer
-        id: upload-contract-deployer
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: solidity/contract-deployer
-          asset_name: contract-deployer
-          asset_content_type: application/bin
-
-      # finally we start arm builds and uploads, we do this because the release
-      # entry is already made and rust builds take nearly 10 minutes, so instead
-      # of having a workable release in 20 minutes we can have one in 10 with the ARM
-      # binaries coming 10 minutes later.
-      - name: Build Rust ARM64
-        run: |
-          cd orchestrator
-          cross build --target aarch64-unknown-linux-musl --release --all
-
-      - name: Build GO ARM64
-        run: |
-          cd module
-          GOARCH=arm64 make
-
-      - name: Upload Rust client ARM
-        id: upload-rust-release-client-arm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./orchestrator/target/aarch64-unknown-linux-musl/release/client
-          asset_name: client-arm
-          asset_content_type: application/bin
-      - name: Upload Rust Orchestrator ARM
-        id: upload-rust-release-orchestrator-arm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./orchestrator/target/aarch64-unknown-linux-musl/release/orchestrator
-          asset_name: orchestrator-arm
-          asset_content_type: application/bin
-      - name: Upload Rust Relayer ARM
-        id: upload-rust-release-relayer-arm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./orchestrator/target/aarch64-unknown-linux-musl/release/relayer
-          asset_name: relayer-arm
-          asset_content_type: application/bin
-      - name: Upload Rust register-delegate-keys ARM
-        id: upload-rust-release-key-delegator-arm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./orchestrator/target/aarch64-unknown-linux-musl/release/register-delegate-keys
-          asset_name: register-delegate-keys-arm
-          asset_content_type: application/bin
-
-      - name: Upload Go Release Asset ARM
-        id: upload-go-release-asset-arm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.GOPATH }}/bin/gravity
-          asset_name: gravity-arm
-          asset_content_type: application/bin

@@ -1,7 +1,7 @@
 # This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: Solidity contract build and test
+name: Solidity
 
 on:
   push:
@@ -10,27 +10,40 @@ on:
     branches: [master, main]
 
 jobs:
-  core-tests:
+  node-build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [ 16.x ]
     steps:
       - uses: actions/checkout@v2
-      - name: Build and test Solidity contracts
-        uses: actions/setup-node@v1
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('solidity/package-lock.json') }}
+      - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
       - run: cd solidity && npm ci
       - run: cd solidity && npm run typechain
       - run: cd solidity && npm run evm &
       - run: cd solidity && npm run test
+      - run: cd solidity && npm run compile-deployer
+      - run: npm i nexe -g
+      - run: cd solidity && nexe dist/contract-deployer.js --build --resource "./dist/**/*"
+
   arbitrary-logic-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [16.x]
     steps:
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       - uses: actions/checkout@v2
       - name: Test arbitrary logic on mainnet fork
         uses: actions/setup-node@v1

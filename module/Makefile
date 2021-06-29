@@ -59,8 +59,8 @@ go.sum: go.mod
 test:
 	@go test -mod=readonly $(PACKAGES)
 
-build-linux:
-	GOOS=linux GOARCH=amd64 go build -o build/gravity $(BUILD_FLAGS) ./cmd/gravity/main.go
+build:
+	go build -o build/gravity $(BUILD_FLAGS) ./cmd/gravity/main.go
 
 docker-build:
 	docker build -t github.com/althea-net/gravity:latest

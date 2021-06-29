@@ -28,7 +28,7 @@ RUN go mod download
 COPY . .
 
 # install simapp, remove packages
-RUN make build-linux
+RUN make build
 
 # Final image
 FROM alpine:edge
@@ -44,3 +44,4 @@ EXPOSE 26656 26657 1317 9090
 
 # Run gravity by default
 CMD sh home/startup.sh
+# todo: remove this script, it isn't needed

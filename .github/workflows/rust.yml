@@ -5,19 +5,47 @@ on:
     branches:
       - main
   pull_request:
-    paths:
-      - "**.rs"
 
 env:
   CARGO_TERM_COLOR: always
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  rust-build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            orchestrator/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('orchestrator/Cargo.lock') }}
       - name: Build Orchestrator
-        run: cd orchestrator && cargo build --all --verbose
+        run: cd orchestrator && cargo build --release --bin orchestrator
       - name: Run Orchestrator tests
         run: cd orchestrator && cargo test --all --verbose
+      - name: container-login
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: labels
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-orchestrator
+      - name: build-and-push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./orchestrator
+          file: orchestrator/ci.Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

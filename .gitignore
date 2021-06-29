@@ -17,3 +17,5 @@ artifacts
 *.test
 
 .DS_Store
+
+build/
