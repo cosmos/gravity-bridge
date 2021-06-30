@@ -91,7 +91,7 @@ type NodeStatus = {
 
 // sets the gas price for all contract deployments
 const overrides = {
-  gasPrice: 100000000000
+  //gasPrice: 100000000000
 }
 
 async function deploy() {
