@@ -78,8 +78,8 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 	vs := pk.GetCurrentValset(ctx)
 	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
 	vs.Height = height
-	nonce := pk.GetLatestValsetNonce(ctx)
-	vs.Nonce = nonce
+
+	vs.Nonce = pk.GetLatestValsetNonce(ctx) + 1
 	pk.StoreValsetUnsafe(ctx, vs)
 
 	for i, val := range keeper.AccAddrs {
@@ -129,8 +129,7 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 	ctx = ctx.WithBlockHeight(valsetRequestHeight)
 	vs := pk.GetCurrentValset(ctx)
 	vs.Height = uint64(valsetRequestHeight)
-	nonce := pk.IncrementLatestValsetNonce(ctx)
-	vs.Nonce = nonce
+	vs.Nonce = pk.GetLatestValsetNonce(ctx) + 1
 	pk.StoreValsetUnsafe(ctx, vs)
 
 	// Start Unbonding validators

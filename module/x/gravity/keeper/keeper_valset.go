@@ -87,14 +87,6 @@ func (k Keeper) SetLatestValsetNonce(ctx sdk.Context, nonce uint64) {
 	store.Set(types.LatestValsetNonce, types.UInt64Bytes(nonce))
 }
 
-// IncrementLatestValsetNonce increments the latest valset nonce in the store and returns it
-func (k Keeper) IncrementLatestValsetNonce(ctx sdk.Context) uint64 {
-	var nonce uint64 = k.GetLatestValsetNonce(ctx)
-	nonce++
-	k.SetLatestValsetNonce(ctx, nonce)
-	return nonce
-}
-
 // GetValset returns a valset by nonce
 func (k Keeper) GetValset(ctx sdk.Context, nonce uint64) *types.Valset {
 	store := ctx.KVStore(k.storeKey)
@@ -132,7 +124,10 @@ func (k Keeper) GetValsets(ctx sdk.Context) (out []*types.Valset) {
 	return
 }
 
-// GetLatestValset returns the latest validator set in state
+// GetLatestValset returns the latest validator set in store. This is different
+// from the CurrrentValset because this one has been saved and is therefore *the* valset
+// for this nonce. GetCurrentValset shows you what could be, if you chose to save it, this function
+// shows you what is the latest valset that was saved.
 func (k Keeper) GetLatestValset(ctx sdk.Context) (out *types.Valset) {
 	latestValsetNonce := k.GetLatestValsetNonce(ctx)
 	out = k.GetValset(ctx, latestValsetNonce)
@@ -227,6 +222,10 @@ func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedVa
 // and submit a valset and they don't have their eth keys set they can never
 // update the validator set again and the bridge and all its' funds are lost.
 // For this reason we exclude validators with unset eth keys from validator sets
+//
+// The function is intended to return what the valset would look like if you made one now
+// you should call this function, evaluate if you want to save this new valset, and discard
+// it or save
 func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 	// allocate enough space for all validators, but len zero, we then append
@@ -267,8 +266,8 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		rewardToken, rewardAmount = k.RewardToERC20Lookup(ctx, reward)
 	}
 
-	// Update the valset nonce for use in the new valset
-	var valsetNonce = k.IncrementLatestValsetNonce(ctx)
+	// increment the nonce, since this potential future valset should be after the current valset
+	valsetNonce := k.GetLatestValsetNonce(ctx) + 1
 
 	return types.NewValset(valsetNonce, uint64(ctx.BlockHeight()), bridgeValidators, rewardAmount, rewardToken)
 }

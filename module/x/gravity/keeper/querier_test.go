@@ -137,8 +137,8 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 func TestLastValsetRequests(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
-	// seed with requests
-	for i := 0; i < 6; i++ {
+	// seed with maxValsetRequestsReturns + 1 requests
+	for i := 0; i < maxValsetRequestsReturned+1; i++ {
 		var validators []sdk.ValAddress
 		for j := 0; j <= i; j++ {
 			// add an validator each block
@@ -153,7 +153,7 @@ func TestLastValsetRequests(t *testing.T) {
 
 	specs := map[string]struct {
 		expResp []byte
-	}{
+	}{ // Expect only maxValsetRequestsReturns back
 		"limit at 5": {
 			expResp: []byte(`[
 {
