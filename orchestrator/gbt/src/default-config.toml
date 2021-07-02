@@ -4,3 +4,4 @@
 relayer_enabled = true
 
 [relayer]
+market-enabled = true

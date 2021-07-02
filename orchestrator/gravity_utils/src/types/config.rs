@@ -10,8 +10,23 @@ pub struct GravityBridgeToolsConfig {
 }
 
 /// Relayer configuration options
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Default)]
-pub struct RelayerConfig {}
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+pub struct RelayerConfig {
+    #[serde(default = "default_market_enabled")]
+    pub market_enabled: bool,
+}
+
+fn default_market_enabled() -> bool {
+    true
+}
+
+impl Default for RelayerConfig {
+    fn default() -> Self {
+        RelayerConfig {
+            market_enabled: default_market_enabled(),
+        }
+    }
+}
 
 /// Orchestrator configuration options
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
