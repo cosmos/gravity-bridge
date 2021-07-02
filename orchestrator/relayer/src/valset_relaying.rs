@@ -1,9 +1,10 @@
 //! This module contains code for the validator update lifecycle. Functioning as a way for this validator to observe
 //! the state of both chains and perform the required operations.
 
+use std::str::FromStr;
 use std::time::Duration;
 
-use clarity::{PrivateKey as EthPrivateKey};
+use clarity::{PrivateKey as EthPrivateKey, Uint256};
 use clarity::{address::Address as EthAddress, utils::bytes_to_hex_str};
 use cosmos_gravity::query::get_latest_valsets;
 use cosmos_gravity::query::{get_all_valset_confirms, get_valset};
@@ -16,7 +17,7 @@ use ethereum_gravity::{
     valset_update::{encode_valset_update_payload, send_eth_valset_update},
 };
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use gravity_utils::types::Valset;
+use gravity_utils::types::{RelayerConfig, Valset};
 use gravity_utils::types::ValsetConfirmResponse;
 use gravity_utils::error::GravityError;
 use tonic::transport::Channel;
@@ -113,6 +114,42 @@ async fn valset_cost_error(
     }
 }
 
+async fn should_relay_valset(valset: &Valset, ethereum_key: &EthPrivateKey, cost: GasCost, web3: &Web3) -> bool {
+    let mut should_relay;
+
+    let relaying_cost = cost.gas * cost.gas_price;
+    let pub_key = ethereum_key.to_public_key().unwrap();
+    let reward = valset.reward_amount.clone();
+    let token_in = valset.reward_token.unwrap();
+    let token_out = *web30::amm::WETH_CONTRACT_ADDRESS; // for now we always want weth
+    // If we're being rewarded in weth, we can just compare cost of gas to reward and see if we're getting enough
+    if token_out == token_in {
+        // TODO: Give relayers a configuration option in this case
+        should_relay = reward > relaying_cost;
+    } else {
+        warn!("No token reward for relaying valset: {:#?} - not relaying!", valset);
+        return false;
+    }
+    // TODO: Give relayers an option for this value
+    let fee_uint24 = Uint256::from_str("500").unwrap();
+    // TODO: Understand this value better and give relayers an option
+    let sqrt_price_limit_x96_uint160 = Uint256::from_str("0").unwrap();
+    if !should_relay {
+        let value = web3.get_uniswap_price(pub_key, token_in, token_out,
+            fee_uint24, reward, sqrt_price_limit_x96_uint160, None).await;
+        if value.is_err() {
+            info!("Not relaying because uniswap returned an error {}", value.err().unwrap());
+        } else {
+            let val = value.unwrap();
+            // TODO: Give relayers a configuration option in this case too
+            should_relay = val > relaying_cost;
+            debug!("We will be relaying because value of reward in weth: {} > cost of gas {}", val, relaying_cost);
+        }
+    }
+
+    should_relay
+}
+
 // Performs relaying of a valid valset, if it is profitable to do so
 async fn relay_valid_valset(
     latest_cosmos_valset: Valset,
@@ -122,7 +159,9 @@ async fn relay_valid_valset(
     gravity_contract_address: EthAddress,
     gravity_id: String,
     ethereum_key: EthPrivateKey,
-    timeout: Duration) {
+    timeout: Duration,
+    enable_relay_market: &bool,
+) {
         let cost = ethereum_gravity::valset_update::estimate_valset_cost(
             &latest_cosmos_valset,
             &current_valset,
@@ -149,17 +188,29 @@ async fn relay_valid_valset(
                 / downcast_to_u128(one_eth()).unwrap() as f32
         );
 
-        let _res = send_eth_valset_update(
-            latest_cosmos_valset,
-            current_valset,
-            &latest_cosmos_confirmed,
-            web3,
-            timeout,
-            gravity_contract_address,
-            gravity_id,
-            ethereum_key,
-        )
-        .await;
+        let should_relay : bool;
+        // If we are allowing relay market operations (e.g. on ethereum), we need to call should_relay_valset
+        if !enable_relay_market { // Relay market operations disabled -> always relay valsets
+            should_relay = true;
+        } else { // Relay market operations enabled -> check that this valset will make us money before relaying
+            should_relay = should_relay_valset(&latest_cosmos_valset, &ethereum_key, cost, web3).await;
+        }
+
+        if should_relay {
+            let _res = send_eth_valset_update(
+                latest_cosmos_valset,
+                current_valset,
+                &latest_cosmos_confirmed,
+                web3,
+                timeout,
+                gravity_contract_address,
+                gravity_id,
+                ethereum_key,
+            )
+            .await;
+        } else {
+            info!("Not relaying valset {:?} because it is not profitable", latest_cosmos_valset);
+        }
 }
 
 /// Check the last validator set on Ethereum, if it's lower than our latest validator
@@ -173,6 +224,7 @@ pub async fn relay_valsets(
     gravity_contract_address: EthAddress,
     gravity_id: String,
     timeout: Duration,
+    config: &RelayerConfig,
 ) {
     // we have to start with the current valset, we need to know what's currently
     // in the contract in order to determine if a new validator set is valid.
@@ -224,6 +276,7 @@ pub async fn relay_valsets(
     }
 
     if latest_cosmos_valset.nonce > current_valset.nonce {
-        relay_valid_valset(latest_cosmos_valset, current_valset, latest_cosmos_confirmed, web3, gravity_contract_address, gravity_id, ethereum_key, timeout).await;
+        relay_valid_valset(latest_cosmos_valset, current_valset, latest_cosmos_confirmed, web3,
+            gravity_contract_address, gravity_id, ethereum_key, timeout, &config.market_enabled).await;
     }
 }

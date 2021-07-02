@@ -76,6 +76,7 @@ pub async fn orchestrator_main_loop(
         web3,
         grpc_client.clone(),
         gravity_contract_address,
+        &config.relayer,
     );
 
     // if the relayer is not enabled we just don't start the future

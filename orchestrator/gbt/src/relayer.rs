@@ -5,12 +5,13 @@ use cosmos_gravity::query::get_gravity_params;
 use gravity_utils::connection_prep::{
     check_for_eth, create_rpc_connections, wait_for_cosmos_node_ready,
 };
+use gravity_utils::types::RelayerConfig;
 use relayer::main_loop::relayer_main_loop;
 use relayer::main_loop::LOOP_SPEED;
 use std::path::Path;
 use std::process::exit;
 
-pub async fn relayer(args: RelayerOpts, address_prefix: String, home_dir: &Path) {
+pub async fn relayer(args: RelayerOpts, address_prefix: String, home_dir: &Path, config: &RelayerConfig) {
     let cosmos_grpc = args.cosmos_grpc;
     let ethereum_rpc = args.ethereum_rpc;
     let ethereum_key = args.ethereum_key;
@@ -71,5 +72,5 @@ pub async fn relayer(args: RelayerOpts, address_prefix: String, home_dir: &Path)
         c.unwrap()
     };
 
-    relayer_main_loop(ethereum_key, web3, grpc, contract_address).await
+    relayer_main_loop(ethereum_key, web3, grpc, contract_address, config).await
 }
