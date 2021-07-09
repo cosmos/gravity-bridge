@@ -111,7 +111,7 @@ pub async fn estimate_valset_cost(
 
 /// Encodes the payload bytes for the validator set update call, useful for
 /// estimating the cost of submitting a validator set
-fn encode_valset_payload(
+pub fn encode_valset_payload(
     new_valset: Valset,
     old_valset: Valset,
     confirms: &[ValsetConfirmResponse],

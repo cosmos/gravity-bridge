@@ -188,10 +188,11 @@ pub async fn get_last_checked_block(
                     // if we've found this event it is the first possible event from the contract
                     // no other events can come before it, therefore either there's been a parsing error
                     // or no events have been submitted on this chain yet.
-                    let bootstrapping = valset.valset_nonce == 0u32.into() && last_event_nonce == 1u8.into();
+                    let bootstrapping =
+                        valset.valset_nonce == 0u32.into() && last_event_nonce == 1u8.into();
                     // our last event was a valset update event, treat as normal case
-                    let common_case = valset.event_nonce == last_event_nonce
-                        && event.block_number.is_some();
+                    let common_case =
+                        valset.event_nonce == last_event_nonce && event.block_number.is_some();
                     trace!(
                         "{} valset event nonce {} last event nonce",
                         valset.event_nonce,

@@ -14,6 +14,7 @@ use cosmos_gravity::{
 };
 use deep_space::client::ChainStatus;
 use deep_space::Contact;
+use deep_space::error::CosmosGrpcError;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_gravity::utils::get_gravity_id;
 use futures::future::join3;
@@ -153,10 +154,18 @@ pub async fn eth_oracle_main_loop(
         .await
         {
             Ok(new_block) => last_checked_block = new_block,
-            Err(e) => error!(
+            Err(e) => {error!(
                 "Failed to get events for block range, Check your Eth node and Cosmos gRPC {:?}",
                 e
-            ),
+            );
+            if let gravity_utils::error::GravityError::CosmosGrpcError(err)=e{
+                if let CosmosGrpcError::TransactionFailed{tx:_,time:_} =err{
+                    delay_for(Duration::from_secs(10)).await;
+                }
+            }
+                
+            
+        },
         }
 
         // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly

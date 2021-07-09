@@ -11,14 +11,14 @@ gravity_utils = {path = "../gravity_utils"}
 ethereum_gravity = {path = "../ethereum_gravity"}
 gravity_proto = {path = "../gravity_proto/"}
 
-deep_space = "2.1"
-clarity = "0.4"
+deep_space = "2.4.3"
+clarity = "0.4.11"
 serde = "1.0"
 num256 = "0.3"
 log = "0.4"
 sha3 = "0.9"
 tokio = "1.4"
-web30 = "0.12"
+web30 = "0.14.4"
 tonic = "0.4"
 cosmos-sdk-proto = "0.5"
 prost = "0.7"

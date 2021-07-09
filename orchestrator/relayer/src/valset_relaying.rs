@@ -4,6 +4,7 @@
 use std::time::Duration;
 
 use clarity::address::Address as EthAddress;
+use clarity::utils::bytes_to_hex_str;
 use clarity::PrivateKey as EthPrivateKey;
 use cosmos_gravity::query::get_latest_valset;
 use cosmos_gravity::query::{get_all_valset_confirms, get_valset};
@@ -70,6 +71,17 @@ pub async fn relay_valsets(
                     assert_eq!(cosmos_valset.nonce, confirm.nonce);
                 }
                 let hash = encode_valset_confirm_hashed(gravity_id.clone(), cosmos_valset.clone());
+
+                // there are two possible encoding problems that could cause the very rare sig failure bug,
+                // one of them is that the hash is incorrect, that's not probable considering that
+                // both Geth and Clarity agree on it. but this lets us check
+                info!(
+                    "New valset hash {} new valset data {:?} old valset data {:?}",
+                    bytes_to_hex_str(&hash),
+                    latest_cosmos_valset,
+                    current_eth_valset,
+                );
+
                 // order valset sigs prepares signatures for submission, notice we compare
                 // them to the 'current' set in the bridge, this confirms for us that the validator set
                 // we have here can be submitted to the bridge in it's current state

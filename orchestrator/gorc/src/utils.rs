@@ -26,7 +26,7 @@ pub async fn get_erc20_decimals(
     caller_address: EthAddress,
 ) -> Result<Uint256, Web3Error> {
     let decimals = web3
-        .contract_call(erc20, "decimals()", &[], caller_address)
+        .contract_call(erc20, "decimals()", &[], caller_address, None)
         .await?;
 
     Ok(Uint256::from_bytes_be(match decimals.get(0..32) {

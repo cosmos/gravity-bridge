@@ -10,9 +10,9 @@ edition = "2018"
 gravity_proto = {path = "../gravity_proto/"}
 cosmos-sdk-proto = "0.5"
 
-deep_space = "2.1"
-web30 = "0.12"
-clarity = "0.4"
+deep_space = "2.4.3"
+web30 = "0.14.4"
+clarity = "0.4.11"
 num256 = "0.3"
 serde_derive = "1.0"
 serde = "1.0"

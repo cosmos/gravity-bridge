@@ -119,7 +119,7 @@ pub async fn get_valset_nonce(
             contract_address,
             "state_lastValsetNonce()",
             &[],
-            caller_address,
+            caller_address, None
         )
         .await?;
     // the go represents all nonces as u64, there's no
@@ -143,7 +143,7 @@ pub async fn get_tx_batch_nonce(
             gravity_contract_address,
             "lastBatchNonce(address)",
             &[erc20_contract_address.into()],
-            caller_address,
+            caller_address, None
         )
         .await?;
     // the go represents all nonces as u64, there's no
@@ -167,7 +167,7 @@ pub async fn get_logic_call_nonce(
             gravity_contract_address,
             "lastLogicCallNonce(bytes32)",
             &[Token::Bytes(invalidation_id)],
-            caller_address,
+            caller_address, None
         )
         .await?;
     // the go represents all nonces as u64, there's no
@@ -190,7 +190,7 @@ pub async fn get_event_nonce(
             gravity_contract_address,
             "state_lastEventNonce()",
             &[],
-            caller_address,
+            caller_address, None
         )
         .await?;
     // the go represents all nonces as u64, there's no
@@ -209,7 +209,7 @@ pub async fn get_gravity_id(
     web3: &Web3,
 ) -> Result<Vec<u8>, Web3Error> {
     let val = web3
-        .contract_call(contract_address, "state_gravityId()", &[], caller_address)
+        .contract_call(contract_address, "state_gravityId()", &[], caller_address, None)
         .await?;
     Ok(val)
 }
@@ -221,7 +221,7 @@ pub async fn get_erc20_symbol(
     web3: &Web3,
 ) -> Result<String, GravityError> {
     let val_symbol = web3
-        .contract_call(contract_address, "symbol()", &[], caller_address)
+        .contract_call(contract_address, "symbol()", &[], caller_address, None)
         .await?;
     // Pardon the unwrap, but this is temporary code, intended only for the tests, to help them
     // deal with a deprecated feature (the symbol), which will be removed soon

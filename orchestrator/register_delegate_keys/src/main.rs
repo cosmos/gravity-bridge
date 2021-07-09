@@ -5,6 +5,8 @@ extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
 
+use log::error;
+
 use clarity::PrivateKey as EthPrivateKey;
 use cosmos_gravity::send::update_gravity_delegate_addresses;
 use deep_space::{coin::Coin, mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
@@ -110,7 +112,7 @@ async fn main() {
 
     let ethereum_address = ethereum_key.to_public_key().unwrap();
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
-    update_gravity_delegate_addresses(
+    let res =update_gravity_delegate_addresses(
         &contact,
         ethereum_address,
         cosmos_address,
@@ -119,6 +121,13 @@ async fn main() {
     )
     .await
     .expect("Failed to update Eth address");
+
+    let res = contact.wait_for_tx(res, TIMEOUT).await;
+
+    if let Err(e) = res {
+        error!("Failed trying to register delegate addresses error {:?}, correct the error and try again", e);
+        std::process::exit(1);
+    }
 
     let eth_address = ethereum_key.to_public_key().unwrap();
     println!(
