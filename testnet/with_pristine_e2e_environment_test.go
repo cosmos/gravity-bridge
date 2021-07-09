@@ -4,6 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/fs"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/BurntSushi/toml"
 	"github.com/cosmos/cosmos-sdk/codec"
 	types3 "github.com/cosmos/cosmos-sdk/codec/types"
@@ -19,60 +27,42 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/require"
 	json2 "github.com/tendermint/tendermint/libs/json"
-	"io/fs"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
-	"testing"
-	"time"
 )
 
-func writeFile(path string, body []byte) error {
-	if _, err := os.Create(path); err != nil {
-		return err
-	}
-
-	if err := ioutil.WriteFile(path, body, 0644); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func TestBasicChainDynamicKeys(t *testing.T) {
-	err := os.RemoveAll("testdata/")
-	require.NoError(t, err, "unable to reset testdata directory")
+func withPristineE2EEnvironment(t *testing.T, cb func(
+	string,
+	*dockertest.Pool,
+	*dockertest.Network,
+)) {
+	t.Helper()
 
 	chain := Chain{
-		DataDir:    "testdata",
-		ID:         "testchain",
-		Validators: nil,
+		DataDir: "testdata",
+		ID:      "testchain",
 	}
 
-	err = chain.CreateAndInitializeValidators(4)
+	err := chain.CreateAndInitializeValidators(4)
 	require.NoError(t, err, "error initializing validators")
 
 	err = chain.CreateAndInitializeOrchestrators(uint8(len(chain.Validators)))
 	require.NoError(t, err, "error initializing orchestrators")
 
 	// add validator accounts to genesis file
-	path := chain.Validators[0].ConfigDir()
+	configDir := chain.Validators[0].ConfigDir()
 	for _, n := range chain.Validators {
-		err = addGenesisAccount(path, "", n.KeyInfo.GetAddress(), "100000000000stake,100000000000footoken")
+		err = addGenesisAccount(configDir, "", n.KeyInfo.GetAddress(), "100000000000stake,100000000000footoken")
 		require.NoError(t, err, "error creating validator accounts")
 	}
 
 	// add orchestrator accounts to genesis file
 	for _, n := range chain.Orchestrators {
-		err = addGenesisAccount(path, "", n.KeyInfo.GetAddress(), "100000000000stake,100000000000footoken")
+		err = addGenesisAccount(configDir, "", n.KeyInfo.GetAddress(), "100000000000stake,100000000000footoken")
 		require.NoError(t, err, "error creating orchestrator accounts")
 	}
 
 	// file_copy around the genesis file with the accounts
 	for _, v := range chain.Validators[1:] {
-		_, err = fileCopy(filepath.Join(path, "config", "genesis.json"), filepath.Join(v.ConfigDir(), "config", "genesis.json"))
+		_, err = fileCopy(filepath.Join(configDir, "config", "genesis.json"), filepath.Join(v.ConfigDir(), "config", "genesis.json"))
 		require.NoError(t, err, "error copying over genesis files")
 	}
 
@@ -96,12 +86,11 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 	ethGenesisMarshal, err := json.MarshalIndent(ethGenesis, "", "  ")
 	require.NoError(t, err, "error marshalling ethereum genesis file")
 
-	err = ioutil.WriteFile(filepath.Join(chain.ConfigDir(), "ETHGenesis.json"), ethGenesisMarshal, 0644)
-	require.NoError(t, err, "error writing ethereum genesis file")
+	writeFile(t, filepath.Join(chain.ConfigDir(), "ETHGenesis.json"), ethGenesisMarshal)
 
 	serverCtx := server.NewDefaultContext()
 	config := serverCtx.Config
-	config.SetRoot(path)
+	config.SetRoot(configDir)
 	config.Moniker = chain.Validators[0].Moniker
 
 	genFilePath := config.GenesisFile()
@@ -117,11 +106,11 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 		Base:        "footoken",
 		DenomUnits: []DenomUnit{
 			{
-				Denom: "footoken",
+				Denom:    "footoken",
 				Exponent: 0,
 			},
 			{
-				Denom: "mfootoken",
+				Denom:    "mfootoken",
 				Exponent: 6,
 			},
 		},
@@ -132,11 +121,11 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 		Base:        "stake",
 		DenomUnits: []DenomUnit{
 			{
-				Denom: "stake",
+				Denom:    "stake",
 				Exponent: 0,
 			},
 			{
-				Denom: "mstake",
+				Denom:    "mstake",
 				Exponent: 3,
 			},
 		},
@@ -189,8 +178,7 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 	require.NoError(t, err, "error marshalling genesis doc")
 
 	for _, validator := range chain.Validators {
-		err = ioutil.WriteFile(filepath.Join(validator.ConfigDir(), "config", "genesis.json"), out, fs.ModePerm)
-		require.NoError(t, err, "error writing out genesis file")
+		writeFile(t, filepath.Join(validator.ConfigDir(), "config", "genesis.json"), out)
 	}
 
 	// update config.toml files
@@ -228,11 +216,9 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 		err = encoder.Encode(configToml)
 		require.NoError(t, err, "error encoding config toml")
 
+		// todo(levi) use writeFile?
 		err = os.WriteFile(path, b.Bytes(), fs.ModePerm)
 		require.NoError(t, err, "error writing config toml")
-
-		startupPath := filepath.Join(v.ConfigDir(), "startup.sh")
-		err = os.WriteFile(startupPath, []byte(fmt.Sprintf("gravity --home home start --pruning=nothing > home.n%d.log", v.Index)), fs.ModePerm)
 	}
 
 	// bring up docker network
@@ -240,29 +226,14 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 	require.NoError(t, err, "error creating docker pool")
 	network, err := pool.CreateNetwork("testnet")
 	require.NoError(t, err, "error creating testnet network")
-	defer func() {
-		network.Close()
-	}()
-
-	// if the env var AUTO_REMOVE is set to a string parseable to true, then it will set
-	// containers to "attempt" to clean themselves up on close/failure. This doesn't seem
-	// to happen consistently with certain code/test failures
-	autoRemove, _ := strconv.ParseBool(os.Getenv("AUTO_REMOVE"))
-	hostConfig := func(config *docker.HostConfig) {
-		// set AUTO_REMOVE to true so that stopped container goes away by itself
-		config.AutoRemove = autoRemove
-		// in this case we don't want the nodes to restart on failure
-		config.RestartPolicy = docker.RestartPolicy{
-			Name: "no",
-		}
-	}
 
 	// bring up ethereum
 	t.Log("building and running ethereum")
-	ethereum, err := pool.BuildAndRunWithBuildOptions(&dockertest.BuildOptions{
-		Dockerfile: "ethereum/Dockerfile",
-		ContextDir: "./",
-	},
+	ethereum, err := pool.BuildAndRunWithBuildOptions(
+		&dockertest.BuildOptions{
+			Dockerfile: "ethereum/Dockerfile",
+			ContextDir: "./",
+		},
 		&dockertest.RunOptions{
 			Name:      "ethereum",
 			NetworkID: network.Network.ID,
@@ -270,14 +241,11 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 				"8545/tcp": {{HostIP: "", HostPort: "8545"}},
 			},
 			Env: []string{},
-		}, hostConfig)
+		},
+		noRestart,
+	)
 	require.NoError(t, err, "error bringing up ethereum")
 	t.Logf("deployed ethereum at %s", ethereum.Container.ID)
-	if autoRemove {
-		defer func() {
-			ethereum.Close()
-		}()
-	}
 
 	// build validators
 	for _, validator := range chain.Validators {
@@ -289,7 +257,6 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 			OutputStream: ioutil.Discard,
 		})
 		require.NoError(t, err, "error building %s", validator.instanceName())
-		t.Logf("built %s", validator.instanceName())
 	}
 
 	wd, err := os.Getwd()
@@ -299,7 +266,7 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 		runOpts := &dockertest.RunOptions{
 			Name:       validator.instanceName(),
 			NetworkID:  network.Network.ID,
-			Mounts:     []string{fmt.Sprintf("%s/testdata/testchain/%s/:/root/home", wd, validator.instanceName())},
+			Mounts:     []string{fmt.Sprintf("%s/testdata/%s/%s/:/root/home", wd, chain.ID, validator.instanceName())},
 			Repository: validator.instanceName(),
 		}
 
@@ -319,14 +286,9 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 			}
 		}
 
-		resource, err := pool.RunWithOptions(runOpts, hostConfig)
+		resource, err := pool.RunWithOptions(runOpts, noRestart)
 		require.NoError(t, err, "error bringing up %s", validator.instanceName())
 		t.Logf("deployed %s at %s", validator.instanceName(), resource.Container.ID)
-		if autoRemove {
-			defer func() {
-				resource.Close()
-			}()
-		}
 	}
 
 	// bring up the contract deployer and deploy contract
@@ -343,14 +305,11 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 				"8545/tcp": {{HostIP: "", HostPort: "8545"}},
 			},
 			Env: []string{},
-		}, func(config *docker.HostConfig) {})
+		},
+		noRestart,
+	)
 	require.NoError(t, err, "error bringing up contract_deployer")
 	t.Logf("deployed contract_deployer at %s", contractDeployer.Container.ID)
-	if autoRemove {
-		defer func() {
-			contractDeployer.Close()
-		}()
-	}
 
 	container := contractDeployer.Container
 	for container.State.Running {
@@ -389,7 +348,6 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 			OutputStream: ioutil.Discard,
 		})
 		require.NoError(t, err, "error building %s", orchestrator.instanceName())
-		t.Logf("built %s", orchestrator.instanceName())
 	}
 
 	// deploy orchestrators
@@ -414,14 +372,9 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 			Env:        env,
 		}
 
-		resource, err := pool.RunWithOptions(runOpts, hostConfig)
+		resource, err := pool.RunWithOptions(runOpts, noRestart)
 		require.NoError(t, err, "error bringing up %s", orchestrator.instanceName())
 		t.Logf("deployed %s at %s", orchestrator.instanceName(), resource.Container.ID)
-		if autoRemove {
-			defer func() {
-				resource.Close()
-			}()
-		}
 	}
 
 	// write test runner files to config directory
@@ -436,58 +389,17 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 		orchestratorPhrases = append(orchestratorPhrases, orchestrator.Mnemonic)
 	}
 
-	err = writeFile(filepath.Join(chain.DataDir, "validator-eth-keys"), []byte(strings.Join(ethKeys, "\n")))
-	require.NoError(t, err)
-	err = writeFile(filepath.Join(chain.DataDir, "validator-phrases"), []byte(strings.Join(validatorPhrases, "\n")))
-	require.NoError(t, err)
-	err = writeFile(filepath.Join(chain.DataDir, "orchestrator-phrases"), []byte(strings.Join(orchestratorPhrases, "\n")))
-	require.NoError(t, err)
-	err = writeFile(filepath.Join(chain.DataDir, "contracts"), contractDeployerLogOutput.Bytes())
-	require.NoError(t, err)
+	writeFile(t, filepath.Join(chain.DataDir, "validator-eth-keys"), []byte(strings.Join(ethKeys, "\n")))
+	writeFile(t, filepath.Join(chain.DataDir, "validator-phrases"), []byte(strings.Join(validatorPhrases, "\n")))
+	writeFile(t, filepath.Join(chain.DataDir, "orchestrator-phrases"), []byte(strings.Join(orchestratorPhrases, "\n")))
+	writeFile(t, filepath.Join(chain.DataDir, "contracts"), contractDeployerLogOutput.Bytes())
 
-	// bring up the test runner
-	t.Log("building and deploying test runner")
-	testRunner, err := pool.BuildAndRunWithBuildOptions(
-		&dockertest.BuildOptions{
-			Dockerfile: "testnet.Dockerfile",
-			ContextDir: "./orchestrator",
-		},
-		&dockertest.RunOptions{
-			Name:      "test_runner",
-			NetworkID: network.Network.ID,
-			PortBindings: map[docker.Port][]docker.PortBinding{
-				"8545/tcp": {{HostIP: "", HostPort: "8545"}},
-			},
-			Mounts: []string{fmt.Sprintf("%s/testdata:/testdata", wd)},
-			Env: []string{
-				"RUST_BACKTRACE=1",
-				"RUST_LOG=INFO",
-				"TEST_TYPE=V2_HAPPY_PATH",
-			},
-		}, func(config *docker.HostConfig) {})
-	require.NoError(t, err, "error bringing up test runner")
-	t.Logf("deployed test runner at %s", contractDeployer.Container.ID)
-	if autoRemove {
-		defer func() {
-			testRunner.Close()
-		}()
+	cb(wd, pool, network)
+}
+
+func noRestart(config *docker.HostConfig) {
+	// in this case we don't want the nodes to restart on failure
+	config.RestartPolicy = docker.RestartPolicy{
+		Name: "no",
 	}
-
-	container = testRunner.Container
-	for container.State.Running {
-		time.Sleep(10 * time.Second)
-		container, err = pool.Client.InspectContainer(testRunner.Container.ID)
-		require.NoError(t, err, "error inspecting test runner")
-	}
-	require.Equal(t, 0, container.State.ExitCode, "container exited with error")
-
-	testRunnerErrOutput := bytes.Buffer{}
-	err = pool.Client.Logs(docker.LogsOptions{
-		Container:         testRunner.Container.ID,
-		ErrorStream:       &testRunnerErrOutput,
-		Stderr:            true,
-		InactivityTimeout: time.Second * 60,
-	})
-	require.NoError(t, err, "error getting test_runner logs")
-	require.Equal(t, 0, container.State.ExitCode, "test_runner container exited with error")
 }

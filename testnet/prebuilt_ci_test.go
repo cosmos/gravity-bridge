@@ -30,6 +30,7 @@ import (
 
 )
 
+
 func TestPrebuiltCi(t *testing.T) {
 	err := os.RemoveAll("testdata/")
 	require.NoError(t, err, "unable to reset testdata directory")
@@ -131,6 +132,10 @@ func TestPrebuiltCi(t *testing.T) {
 		},
 	})
 
+	bz, err := json.Marshal(bank)
+	require.NoError(t, err, "error marshalling bank state")
+	appState["bank"] = bz
+
 	var genUtil GenUtil
 	err = json.Unmarshal(appState["genutil"], &genUtil)
 	require.NoError(t, err, "error unmarshalling genesis state")
@@ -162,7 +167,7 @@ func TestPrebuiltCi(t *testing.T) {
 	}
 	genUtil.GenTxs = genTxs
 
-	bz, err := json.Marshal(genUtil)
+	bz, err = json.Marshal(genUtil)
 	require.NoError(t, err, "error marshalling gen_util state")
 	appState["genutil"] = bz
 
@@ -230,11 +235,10 @@ func TestPrebuiltCi(t *testing.T) {
 	}()
 
 	hostConfig := func(config *docker.HostConfig) {
-		// set AutoRemove to true so that stopped container goes away by itself
-		//config.AutoRemove = true
-		//config.RestartPolicy = docker.RestartPolicy{
-		//	Name: "no",
-		//}
+		// in this case we don't want the nodes to restart on failure
+		config.RestartPolicy = docker.RestartPolicy{
+			Name: "no",
+		}
 	}
 
 	// bring up ethereum
@@ -250,12 +254,9 @@ func TestPrebuiltCi(t *testing.T) {
 				"8545/tcp": {{HostIP: "", HostPort: "8545"}},
 			},
 			Env: []string{},
-		}, hostConfig)
+		}, noRestart)
 	require.NoError(t, err, "error bringing up ethereum")
 	t.Logf("deployed ethereum at %s", ethereum.Container.ID)
-	defer func() {
-		ethereum.Close()
-	}()
 
 	wd, err := os.Getwd()
 	require.NoError(t, err, "couldn't get working directory")
@@ -293,9 +294,7 @@ func TestPrebuiltCi(t *testing.T) {
 		require.True(t, resource.Container.State.Running, "validator not running after 5 seconds")
 
 		t.Logf("deployed %s at %s", validator.instanceName(), resource.Container.ID)
-		defer func() {
-			resource.Close()
-		}()
+
 	}
 
 	// bring up the contract deployer and deploy contract
@@ -313,9 +312,7 @@ func TestPrebuiltCi(t *testing.T) {
 		}, func(config *docker.HostConfig) {})
 	require.NoError(t, err, "error bringing up contract_deployer")
 	t.Logf("deployed contract_deployer at %s", contractDeployer.Container.ID)
-	defer func() {
-		contractDeployer.Close()
-	}()
+
 
 	container := contractDeployer.Container
 	for container.State.Running {
@@ -373,10 +370,6 @@ func TestPrebuiltCi(t *testing.T) {
 		resource, err := pool.RunWithOptions(runOpts, hostConfig)
 		require.NoError(t, err, "error bringing up %s", orchestrator.instanceName())
 		t.Logf("deployed %s at %s", orchestrator.instanceName(), resource.Container.ID)
-		defer func() {
-			resource.Close()
-		}()
-
 		// this is a hack, to see if the container has an error shortly after launching
 		time.Sleep(5)
 		require.True(t, resource.Container.State.Running, "orchestrator not running after 5 seconds")
@@ -394,14 +387,10 @@ func TestPrebuiltCi(t *testing.T) {
 		orchestratorPhrases = append(orchestratorPhrases, orchestrator.Mnemonic)
 	}
 
-	err = writeFile(filepath.Join(chain.DataDir, "validator-eth-keys"), []byte(strings.Join(ethKeys, "\n")))
-	require.NoError(t, err)
-	err = writeFile(filepath.Join(chain.DataDir, "validator-phrases"), []byte(strings.Join(validatorPhrases, "\n")))
-	require.NoError(t, err)
-	err = writeFile(filepath.Join(chain.DataDir, "orchestrator-phrases"), []byte(strings.Join(orchestratorPhrases, "\n")))
-	require.NoError(t, err)
-	err = writeFile(filepath.Join(chain.DataDir, "contracts"), contractDeployerLogOutput.Bytes())
-	require.NoError(t, err)
+	writeFile(t, filepath.Join(chain.DataDir, "validator-eth-keys"), []byte(strings.Join(ethKeys, "\n")))
+	writeFile(t, filepath.Join(chain.DataDir, "validator-phrases"), []byte(strings.Join(validatorPhrases, "\n")))
+	writeFile(t, filepath.Join(chain.DataDir, "orchestrator-phrases"), []byte(strings.Join(orchestratorPhrases, "\n")))
+	writeFile(t, filepath.Join(chain.DataDir, "contracts"), contractDeployerLogOutput.Bytes())
 
 	testType := os.Getenv("TEST_TYPE")
 	if testType == "" {
@@ -429,9 +418,7 @@ func TestPrebuiltCi(t *testing.T) {
 
 	require.NoError(t, err, "error bringing up test runner")
 	t.Logf("deployed test runner at %s", contractDeployer.Container.ID)
-	defer func() {
-		testRunner.Close()
-	}()
+
 
 	container = testRunner.Container
 	for container.State.Running {

@@ -265,7 +265,9 @@ jobs:
         run: docker pull ${{ steps.meta-solidity.outputs.tags }}
       - name: rename contract deployer image
         run: docker tag ${{ steps.meta-solidity.outputs.tags }} solidity:prebuilt
+      - name: build go test binary
+        run: cd testnet && go test -c
       - name: Run all up ci test
-        run: cd testnet && go test -c && cd .. && ./testnet/testnet.test -test.run PrebuiltCi -test.failfast -test.v
+        run: ./testnet/testnet.test -test.run PrebuiltCi -test.failfast -test.v
         env:
           TEST_TYPE: ${{ matrix.test_type}}
