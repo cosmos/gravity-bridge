@@ -2,5 +2,5 @@
 .git
 .gitignore
 Dockerfile
-target
 testnet.Dockerfile
+target/

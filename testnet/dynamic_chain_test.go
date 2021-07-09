@@ -23,10 +23,23 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 )
+
+func writeFile(path string, body []byte) error {
+	if _, err := os.Create(path); err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(path, body, 0644); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func TestBasicChainDynamicKeys(t *testing.T) {
 	err := os.RemoveAll("testdata/")
@@ -95,6 +108,44 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 	appState, genDoc, err := types.GenesisStateFromGenFile(genFilePath)
 	require.NoError(t, err, "error reading genesis file")
 
+	var bank Bank
+	err = json.Unmarshal(appState["bank"], &bank)
+	require.NoError(t, err, "error unmarshalling bank genesis state")
+	bank.DenomMetadata = append(bank.DenomMetadata, DenomMetadata{
+		Description: "footoken",
+		Display:     "mfootoken",
+		Base:        "footoken",
+		DenomUnits: []DenomUnit{
+			{
+				Denom: "footoken",
+				Exponent: 0,
+			},
+			{
+				Denom: "mfootoken",
+				Exponent: 6,
+			},
+		},
+	})
+	bank.DenomMetadata = append(bank.DenomMetadata, DenomMetadata{
+		Description: "stake",
+		Display:     "mstake",
+		Base:        "stake",
+		DenomUnits: []DenomUnit{
+			{
+				Denom: "stake",
+				Exponent: 0,
+			},
+			{
+				Denom: "mstake",
+				Exponent: 3,
+			},
+		},
+	})
+
+	bz, err := json.Marshal(bank)
+	require.NoError(t, err, "error marshalling bank state")
+	appState["bank"] = bz
+
 	var genUtil GenUtil
 	err = json.Unmarshal(appState["genutil"], &genUtil)
 	require.NoError(t, err, "error unmarshalling genesis state")
@@ -126,7 +177,7 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 	}
 	genUtil.GenTxs = genTxs
 
-	bz, err := json.Marshal(genUtil)
+	bz, err = json.Marshal(genUtil)
 	require.NoError(t, err, "error marshalling gen_util state")
 	appState["genutil"] = bz
 
@@ -193,9 +244,14 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 		network.Close()
 	}()
 
+	// if the env var AUTO_REMOVE is set to a string parseable to true, then it will set
+	// containers to "attempt" to clean themselves up on close/failure. This doesn't seem
+	// to happen consistently with certain code/test failures
+	autoRemove, _ := strconv.ParseBool(os.Getenv("AUTO_REMOVE"))
 	hostConfig := func(config *docker.HostConfig) {
-		// set AutoRemove to true so that stopped container goes away by itself
-		config.AutoRemove = true
+		// set AUTO_REMOVE to true so that stopped container goes away by itself
+		config.AutoRemove = autoRemove
+		// in this case we don't want the nodes to restart on failure
 		config.RestartPolicy = docker.RestartPolicy{
 			Name: "no",
 		}
@@ -217,9 +273,11 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 		}, hostConfig)
 	require.NoError(t, err, "error bringing up ethereum")
 	t.Logf("deployed ethereum at %s", ethereum.Container.ID)
-	defer func() {
-		ethereum.Close()
-	}()
+	if autoRemove {
+		defer func() {
+			ethereum.Close()
+		}()
+	}
 
 	// build validators
 	for _, validator := range chain.Validators {
@@ -264,9 +322,11 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 		resource, err := pool.RunWithOptions(runOpts, hostConfig)
 		require.NoError(t, err, "error bringing up %s", validator.instanceName())
 		t.Logf("deployed %s at %s", validator.instanceName(), resource.Container.ID)
-		defer func() {
-			resource.Close()
-		}()
+		if autoRemove {
+			defer func() {
+				resource.Close()
+			}()
+		}
 	}
 
 	// bring up the contract deployer and deploy contract
@@ -286,9 +346,11 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 		}, func(config *docker.HostConfig) {})
 	require.NoError(t, err, "error bringing up contract_deployer")
 	t.Logf("deployed contract_deployer at %s", contractDeployer.Container.ID)
-	defer func() {
-		contractDeployer.Close()
-	}()
+	if autoRemove {
+		defer func() {
+			contractDeployer.Close()
+		}()
+	}
 
 	container := contractDeployer.Container
 	for container.State.Running {
@@ -355,9 +417,11 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 		resource, err := pool.RunWithOptions(runOpts, hostConfig)
 		require.NoError(t, err, "error bringing up %s", orchestrator.instanceName())
 		t.Logf("deployed %s at %s", orchestrator.instanceName(), resource.Container.ID)
-		defer func() {
-			resource.Close()
-		}()
+		if autoRemove {
+			defer func() {
+				resource.Close()
+			}()
+		}
 	}
 
 	// write test runner files to config directory
@@ -398,14 +462,16 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 			Env: []string{
 				"RUST_BACKTRACE=1",
 				"RUST_LOG=INFO",
-				"TEST_TYPE=HAPPY_PATH",
+				"TEST_TYPE=V2_HAPPY_PATH",
 			},
 		}, func(config *docker.HostConfig) {})
 	require.NoError(t, err, "error bringing up test runner")
 	t.Logf("deployed test runner at %s", contractDeployer.Container.ID)
-	defer func() {
-		testRunner.Close()
-	}()
+	if autoRemove {
+		defer func() {
+			testRunner.Close()
+		}()
+	}
 
 	container = testRunner.Container
 	for container.State.Running {
@@ -423,5 +489,5 @@ func TestBasicChainDynamicKeys(t *testing.T) {
 		InactivityTimeout: time.Second * 60,
 	})
 	require.NoError(t, err, "error getting test_runner logs")
-	require.Contains(t, testRunnerErrOutput.String(), "Successfully updated txbatch nonce to")
+	require.Equal(t, 0, container.State.ExitCode, "test_runner container exited with error")
 }

@@ -20,71 +20,17 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/cosmos-sdk/x/genutil/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gravitytypes "github.com/cosmos/gravity-bridge/module/x/gravity/types"
-	dt "github.com/ory/dockertest/v3"
-	dc "github.com/ory/dockertest/v3/docker"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/require"
 	tmjson "github.com/tendermint/tendermint/libs/json"
+
 )
 
-func writeFile(path string, body []byte) error {
-	if _, err := os.Create(path); err != nil {
-		return err
-	}
-
-	if err := ioutil.WriteFile(path, body, 0644); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-var ValidatorMnemonics = []string{
-	"indoor rail elder dwarf concert cry surprise ice exhaust sword million square dinosaur merry brother panther evolve usual excess when annual grid path saddle",
-	"veteran early defense faith brand siege rent ceiling boring end before genuine fault shrug crater raccoon success paper grunt prefer transfer powder repeat boil",
-	"wonder armed degree prosper swarm crouch uphold hair deputy hospital title group unusual baby asthma bean mouse hobby custom era success earth wonder clog",
-	"person blast robust group uniform awesome poem prevent pear sugar audit curious video punch senior nest short song topple sick guitar unhappy state forum",
-}
-
-var OrchestratorMnemonics = []string{
-	"dwarf armed ordinary industry drive normal radar laugh host garden banner gather bless source elegant gold myth rail leader describe sick actor clown fuel",
-	"print screen fade apart galaxy major flame kick power initial false window spoil caught pink find anxiety prosper elder speak enough often mountain deny",
-	"theory system waste zone best still auction drop bread flavor caught daughter tower elder normal movie swallow crack just best ball exist seven involve",
-	"ship beef little food chase ostrich neutral lemon abandon nut balance nice outside crater creek radio witness tree bridge yard depend curve fever wife",
-}
-
-var ValidatorEthereumKeys = []EthereumKey{
-	{
-		PublicKey:  "0x0429e9b421a18927707d23d74ec17a18d70dd582c566a02f70f825ae1a9be933946ee6753d40fa467037bbb33afed2e2031ad2008461ee15caa634d505cd9898a7",
-		PrivateKey: "0xd2ef9c9fd43ab2a652f2ef343c7c7748d639fe1bf060b542222b74ac2a427bcd",
-		Address:    "0x1b30Ed4DEF9933ef5a597713Ca61d28734F67BCA",
-	},
-	{
-		PublicKey:  "0x04e373425bb40df0ac023b30bf33b917141b8abe5897a39bfae5f4f32a71efa0f5e84d355553c8b75e7f2f38326b4748f23158d4d0b22727a4bc90d4da897712e2",
-		PrivateKey: "0x8c9cd3be82e86bfa77661768d79f2a899651f1c952ee2541488d6ee074a77c10",
-		Address:    "0xAdD1fB646a7e93351E4c68801FD3Df224BD75e6B",
-	},
-	{
-		PublicKey:  "0x0417aeb52eec2e05c825e428fc43149973d35ac29bc1126a71ff64e19708ee71873497cdd78bf025bd1ffd8f6c853bb5806e84870c993fd246d851171af9d07668",
-		PrivateKey: "0x19f772379632aa5542e4a1637008d1702a3bd44a1c329af981a60cafd30bf946",
-		Address:    "0x8C1A34491101E8f00204BBaF1ab34604a08F0b9A",
-	},
-	{
-		PublicKey:  "0x0407e5e679602583a9d2735c84e3475b1305f4c4b608cc3e5c17402938a34e75656f8fe2e55b91fde56ac893637594061edc90a0719be491381a3621289bfb6d93",
-		PrivateKey: "0xda4a30ccf1b6804d1f139d1912583825703e50478f9fd10436a8f0924a569061",
-		Address:    "0xBb283c611036702ba33edC4C479daA102CCdBA12",
-	},
-}
-
-var MinerKey = EthereumKey{
-	PublicKey:  "",
-	PrivateKey: "0xb1bab011e03a9862664706fc3bbaa1b16651528e5f0e7fbfcbfdd8be302a13e7",
-	Address:    "0xBf660843528035a5A4921534E156a27e64B231fE",
-}
-
-func TestBasicChainDeterministicKeys(t *testing.T) {
+func TestPrebuiltCi(t *testing.T) {
 	err := os.RemoveAll("testdata/")
 	require.NoError(t, err, "unable to reset testdata directory")
 
@@ -94,10 +40,10 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 		Validators: nil,
 	}
 
-	err = chain.CreateAndInitializeValidatorsWithMnemonics(4, ValidatorMnemonics)
+	err = chain.CreateAndInitializeValidators(4)
 	require.NoError(t, err, "error initializing validators")
 
-	err = chain.CreateAndInitializeOrchestratorsWithMnemonics(uint8(len(chain.Validators)), OrchestratorMnemonics)
+	err = chain.CreateAndInitializeOrchestrators(uint8(len(chain.Validators)))
 	require.NoError(t, err, "error initializing orchestrators")
 
 	// add validator accounts to genesis file
@@ -128,8 +74,10 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 		Alloc:      make(map[string]Allocation, len(chain.Validators)+1),
 	}
 	ethGenesis.Alloc["0xBf660843528035a5A4921534E156a27e64B231fE"] = Allocation{Balance: "0x1337000000000000000000"}
-	for i, v := range chain.Validators {
-		v.EthereumKey = ValidatorEthereumKeys[i]
+	for _, v := range chain.Validators {
+		err = v.generateEthereumKey()
+		require.NoError(t, err, "error copying over genesis files")
+
 		ethGenesis.Alloc[v.EthereumKey.Address] = Allocation{Balance: "0x1337000000000000000000"}
 	}
 
@@ -146,8 +94,42 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 	config.Moniker = chain.Validators[0].Moniker
 
 	genFilePath := config.GenesisFile()
-	appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFilePath)
+	appState, genDoc, err := types.GenesisStateFromGenFile(genFilePath)
 	require.NoError(t, err, "error reading genesis file")
+
+	var bank Bank
+	err = json.Unmarshal(appState["bank"], &bank)
+	require.NoError(t, err, "error unmarshalling bank genesis state")
+	bank.DenomMetadata = append(bank.DenomMetadata, DenomMetadata{
+		Description: "footoken",
+		Display:     "mfootoken",
+		Base:        "footoken",
+		DenomUnits: []DenomUnit{
+			{
+				Denom: "footoken",
+				Exponent: 0,
+			},
+			{
+				Denom: "mfootoken",
+				Exponent: 6,
+			},
+		},
+	})
+	bank.DenomMetadata = append(bank.DenomMetadata, DenomMetadata{
+		Description: "stake",
+		Display:     "mstake",
+		Base:        "stake",
+		DenomUnits: []DenomUnit{
+			{
+				Denom: "stake",
+				Exponent: 0,
+			},
+			{
+				Denom: "mstake",
+				Exponent: 3,
+			},
+		},
+	})
 
 	var genUtil GenUtil
 	err = json.Unmarshal(appState["genutil"], &genUtil)
@@ -159,7 +141,7 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 	genTxs := make([]json.RawMessage, len(chain.Validators))
 
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
-	interfaceRegistry.RegisterImplementations((*sdktypes.Msg)(nil), &types.MsgCreateValidator{}, &gravitytypes.MsgDelegateKeys{})
+	interfaceRegistry.RegisterImplementations((*sdktypes.Msg)(nil), &stakingtypes.MsgCreateValidator{}, &gravitytypes.MsgDelegateKeys{})
 	interfaceRegistry.RegisterImplementations((*cryptotypes.PubKey)(nil), &secp256k1.PubKey{}, &ed25519.PubKey{})
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
 
@@ -239,7 +221,7 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 	}
 
 	// bring up docker network
-	pool, err := dt.NewPool("")
+	pool, err := dockertest.NewPool("")
 	require.NoError(t, err, "error creating docker pool")
 	network, err := pool.CreateNetwork("testnet")
 	require.NoError(t, err, "error creating testnet network")
@@ -247,24 +229,24 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 		network.Close()
 	}()
 
-	hostConfig := func(config *dc.HostConfig) {
+	hostConfig := func(config *docker.HostConfig) {
 		// set AutoRemove to true so that stopped container goes away by itself
-		config.AutoRemove = true
-		config.RestartPolicy = dc.RestartPolicy{
-			Name: "no",
-		}
+		//config.AutoRemove = true
+		//config.RestartPolicy = docker.RestartPolicy{
+		//	Name: "no",
+		//}
 	}
 
 	// bring up ethereum
 	t.Log("building and running ethereum")
-	ethereum, err := pool.BuildAndRunWithBuildOptions(&dt.BuildOptions{
+	ethereum, err := pool.BuildAndRunWithBuildOptions(&dockertest.BuildOptions{
 		Dockerfile: "ethereum/Dockerfile",
 		ContextDir: "./",
 	},
-		&dt.RunOptions{
+		&dockertest.RunOptions{
 			Name:      "ethereum",
 			NetworkID: network.Network.ID,
-			PortBindings: map[dc.Port][]dc.PortBinding{
+			PortBindings: map[docker.Port][]docker.PortBinding{
 				"8545/tcp": {{HostIP: "", HostPort: "8545"}},
 			},
 			Env: []string{},
@@ -275,33 +257,21 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 		ethereum.Close()
 	}()
 
-	// build validators
-	for _, validator := range chain.Validators {
-		t.Logf("building %s", validator.instanceName())
-		err = pool.Client.BuildImage(dc.BuildImageOptions{
-			Name:         validator.instanceName(),
-			Dockerfile:   "Dockerfile",
-			ContextDir:   "./module",
-			OutputStream: ioutil.Discard,
-		})
-		require.NoError(t, err, "error building %s", validator.instanceName())
-		t.Logf("built %s", validator.instanceName())
-	}
-
 	wd, err := os.Getwd()
 	require.NoError(t, err, "couldn't get working directory")
 
 	for _, validator := range chain.Validators {
-		runOpts := &dt.RunOptions{
+		runOpts := &dockertest.RunOptions{
 			Name:       validator.instanceName(),
 			NetworkID:  network.Network.ID,
 			Mounts:     []string{fmt.Sprintf("%s/testdata/testchain/%s/:/root/home", wd, validator.instanceName())},
-			Repository: validator.instanceName(),
+			Repository: "gravity",
+			Tag:        "prebuilt",
 		}
 
 		// expose the first validator for debugging and communication
 		if validator.Index == 0 {
-			runOpts.PortBindings = map[dc.Port][]dc.PortBinding{
+			runOpts.PortBindings = map[docker.Port][]docker.PortBinding{
 				"1317/tcp":  {{HostIP: "", HostPort: "1317"}},
 				"6060/tcp":  {{HostIP: "", HostPort: "6060"}},
 				"6061/tcp":  {{HostIP: "", HostPort: "6061"}},
@@ -317,6 +287,11 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 
 		resource, err := pool.RunWithOptions(runOpts, hostConfig)
 		require.NoError(t, err, "error bringing up %s", validator.instanceName())
+
+		// this is a hack, to see if the container has an error shortly after launching
+		time.Sleep(5)
+		require.True(t, resource.Container.State.Running, "validator not running after 5 seconds")
+
 		t.Logf("deployed %s at %s", validator.instanceName(), resource.Container.ID)
 		defer func() {
 			resource.Close()
@@ -324,22 +299,20 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 	}
 
 	// bring up the contract deployer and deploy contract
-	t.Log("building contract_deployer")
-	contractDeployer, err := pool.BuildAndRunWithBuildOptions(
-		&dt.BuildOptions{
-			Dockerfile: "Dockerfile",
-			ContextDir: "./solidity",
-		},
-		&dt.RunOptions{
+	t.Log("deploying contract_deployer")
+	contractDeployer, err := pool.RunWithOptions(
+		&dockertest.RunOptions{
 			Name:      "contract_deployer",
+			Repository: "solidity",
+			Tag: "prebuilt",
 			NetworkID: network.Network.ID,
-			PortBindings: map[dc.Port][]dc.PortBinding{
+			PortBindings: map[docker.Port][]docker.PortBinding{
 				"8545/tcp": {{HostIP: "", HostPort: "8545"}},
 			},
 			Env: []string{},
-		}, func(config *dc.HostConfig) {})
-	require.NoError(t, err, "error bringing up contract deployer")
-	t.Logf("deployed contract deployer at %s", contractDeployer.Container.ID)
+		}, func(config *docker.HostConfig) {})
+	require.NoError(t, err, "error bringing up contract_deployer")
+	t.Logf("deployed contract_deployer at %s", contractDeployer.Container.ID)
 	defer func() {
 		contractDeployer.Close()
 	}()
@@ -350,12 +323,15 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 		container, err = pool.Client.InspectContainer(contractDeployer.Container.ID)
 		require.NoError(t, err, "error inspecting contract deployer")
 	}
+	t.Logf("container no longer running: %s", container.State.String())
 
 	contractDeployerLogOutput := bytes.Buffer{}
-	err = pool.Client.Logs(dc.LogsOptions{
+	err = pool.Client.Logs(docker.LogsOptions{
 		Container:    contractDeployer.Container.ID,
 		OutputStream: &contractDeployerLogOutput,
+		ErrorStream:  &contractDeployerLogOutput,
 		Stdout:       true,
+		Stderr:       true,
 	})
 	require.NoError(t, err, "error getting contract deployer logs")
 
@@ -369,19 +345,7 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 	}
 	err = pool.RemoveContainerByName(container.Name)
 	require.NoError(t, err, "error removing contract deployer container")
-
-	// build orchestrators
-	for _, orchestrator := range chain.Orchestrators {
-		t.Logf("building %s", orchestrator.instanceName())
-		err = pool.Client.BuildImage(dc.BuildImageOptions{
-			Name:         orchestrator.instanceName(),
-			Dockerfile:   "Dockerfile",
-			ContextDir:   "./orchestrator",
-			OutputStream: ioutil.Discard,
-		})
-		require.NoError(t, err, "error building %s", orchestrator.instanceName())
-		t.Logf("built %s", orchestrator.instanceName())
-	}
+	require.NotEmptyf(t, gravityContract, "empty gravity contract: %s", contractDeployerLogOutput.String())
 
 	// deploy orchestrators
 	for _, orchestrator := range chain.Orchestrators {
@@ -398,10 +362,11 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 			"ETH_RPC=http://ethereum:8545",
 			"RUST_BACKTRACE=full",
 		}
-		runOpts := &dt.RunOptions{
+		runOpts := &dockertest.RunOptions{
 			Name:       orchestrator.instanceName(),
 			NetworkID:  network.Network.ID,
-			Repository: orchestrator.instanceName(),
+			Repository: "orchestrator",
+			Tag:        "prebuilt",
 			Env:        env,
 		}
 
@@ -411,8 +376,80 @@ func TestBasicChainDeterministicKeys(t *testing.T) {
 		defer func() {
 			resource.Close()
 		}()
+
+		// this is a hack, to see if the container has an error shortly after launching
+		time.Sleep(5)
+		require.True(t, resource.Container.State.Running, "orchestrator not running after 5 seconds")
 	}
 
-	// distribute ethereum from miner to validators
-	// todo: Implement happy path directly without the test_runner container
+	// write test runner files to config directory
+	var ethKeys []string
+	var validatorPhrases []string
+	for _, validator := range chain.Validators {
+		ethKeys = append(ethKeys, validator.EthereumKey.PrivateKey)
+		validatorPhrases = append(validatorPhrases, validator.Mnemonic)
+	}
+	var orchestratorPhrases []string
+	for _, orchestrator := range chain.Orchestrators {
+		orchestratorPhrases = append(orchestratorPhrases, orchestrator.Mnemonic)
+	}
+
+	err = writeFile(filepath.Join(chain.DataDir, "validator-eth-keys"), []byte(strings.Join(ethKeys, "\n")))
+	require.NoError(t, err)
+	err = writeFile(filepath.Join(chain.DataDir, "validator-phrases"), []byte(strings.Join(validatorPhrases, "\n")))
+	require.NoError(t, err)
+	err = writeFile(filepath.Join(chain.DataDir, "orchestrator-phrases"), []byte(strings.Join(orchestratorPhrases, "\n")))
+	require.NoError(t, err)
+	err = writeFile(filepath.Join(chain.DataDir, "contracts"), contractDeployerLogOutput.Bytes())
+	require.NoError(t, err)
+
+	testType := os.Getenv("TEST_TYPE")
+	if testType == "" {
+		testType = "HAPPY_PATH"
+	}
+
+	// bring up the test runner
+	t.Log("building and deploying test runner")
+	testRunner, err := pool.RunWithOptions(
+		&dockertest.RunOptions{
+			Name:       "test_runner",
+			Repository: "test-runner",
+			Tag:        "prebuilt",
+			NetworkID:  network.Network.ID,
+			PortBindings: map[docker.Port][]docker.PortBinding{
+				"8545/tcp": {{HostIP: "", HostPort: "8545"}},
+			},
+			Mounts: []string{fmt.Sprintf("%s/testdata:/testdata", wd)},
+			Env: []string{
+				"RUST_BACKTRACE=full",
+				"RUST_LOG=INFO",
+				fmt.Sprintf("TEST_TYPE=%s", testType),
+			},
+		}, func(config *docker.HostConfig) {})
+
+	require.NoError(t, err, "error bringing up test runner")
+	t.Logf("deployed test runner at %s", contractDeployer.Container.ID)
+	defer func() {
+		testRunner.Close()
+	}()
+
+	container = testRunner.Container
+	for container.State.Running {
+		time.Sleep(10 * time.Second)
+		container, err = pool.Client.InspectContainer(testRunner.Container.ID)
+		require.NoError(t, err, "error inspecting test runner")
+	}
+
+	testRunnerOutput := bytes.Buffer{}
+	err = pool.Client.Logs(docker.LogsOptions{
+		Container:         testRunner.Container.ID,
+		ErrorStream:       &testRunnerOutput,
+		OutputStream:      &testRunnerOutput,
+		Stderr:            true,
+		Stdout:            true,
+		InactivityTimeout: time.Second * 60,
+	})
+	require.NoError(t, err, "error getting test_runner logs")
+	t.Logf("Test logs:\n%s", testRunnerOutput.String())
+	require.Equal(t, 0, container.State.ExitCode, "test_runner container exited with error")
 }

@@ -1,4 +1,4 @@
-name: Go
+name: Go tests
 
 on:
   push:
@@ -6,50 +6,25 @@ on:
       - main
   pull_request:
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
-  go-build:
+  go-test:
     permissions:
       contents: read
       packages: write
     runs-on: ubuntu-latest
     steps:
-      - name: install-go
+      - name: Install Go
         uses: actions/setup-go@v2
         with:
           go-version: ^1.16
-      - name: checkout
+      - name: Checkout Branch
         uses: actions/checkout@v2
-      - name: go-cache
+      - name: Create Go cache
         uses: actions/cache@v2
-        with: 
+        with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('module/go.sum') }}
-      - name: go-test
+      - name: Run Go tests
         run: cd module && make test
-      - name: go-build
-        run: cd module && make build
-      - name: container-login
-        uses: docker/login-action@v1
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: labels
-        id: meta
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-gravity
-      - name: build-and-push
-        uses: docker/build-push-action@v2
-        with:
-          context: ./module
-          file: module/ci.Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}

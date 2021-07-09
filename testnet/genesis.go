@@ -13,12 +13,25 @@ type Auth struct {
 	Accounts []types.BaseAccount `json:"accounts"`
 }
 
+type DenomUnit struct {
+	Denom string `json:"denom"`
+	Exponent uint `json:"exponent"`
+	Aliases []json.RawMessage `json:"aliases"`
+}
+
+type DenomMetadata struct {
+	Description string `json:"description"`
+	Display string `json:"display"`
+	Base string `json:"base"`
+	DenomUnits []DenomUnit `json:"denom_units"`
+}
+
 type Bank struct {
 	Params map[string]json.RawMessage `json:"params"`
 	Balances []types2.Balance `json:"balances"`
 
 	Supply []json.RawMessage `json:"supply"`
-	DenomMetadata []json.RawMessage `json:"denom_metadata"`
+	DenomMetadata []DenomMetadata `json:"denom_metadata"`
 }
 
 type GenUtil struct {

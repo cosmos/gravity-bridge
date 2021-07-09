@@ -1,7 +1,7 @@
-FROM alpine:edge
+FROM ubuntu:latest
 
 # Install ca-certificates
-RUN apk add --update ca-certificates
+RUN apt get install ca-certificates
 
 EXPOSE 26656 26657 1317 9090
 

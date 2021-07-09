@@ -28,12 +28,13 @@ RUN go mod download
 COPY . .
 
 # install simapp, remove packages
-RUN make build
+RUN go build -o build/gravity ./cmd/gravity/main.go
 
 # Final image
 FROM alpine:edge
 
 # Install ca-certificates
+RUN apk add bash
 RUN apk add --update ca-certificates
 WORKDIR /root
 
@@ -43,5 +44,4 @@ COPY --from=build-env /go/src/github.com/althea-net/cosmos-gravity-bridge/module
 EXPOSE 26656 26657 1317 9090
 
 # Run gravity by default
-CMD sh home/startup.sh
-# todo: remove this script, it isn't needed
+CMD ["gravity", "--home", "home", "start", "--pruning=nothing"]
