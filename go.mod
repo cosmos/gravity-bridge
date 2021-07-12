@@ -1,5 +1,5 @@
 module github.com/peggyjv/gravity-bridge
 
-go 1.16
+go 1.15
 
-replace github.com/peggyjv/gravity-bridge/module => ./module
+require github.com/peggyjv/gravity-bridge/module v0.1.6 // indirect
