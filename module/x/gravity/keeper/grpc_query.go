@@ -283,6 +283,9 @@ func (k Keeper) BatchTxFees(c context.Context, req *types.BatchTxFeesRequest) (*
 	ctx := sdk.UnwrapSDKContext(c)
 	res := &types.BatchTxFeesResponse{}
 
+	// TODO: is this what we want here?
+	// Should this calculation return a
+	// map[contract_address]fees or something similar?
 	k.IterateOutgoingTxsByType(ctx, types.BatchTxPrefixByte, func(key []byte, otx types.OutgoingTx) bool {
 		btx, _ := otx.(*types.BatchTx)
 		for _, tx := range btx.Transactions {
@@ -411,4 +414,3 @@ func (k Keeper) DelegateKeys(c context.Context, req *types.DelegateKeysRequest) 
 	}
 	return res, nil
 }
-
