@@ -3,12 +3,13 @@ use crate::error::GravityError;
 use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
 use deep_space::error::CosmosGrpcError;
-use deep_space::Address as CosmosAddress;
 use std::fmt::Debug;
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
     fmt,
+    str,
+    // str::FromStr,
 };
 
 /// The total power in the Gravity bridge is normalized to u32 max every
@@ -60,11 +61,11 @@ pub struct ValsetConfirmResponse {
 
 impl ValsetConfirmResponse {
     pub fn from_proto(
-        input: gravity_proto::gravity::UpdateSignerSetTxSignature,
+        input: gravity_proto::gravity::SignerSetTxConfirmation,
     ) -> Result<Self, GravityError> {
         Ok(ValsetConfirmResponse {
-            eth_signer: input.eth_signer.parse()?,
-            nonce: input.nonce,
+            eth_signer: input.ethereum_signer.parse()?,
+            nonce: input.signer_set_nonce,
             eth_signature: EthSignature::from_bytes(&input.signature)?,
         })
     }
@@ -323,8 +324,8 @@ impl Valset {
     }
 }
 
-impl From<gravity_proto::gravity::UpdateSignerSetTxResponse> for Valset {
-    fn from(input: gravity_proto::gravity::UpdateSignerSetTxResponse) -> Self {
+impl From<gravity_proto::gravity::SignerSetTxResponse> for Valset {
+    fn from(input: gravity_proto::gravity::SignerSetTxResponse) -> Self {
         Valset {
             nonce: input.signer_set.clone().unwrap().nonce,
             members: input
@@ -338,8 +339,17 @@ impl From<gravity_proto::gravity::UpdateSignerSetTxResponse> for Valset {
     }
 }
 
-impl From<&gravity_proto::gravity::UpdateSignerSetTxResponse> for Valset {
-    fn from(input: &gravity_proto::gravity::UpdateSignerSetTxResponse) -> Self {
+impl From<gravity_proto::gravity::SignerSetTx> for Valset {
+    fn from(input: gravity_proto::gravity::SignerSetTx) -> Self {
+        Valset {
+            nonce: input.clone().nonce,
+            members: input.signers.iter().map(|i| i.into()).collect(),
+        }
+    }
+}
+
+impl From<&gravity_proto::gravity::SignerSetTxResponse> for Valset {
+    fn from(input: &gravity_proto::gravity::SignerSetTxResponse) -> Self {
         Valset {
             nonce: input.signer_set.clone().unwrap().nonce,
             members: input
@@ -427,6 +437,19 @@ impl From<&gravity_proto::gravity::EthereumSigner> for ValsetMember {
         ValsetMember {
             power: input.power as u64,
             eth_address,
+        }
+    }
+}
+
+impl From<&ValsetMember> for gravity_proto::gravity::EthereumSigner {
+    fn from(input: &ValsetMember) -> gravity_proto::gravity::EthereumSigner {
+        let ethereum_address = match input.eth_address {
+            Some(e) => e.to_string(),
+            None => String::new(),
+        };
+        gravity_proto::gravity::EthereumSigner {
+            power: input.power,
+            ethereum_address,
         }
     }
 }

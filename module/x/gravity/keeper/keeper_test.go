@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 func TestCurrentValsetNormalization(t *testing.T) {
@@ -208,7 +208,6 @@ func TestStoreEventVoteRecord(t *testing.T) {
 	require.EqualValues(t, cctxe.Hash(), eve2.Hash())
 }
 
-// TODO: uncomment
 func TestLastSlashedValsetNonce(t *testing.T) {
 	input := CreateTestEnv(t)
 	k := input.GravityKeeper
@@ -224,7 +223,7 @@ func TestLastSlashedValsetNonce(t *testing.T) {
 	assert.Equal(t, uint64(i-1), latestValsetNonce)
 
 	//  lastSlashedValsetNonce should be zero initially.
-  lastSlashedValsetNonce := k.GetLastSlashedOutgoingTxBlockHeight(ctx)
+	lastSlashedValsetNonce := k.GetLastSlashedOutgoingTxBlockHeight(ctx)
 	assert.Equal(t, uint64(0), lastSlashedValsetNonce)
 	unslashedValsets := k.GetUnSlashedOutgoingTxs(ctx, uint64(12))
 	assert.Equal(t, 9, len(unslashedValsets))
@@ -250,3 +249,259 @@ func TestLastSlashedValsetNonce(t *testing.T) {
 	unslashedValsets = k.GetUnSlashedOutgoingTxs(ctx, uint64(15))
 	assert.Equal(t, 6, len(unslashedValsets))
 }
+
+// ---
+
+func TestKeeper_GetLatestSignerSetTx(t *testing.T) {
+	t.Run("read before there's one in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		got := gk.GetLatestSignerSetTx(ctx)
+		require.Nil(t, got)
+	})
+
+	t.Run("read after there's one in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		{ // setup
+			gk.SetOutgoingTx(ctx, &types.SignerSetTx{
+				Nonce:   gk.incrementLatestSignerSetTxNonce(ctx),
+				Height:  1,
+				Signers: nil,
+			})
+		}
+
+		{ // validate
+			got := gk.GetLatestSignerSetTx(env.Context)
+			require.NotNil(t, got)
+			require.EqualValues(t, got.Height, gk.GetLatestSignerSetTxNonce(ctx))
+		}
+	})
+}
+
+func TestKeeper_GetSignerSetTxs(t *testing.T) {
+	t.Run("read before there's any in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		got := gk.GetSignerSetTxs(ctx)
+		require.Nil(t, got)
+	})
+
+	t.Run("read after there's one in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		{ // setup
+			gk.SetOutgoingTx(ctx, &types.SignerSetTx{
+				Nonce:   gk.incrementLatestSignerSetTxNonce(ctx),
+				Height:  1,
+				Signers: nil,
+			})
+		}
+
+		{ // validate
+			got := gk.GetSignerSetTxs(ctx)
+			require.NotNil(t, got)
+			require.Len(t, got, 1)
+		}
+	})
+}
+
+func TestKeeper_GetLastObservedSignerSetTx(t *testing.T) {
+	t.Run("read before there's any in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		got := gk.GetLastObservedSignerSetTx(ctx)
+		require.Nil(t, got)
+	})
+
+	t.Run("read after there's one in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		{ // setup
+			gk.setLastObservedSignerSetTx(ctx, types.SignerSetTx{
+				Nonce:   1,
+				Height:  1,
+				Signers: nil,
+			})
+		}
+
+		{ // validate
+			got := gk.GetLastObservedSignerSetTx(ctx)
+			require.NotNil(t, got)
+		}
+	})
+}
+
+func TestKeeper_GetLastUnbondingBlockHeight(t *testing.T) {
+	t.Run("read before there's any in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		got := gk.GetLastUnbondingBlockHeight(ctx)
+		require.Zero(t, got)
+	})
+
+	t.Run("read after there's one in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		{ // setup
+			gk.setLastUnbondingBlockHeight(ctx, 10)
+		}
+
+		{ // validate
+			got := gk.GetLastUnbondingBlockHeight(ctx)
+			require.EqualValues(t, 10, got)
+		}
+	})
+}
+
+func TestKeeper_GetEthereumSignatures(t *testing.T) {
+	t.Run("read before there's anything in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		storeIndexes := [][]byte{
+			types.MakeSignerSetTxKey(1),
+			types.MakeBatchTxKey(common.HexToAddress(""), 1), // weird that empty address is okay
+			types.MakeContractCallTxKey(nil, 0),
+		}
+		for _, storeIndex := range storeIndexes {
+			got := gk.GetEthereumSignatures(ctx, storeIndex)
+			require.Empty(t, got)
+		}
+	})
+
+	t.Run("read after there's one signer-set-tx-confirmation in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		ethAddr := common.HexToAddress("0x3146D2d6Eed46Afa423969f5dDC3152DfC359b09")
+		valAddr, err := sdk.ValAddressFromBech32("cosmosvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6z3plt4")
+		require.NoError(t, err)
+
+		const signerSetNonce = 10
+
+		{ // setup
+			signerSetTxConfirmation := &types.SignerSetTxConfirmation{
+				SignerSetNonce: signerSetNonce,
+				EthereumSigner: ethAddr.Hex(),
+				Signature:      []byte("fake-signature"),
+			}
+			key := gk.SetEthereumSignature(ctx, signerSetTxConfirmation, valAddr)
+			require.NotEmpty(t, key)
+		}
+
+		{ // validate
+			storeIndex := types.MakeSignerSetTxKey(signerSetNonce)
+
+			{ // getEthereumSignature
+				got := gk.getEthereumSignature(ctx, storeIndex, valAddr)
+				require.Equal(t, []byte("fake-signature"), got)
+			}
+			{ // GetEthereumSignatures
+				got := gk.GetEthereumSignatures(ctx, storeIndex)
+				require.Len(t, got, 1)
+			}
+		}
+	})
+
+	t.Run("read after there's one batch-tx-confirmation in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		ethAddr := common.HexToAddress("0x3146D2d6Eed46Afa423969f5dDC3152DfC359b09")
+		valAddr, err := sdk.ValAddressFromBech32("cosmosvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6z3plt4")
+		require.NoError(t, err)
+
+		const (
+			batchNonce    = 10
+			tokenContract = "0x1111111111111111111111111111111111111111"
+		)
+
+		{ // setup
+			batchTxConfirmation := &types.BatchTxConfirmation{
+				TokenContract:  tokenContract,
+				BatchNonce:     batchNonce,
+				EthereumSigner: ethAddr.Hex(),
+				Signature:      []byte("fake-signature"),
+			}
+			key := gk.SetEthereumSignature(ctx, batchTxConfirmation, valAddr)
+			require.NotEmpty(t, key)
+		}
+
+		{ // validate
+			storeIndex := types.MakeBatchTxKey(common.HexToAddress(tokenContract), batchNonce)
+
+			{ // getEthereumSignature
+				got := gk.getEthereumSignature(ctx, storeIndex, valAddr)
+				require.Equal(t, []byte("fake-signature"), got)
+			}
+			{ // GetEthereumSignatures
+				got := gk.GetEthereumSignatures(ctx, storeIndex)
+				require.Len(t, got, 1)
+			}
+		}
+	})
+
+	t.Run("read after there's one contract-call-tx-confirmation in state", func(t *testing.T) {
+		env := CreateTestEnv(t)
+		ctx := env.Context
+		gk := env.GravityKeeper
+
+		ethAddr := common.HexToAddress("0x3146D2d6Eed46Afa423969f5dDC3152DfC359b09")
+
+		valAddr, err := sdk.ValAddressFromBech32("cosmosvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6z3plt4")
+		require.NoError(t, err)
+
+		const (
+			invalidationScope = "some-invalidation-scope"
+			invalidationNonce = 10
+		)
+
+		{ // setup
+			contractCallConfirmation := &types.ContractCallTxConfirmation{
+				InvalidationScope: []byte(invalidationScope),
+				InvalidationNonce: invalidationNonce,
+				EthereumSigner:    ethAddr.Hex(),
+				Signature:         []byte("fake-signature"),
+			}
+			key := gk.SetEthereumSignature(ctx, contractCallConfirmation, valAddr)
+			require.NotEmpty(t, key)
+		}
+
+		{ // validate
+			storeIndex := types.MakeContractCallTxKey([]byte(invalidationScope), invalidationNonce)
+
+			{ // getEthereumSignature
+				got := gk.getEthereumSignature(ctx, storeIndex, valAddr)
+				require.Equal(t, []byte("fake-signature"), got)
+			}
+			{ // GetEthereumSignatures
+				got := gk.GetEthereumSignatures(ctx, storeIndex)
+				require.Len(t, got, 1)
+			}
+		}
+	})
+}
+
+// TODO(levi) review/ensure coverage for:
+// PaginateOutgoingTxsByType
+// GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses

@@ -10,20 +10,21 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
-mod start;
-mod version;
-mod tx;
-mod query;
-mod tests;
+mod deploy;
 mod keys;
+mod query;
+mod start;
+mod tests;
+mod tx;
+mod version;
 
 use self::{
-    start::StartCmd, version::VersionCmd, tx::TxCmd,
-    query::QueryCmd, tests::TestsCmd, keys::KeysCmd, 
+    keys::KeysCmd, query::QueryCmd, start::StartCmd, tests::TestsCmd, tx::TxCmd,
+    version::VersionCmd,
 };
 use crate::config::GorcConfig;
 use abscissa_core::{
-    config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
+    Command, Configurable, Help, Options, Runnable,
 };
 use std::path::PathBuf;
 
@@ -35,7 +36,7 @@ pub const CONFIG_FILE: &str = "gorc.toml";
 pub enum GorcCmd {
     #[options(help = "create transactions on either ethereum or cosmos chains")]
     Tx(TxCmd),
-    
+
     #[options(help = "query state on either ethereum or cosmos chains")]
     Query(QueryCmd),
 
@@ -50,7 +51,7 @@ pub enum GorcCmd {
 
     #[options(help = "get usage information")]
     Help(Help<Self>),
-    
+
     #[options(help = "display version information")]
     Version(VersionCmd),
 }
@@ -68,21 +69,6 @@ impl Configurable<GorcConfig> for GorcCmd {
             Some(filename)
         } else {
             None
-        }
-    }
-
-    /// Apply changes to the config after it's been loaded, e.g. overriding
-    /// values in a config file using command-line options.
-    ///
-    /// This can be safely deleted if you don't want to override config
-    /// settings from command-line options.
-    fn process_config(
-        &self,
-        config: GorcConfig,
-    ) -> Result<GorcConfig, FrameworkError> {
-        match self {
-            GorcCmd::Start(cmd) => cmd.override_config(config),
-            _ => Ok(config),
         }
     }
 }

@@ -14,6 +14,7 @@ use cosmos_gravity::{
 };
 use deep_space::client::ChainStatus;
 use deep_space::Contact;
+use deep_space::error::CosmosGrpcError;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_gravity::utils::get_gravity_id;
 use futures::future::join3;
@@ -153,10 +154,18 @@ pub async fn eth_oracle_main_loop(
         .await
         {
             Ok(new_block) => last_checked_block = new_block,
-            Err(e) => error!(
+            Err(e) => {error!(
                 "Failed to get events for block range, Check your Eth node and Cosmos gRPC {:?}",
                 e
-            ),
+            );
+            if let gravity_utils::error::GravityError::CosmosGrpcError(err)=e{
+                if let CosmosGrpcError::TransactionFailed{tx:_,time:_} =err{
+                    delay_for(Duration::from_secs(10)).await;
+                }
+            }
+                
+            
+        },
         }
 
         // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
@@ -265,10 +274,11 @@ pub async fn eth_signer_main_loop(
         match get_oldest_unsigned_transaction_batch(&mut grpc_client, our_cosmos_address).await {
             Ok(Some(last_unsigned_batch)) => {
                 info!(
-                    "Sending batch confirm for {}:{} with {} in fees",
+                    "Sending batch confirm for {}:{} fees {} timeout {}",
                     last_unsigned_batch.token_contract,
                     last_unsigned_batch.nonce,
-                    last_unsigned_batch.total_fee.amount
+                    last_unsigned_batch.total_fee.amount,
+                    last_unsigned_batch.batch_timeout,
                 );
                 let res = send_batch_confirm(
                     &contact,
@@ -279,21 +289,22 @@ pub async fn eth_signer_main_loop(
                     gravity_id.clone(),
                 )
                 .await;
-                trace!("Batch confirm result is {:?}", res);
+                info!("Batch confirm result is {:?}", res);
             }
-            Ok(None) => trace!("No unsigned batches! Everything good!"),
-            Err(e) => trace!(
+            Ok(None) => info!("No unsigned batches! Everything good!"),
+            Err(e) => info!(
                 "Failed to get unsigned Batches, check your Cosmos gRPC {:?}",
                 e
             ),
         }
 
-        let logic_calls =get_oldest_unsigned_logic_call(&mut grpc_client, our_cosmos_address).await;
-        if let Ok(logic_calls) = logic_calls{
-            for logic_call in logic_calls{
+        let logic_calls =
+            get_oldest_unsigned_logic_call(&mut grpc_client, our_cosmos_address).await;
+        if let Ok(logic_calls) = logic_calls {
+            for logic_call in logic_calls {
                 info!(
                     "Sending Logic call confirm for {}:{}",
-                    bytes_to_hex_str(&logic_call.invalidation_scope),
+                    bytes_to_hex_str(&logic_call.invalidation_id),
                     logic_call.invalidation_nonce
                 );
                 let res = send_logic_call_confirm(
@@ -313,9 +324,6 @@ pub async fn eth_signer_main_loop(
                 e
             )
         }
-        
-
-
 
         // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
         // this is not required for any specific reason. In fact we expect and plan for

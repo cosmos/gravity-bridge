@@ -16,7 +16,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgCancelSendToEthereum{},
 		&MsgRequestBatchTx{},
 		&MsgSubmitEthereumEvent{},
-		&MsgSubmitEthereumSignature{},
+		&MsgSubmitEthereumTxConfirmation{},
 		&MsgDelegateKeys{},
 	)
 
@@ -32,10 +32,10 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 
 	registry.RegisterInterface(
 		"gravity.v1.EthereumSignature",
-		(*EthereumSignature)(nil),
-		&BatchTxSignature{},
-		&ContractCallTxSignature{},
-		&SignerSetTxSignature{},
+		(*EthereumTxConfirmation)(nil),
+		&BatchTxConfirmation{},
+		&ContractCallTxConfirmation{},
+		&SignerSetTxConfirmation{},
 	)
 
 	registry.RegisterInterface(
@@ -78,10 +78,10 @@ func UnpackEvent(any *types.Any) (EthereumEvent, error) {
 	return event, nil
 }
 
-func PackSignature(signature EthereumSignature) (*types.Any, error) {
-	msg, ok := signature.(proto.Message)
+func PackConfirmation(confirmation EthereumTxConfirmation) (*types.Any, error) {
+	msg, ok := confirmation.(proto.Message)
 	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", signature)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", confirmation)
 	}
 
 	anyEvent, err := types.NewAnyWithValue(msg)
@@ -92,14 +92,14 @@ func PackSignature(signature EthereumSignature) (*types.Any, error) {
 	return anyEvent, nil
 }
 
-// UnpackSignature unpacks an Any into a Confirm interface. It returns an error if the
+// UnpackConfirmation unpacks an Any into a Confirm interface. It returns an error if the
 // confirm can't be unpacked.
-func UnpackSignature(any *types.Any) (EthereumSignature, error) {
+func UnpackConfirmation(any *types.Any) (EthereumTxConfirmation, error) {
 	if any == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "protobuf Any message cannot be nil")
 	}
 
-	confirm, ok := any.GetCachedValue().(EthereumSignature)
+	confirm, ok := any.GetCachedValue().(EthereumTxConfirmation)
 	if !ok {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into EthereumSignature %T", any)
 	}

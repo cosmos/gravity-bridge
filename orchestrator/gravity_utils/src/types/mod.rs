@@ -21,12 +21,10 @@ pub struct Erc20Token {
 }
 
 impl Erc20Token {
-    pub fn from_proto(
-        input: cosmos_sdk_proto::cosmos::base::v1beta1::Coin,
-    ) -> Result<Self, GravityError> {
+    pub fn from_proto(input: gravity_proto::gravity::Erc20Token) -> Result<Self, GravityError> {
         Ok(Erc20Token {
             amount: input.amount.parse()?,
-            token_contract_address: "Figure out how to get this from the denom".parse()?,
+            token_contract_address: EthAddress::parse_and_validate(&input.contract)?,
         })
     }
 }

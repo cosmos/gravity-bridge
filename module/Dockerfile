@@ -19,16 +19,22 @@ RUN apk add --no-cache $PACKAGES
 # Set working directory for the build
 WORKDIR /go/src/github.com/althea-net/cosmos-gravity-bridge/module
 
+# Get dependancies - will also be cached if we won't change mod/sum
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
 # Add source files
 COPY . .
 
 # install simapp, remove packages
-RUN make build-linux
+RUN go build -o build/gravity ./cmd/gravity/main.go
 
 # Final image
 FROM alpine:edge
 
 # Install ca-certificates
+RUN apk add bash
 RUN apk add --update ca-certificates
 WORKDIR /root
 
@@ -38,4 +44,4 @@ COPY --from=build-env /go/src/github.com/althea-net/cosmos-gravity-bridge/module
 EXPOSE 26656 26657 1317 9090
 
 # Run gravity by default
-CMD sh home/startup.sh
+CMD ["gravity", "--home", "home", "start", "--pruning=nothing"]

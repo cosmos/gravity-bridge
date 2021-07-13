@@ -2,18 +2,28 @@ package keeper
 
 import (
 	"fmt"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 // EthereumEventProcessor processes `accepted` EthereumEvents
 type EthereumEventProcessor struct {
 	keeper     Keeper
 	bankKeeper types.BankKeeper
+}
+
+func (a EthereumEventProcessor) DetectMaliciousSupply(ctx sdk.Context, denom string, amount sdk.Int) (err error) {
+	currentSupply := a.keeper.bankKeeper.GetSupplyForDenom(ctx, denom)
+	newSupply := new(big.Int).Add(currentSupply.BigInt(), amount.BigInt())
+	if newSupply.BitLen() > 256 {
+		return sdkerrors.Wrapf(types.ErrSupplyOverflow, "malicious supply of %s detected", denom)
+	}
+	return nil
 }
 
 // Handle is the entry point for EthereumEvent processing
@@ -25,6 +35,9 @@ func (a EthereumEventProcessor) Handle(ctx sdk.Context, eve types.EthereumEvent)
 		addr, _ := sdk.AccAddressFromBech32(event.CosmosReceiver)
 		coins := sdk.Coins{sdk.NewCoin(denom, event.Amount)}
 		if !isCosmosOriginated {
+			if err := a.DetectMaliciousSupply(ctx, denom, event.Amount); err != nil {
+				return err
+			}
 			// If it is not cosmos originated, mint the coins (aka vouchers)
 			if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
 				return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)

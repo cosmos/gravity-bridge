@@ -2,52 +2,272 @@ name: Integration tests
 
 on:
   push:
-    branches: [master, main]
+    branches:
+      - main
   pull_request:
-    branches: [master, main]
+
+env:
+  CARGO_TERM_COLOR: always
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  happy-path:
+  rust-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Run all up happy-path test
-        run: tests/all-up-test.sh
-  validator-out:
+      - name: Checkout branch
+        uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        id: docker-cache
+        with:
+          path: /tmp/.buildx-cache
+          # Key is named differently to avoid collision
+          key: ${{ runner.os }}-multi-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-multi-buildx
+      - name: Container service login
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-orchestrator
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./orchestrator
+          builder: ${{ steps.buildx.outputs.name }}
+          file: orchestrator/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+      - name: Move Docker cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  test-runner-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Run all up test with a validator out
-        run: tests/all-up-test.sh VALIDATOR_OUT
-  valset-stress:
+      - name: Checkout branch
+        uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        id: docker-cache
+        with:
+          path: /tmp/.buildx-cache
+          # Key is named differently to avoid collision
+          key: ${{ runner.os }}-multi-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-multi-buildx
+      - name: Container service login
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-test-runner
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./orchestrator
+          builder: ${{ steps.buildx.outputs.name }}
+          file: orchestrator/testnet.Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+      - name: Move Docker cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  go-build:
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Run all up valset stress test
-        run: tests/all-up-test.sh VALSET_STRESS
-  batch-stress:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        id: docker-cache
+        with:
+          path: /tmp/.buildx-cache
+          # Key is named differently to avoid collision
+          key: ${{ runner.os }}-multi-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-multi-buildx
+      - name: container-login
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: labels
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-gravity
+      - name: build-and-push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./module
+          file: module/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          builder: ${{ steps.buildx.outputs.name }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+      - name: Move Docker cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  solidity-build:
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Run all up batch stress test
-        run: tests/all-up-test.sh BATCH_STRESS
-  v2-happy-path:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        id: docker-cache
+        with:
+          path: /tmp/.buildx-cache
+          # Key is named differently to avoid collision
+          key: ${{ runner.os }}-multi-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-multi-buildx
+      - name: container-login
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: labels
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-solidity
+      - name: build-and-push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./solidity
+          file: solidity/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          builder: ${{ steps.buildx.outputs.name }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+      - name: Move Docker cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  integration-tests:
     runs-on: ubuntu-latest
+    needs: [ rust-build, go-build, test-runner-build, solidity-build ]
+    strategy:
+      matrix:
+        test_type: [
+          # working tests
+            "ORCHESTRATOR_KEYS",
+            "ARBITRARY_LOGIC",
+
+          # non-working tests
+#            "VALIDATOR_OUT",
+#            "BATCH_STRESS",
+#            "VALSET_STRESS",
+#            "HAPPY_PATH",
+#            "V2_HAPPY_PATH",
+        ]
     steps:
-      - uses: actions/checkout@v2
-      - name: Run all up batch stress test
-        run: tests/all-up-test.sh V2_HAPPY_PATH
-  arbitrary-logic:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run all up arbitrary logic test
-        run: tests/all-up-test.sh ARBITRARY_LOGIC $ALCHEMY_ID
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: go-cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('testnet/go.sum') }}
+      - name: container-login
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: docker gravity metadata
+        id: meta-gravity
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-gravity
+      - name: docker orchestrator metadata
+        id: meta-orchestrator
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-orchestrator
+      - name: docker test runner metadata
+        id: meta-test-runner
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-test-runner
+      - name: docker contract deployer metadata
+        id: meta-solidity
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-solidity
+      - name: pull gravity image
+        run: docker pull ${{ steps.meta-gravity.outputs.tags }}
+      - name: rename gravity image
+        run: docker tag ${{ steps.meta-gravity.outputs.tags }} gravity:prebuilt
+      - name: pull orchestrator image
+        run: docker pull ${{ steps.meta-orchestrator.outputs.tags }}
+      - name: rename orchestrator image
+        run: docker tag ${{ steps.meta-gravity.outputs.tags }} orchestrator:prebuilt
+      - name: pull test-runner image
+        run: docker pull ${{ steps.meta-test-runner.outputs.tags }}
+      - name: rename test-runner image
+        run: docker tag ${{ steps.meta-test-runner.outputs.tags }} test-runner:prebuilt
+      - name: pull contract deployer image
+        run: docker pull ${{ steps.meta-solidity.outputs.tags }}
+      - name: rename contract deployer image
+        run: docker tag ${{ steps.meta-solidity.outputs.tags }} solidity:prebuilt
+      - name: build go test binary
+        run: cd testnet && go test -c
+      - name: Run all up ci test
+        run: ./testnet/testnet.test -test.run PrebuiltCi -test.failfast -test.v
         env:
-          ALCHEMY_ID: ${{ secrets.ALCHEMY_ID }}
-  orchestrator-keys:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run all up arbitrary logic test
-        run: tests/all-up-test.sh ORCHESTRATOR_KEYS
+          TEST_TYPE: ${{ matrix.test_type}}

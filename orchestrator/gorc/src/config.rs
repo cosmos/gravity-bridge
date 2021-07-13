@@ -48,7 +48,6 @@ impl Default for EthereumSection {
     }
 }
 
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct CosmosSection {
@@ -58,7 +57,7 @@ pub struct CosmosSection {
 }
 
 impl Default for CosmosSection {
-    fn default() -> Self{
+    fn default() -> Self {
         Self {
             key: "testkey".to_owned(),
             grpc: "http://localhost:9090".to_owned(),

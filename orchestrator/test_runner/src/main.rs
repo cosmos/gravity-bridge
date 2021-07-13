@@ -39,16 +39,21 @@ const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
 /// the timeout for the total system
 const TOTAL_TIMEOUT: Duration = Duration::from_secs(300);
 
-pub const COSMOS_NODE_GRPC: &str = "http://localhost:9090";
-pub const COSMOS_NODE_ABCI: &str = "http://localhost:26657";
-pub const ETH_NODE: &str = "http://localhost:8545";
+lazy_static! {
+    static ref COSMOS_NODE_GRPC: String =
+        env::var("COSMOS_NODE_GRPC").unwrap_or("http://localhost:9090".to_owned());
+    static ref COSMOS_NODE_ABCI: String =
+        env::var("COSMOS_NODE_ABCI").unwrap_or("http://localhost:26657".to_owned());
+    static ref ETH_NODE: String =
+        env::var("ETH_NODE").unwrap_or("http://localhost:8545".to_owned());
+}
 
 /// this value reflects the contents of /tests/container-scripts/setup-validator.sh
 /// and is used to compute if a stake change is big enough to trigger a validator set
 /// update since we want to make several such changes intentionally
-pub const STAKE_SUPPLY_PER_VALIDATOR: u128 = 1000000000;
+pub const STAKE_SUPPLY_PER_VALIDATOR: u128 = 100000000000; // 100B
 /// this is the amount each validator bonds at startup
-pub const STARTING_STAKE_PER_VALIDATOR: u128 = STAKE_SUPPLY_PER_VALIDATOR / 2;
+pub const STARTING_STAKE_PER_VALIDATOR: u128 = STAKE_SUPPLY_PER_VALIDATOR / 2; // 50B
 
 lazy_static! {
     // this key is the private key for the public key defined in tests/assets/ETHGenesis.json
@@ -88,47 +93,47 @@ pub fn one_hundred_eth() -> Uint256 {
     (1000000000000000000u128 * 100).into()
 }
 
-pub fn should_deploy_contracts() -> bool {
-    match env::var("DEPLOY_CONTRACTS") {
-        Ok(s) => s == "1" || s.to_lowercase() == "yes" || s.to_lowercase() == "true",
-        _ => false,
-    }
-}
+// pub fn should_deploy_contracts() -> bool {
+//     match env::var("DEPLOY_CONTRACTS") {
+//         Ok(s) => s == "1" || s.to_lowercase() == "yes" || s.to_lowercase() == "true",
+//         _ => false,
+//     }
+// }
 
 #[actix_rt::main]
 pub async fn main() {
     env_logger::init();
+
     info!("Staring Gravity test-runner");
+
     let contact = Contact::new(
-        COSMOS_NODE_GRPC,
+        COSMOS_NODE_GRPC.as_str(),
         OPERATION_TIMEOUT,
         CosmosAddress::DEFAULT_PREFIX,
     )
     .unwrap();
-
+    info!("COSMOS_NODE_GRPC {}", COSMOS_NODE_GRPC.as_str());
     info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact, TOTAL_TIMEOUT).await;
 
-    let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
-    let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
+    let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC.as_str())
+        .await
+        .unwrap();
+    let web30 = web30::client::Web3::new(ETH_NODE.as_str(), OPERATION_TIMEOUT);
     let keys = get_keys();
 
-    // if we detect this env var we are only deploying contracts, do that then exit.
-    if should_deploy_contracts() {
-        info!("test-runner in contract deploying mode, deploying contracts, then exiting");
-        deploy_contracts(&contact).await;
-        return;
-    }
+    // // if we detect this env var we are only deploying contracts, do that then exit.
+    // if should_deploy_contracts() {
+    //     info!("test-runner in contract deploying mode, deploying contracts, then exiting");
+    //     deploy_contracts(&contact).await;
+    //     return;
+    // }
 
     let contracts = parse_contract_addresses();
     // the address of the deployed Gravity contract
     let gravity_address = contracts.gravity_contract;
     // addresses of deployed ERC20 token contracts to be used for testing
     let erc20_addresses = contracts.erc20_addresses;
-
-    // before we start the orchestrators send them some funds so they can pay
-    // for things
-    send_eth_to_orchestrators(&keys, &web30).await;
 
     assert!(check_cosmos_balance(
         &get_test_token_name(),
@@ -166,8 +171,9 @@ pub async fn main() {
             .await;
             return;
         } else if test_type == "BATCH_STRESS" {
+            info!("Starting batch stress test");
             let contact = Contact::new(
-                COSMOS_NODE_GRPC,
+                COSMOS_NODE_GRPC.as_str(),
                 TOTAL_TIMEOUT,
                 CosmosAddress::DEFAULT_PREFIX,
             )
@@ -175,16 +181,16 @@ pub async fn main() {
             transaction_stress_test(&web30, &contact, keys, gravity_address, erc20_addresses).await;
             return;
         } else if test_type == "VALSET_STRESS" {
-            info!("Starting Valset update stress test");
+            info!("Starting valset stress test");
             validator_set_stress_test(&web30, &contact, keys, gravity_address).await;
             return;
         } else if test_type == "V2_HAPPY_PATH" {
             info!("Starting happy path for Gravity v2");
-            happy_path_test_v2(&web30, grpc_client, &contact, keys, gravity_address, false).await;
+            happy_path_test_v2(&web30, grpc_client, &contact, keys, gravity_address).await;
             return;
         } else if test_type == "ARBITRARY_LOGIC" {
             info!("Starting arbitrary logic tests!");
-            arbitrary_logic_test(&web30, grpc_client, &contact, keys, gravity_address).await;
+            arbitrary_logic_test(&web30, grpc_client, &contact).await;
             return;
         } else if test_type == "ORCHESTRATOR_KEYS" {
             info!("Starting orchestrator key update tests!");

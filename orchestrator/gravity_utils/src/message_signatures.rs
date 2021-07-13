@@ -260,7 +260,7 @@ pub fn encode_logic_call_confirm(gravity_id: String, call: LogicCall) -> Vec<u8>
         call.logic_contract_address.into(),          // Address of a logic contract
         Token::UnboundedBytes(call.payload),         // Encoded arguments to logic contract
         call.timeout.into(),                         // Timeout on batch
-        Token::Bytes(call.invalidation_scope),       // Scope of logic batch
+        Token::Bytes(call.invalidation_id),          // Scope of logic batch
         call.invalidation_nonce.into(),              // Nonce of logic batch. See 2-d nonce scheme.
     ])
 }
@@ -300,7 +300,7 @@ fn test_logic_call_signature() {
         )
         .unwrap(),
         timeout: 4766922941000,
-        invalidation_scope: hex_str_to_bytes(
+        invalidation_id: hex_str_to_bytes(
             "0x696e76616c69646174696f6e4964000000000000000000000000000000000000",
         )
         .unwrap(),

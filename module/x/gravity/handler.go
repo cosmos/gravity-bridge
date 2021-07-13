@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/keeper"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 // NewHandler returns a handler for "Gravity" type messages.
@@ -26,8 +26,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgRequestBatchTx:
 			res, err := msgServer.RequestBatchTx(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgSubmitEthereumSignature:
-			res, err := msgServer.SubmitEthereumSignature(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgSubmitEthereumTxConfirmation:
+			res, err := msgServer.SubmitEthereumTxConfirmation(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgSubmitEthereumEvent:
 			res, err := msgServer.SubmitEthereumEvent(sdk.WrapSDKContext(ctx), msg)

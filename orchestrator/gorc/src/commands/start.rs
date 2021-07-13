@@ -1,46 +1,58 @@
 //! `start` subcommand - example of how to write a subcommand
 
+use crate::{application::APP, prelude::*};
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
-use crate::prelude::*;
-
-use crate::config::GorcConfig;
-use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
+use abscissa_core::{Command, Options, Runnable};
 
 /// `start` subcommand
-///
-/// The `Options` proc macro generates an option parser based on the struct
-/// definition, and is defined in the `gumdrop` crate. See their documentation
-/// for a more comprehensive example:
-///
-/// <https://docs.rs/gumdrop/>
+
 #[derive(Command, Debug, Options)]
-pub struct StartCmd {
+pub enum StartCmd {
     /// To whom are we saying hello?
-    #[options(free)]
-    recipient: Vec<String>,
+    #[options(help = "orchestrator [contract-address] [fee-denom]")]
+    Orchestrator(Orchestrator),
+
+    #[options(help = "relayer")]
+    Relayer(Relayer),
 }
 
 impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
-        let config = APP.config();
-        println!("Hello, {}!", &config.gravity.contract);
+        //Your code goes here
     }
 }
 
-impl config::Override<GorcConfig> for StartCmd {
-    // Process the given command line options, overriding settings from
-    // a configuration file using explicit flags taken from command-line
-    // arguments.
-    fn override_config(
-        &self,
-        mut config: GorcConfig,
-    ) -> Result<GorcConfig, FrameworkError> {
-        if !self.recipient.is_empty() {
-            config.gravity.contract = self.recipient.join(" ");
-        }
+#[derive(Command, Debug, Options)]
+pub struct Orchestrator {
+    #[options(free)]
+    free: Vec<String>,
 
-        Ok(config)
+    #[options(help = "print help message")]
+    help: bool,
+}
+
+impl Runnable for Orchestrator {
+    fn run(&self) {
+        assert!(self.free.len() == 2);
+        let contract_address = self.free[0].clone();
+        let fee_denom = self.free[1].clone();
+
+        abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
+            status_err!("executor exited with error: {}", e);
+            std::process::exit(1);
+        });
     }
+}
+
+#[derive(Command, Debug, Options)]
+pub struct Relayer {
+    #[options(help = "print help message")]
+    help: bool,
+}
+
+impl Runnable for Relayer {
+    /// Start the application.
+    fn run(&self) {}
 }

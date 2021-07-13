@@ -1,23 +1,30 @@
-name: Rust
+name: Rust tests
 
 on:
   push:
     branches:
       - main
   pull_request:
-    paths:
-      - "**.rs"
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  rust-test:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
-      - name: Build Orchestrator
-        run: cd orchestrator && cargo build --all --verbose
-      - name: Run Orchestrator tests
+      - name: Checkout branch
+        uses: actions/checkout@v2
+      - name: Set up Rust caches
+        uses: actions/cache@v2
+        id: rust-cache
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            orchestrator/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('orchestrator/Cargo.lock') }}
+      - name: Run Orchestrator unit tests
         run: cd orchestrator && cargo test --all --verbose

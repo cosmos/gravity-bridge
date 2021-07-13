@@ -8,7 +8,7 @@ use deep_space::Address as CosmosAddress;
 use deep_space::Contact;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_proto::gravity::DelegateKeysByEthereumSignerRequest;
-use gravity_proto::gravity::DelegateKeysByOrchestratorAddress;
+use gravity_proto::gravity::DelegateKeysByOrchestratorRequest;
 use std::process::exit;
 use std::time::Duration;
 use tokio::time::sleep as delay_for;
@@ -207,9 +207,7 @@ pub async fn wait_for_cosmos_node_ready(contact: &Contact) {
     loop {
         let res = contact.get_chain_status().await;
         match res {
-            Ok(ChainStatus::Syncing) => {
-                info!("Cosmos node is syncing Standing by")
-            }
+            Ok(ChainStatus::Syncing) => info!("Cosmos node is syncing Standing by"),
             Ok(ChainStatus::WaitingToStart) => {
                 info!("Cosmos node is waiting for the chain to start, Standing by")
             }
@@ -241,7 +239,7 @@ pub async fn check_delegate_addresses(
         })
         .await;
     let orchestrator_response = client
-        .delegate_keys_by_orchestrator(DelegateKeysByOrchestratorAddress {
+        .delegate_keys_by_orchestrator(DelegateKeysByOrchestratorRequest {
             orchestrator_address: delegate_orchestrator_address.to_bech32(prefix).unwrap(),
         })
         .await;

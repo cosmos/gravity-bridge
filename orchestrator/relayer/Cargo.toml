@@ -18,14 +18,14 @@ cosmos_gravity = {path = "../cosmos_gravity"}
 gravity_utils = {path = "../gravity_utils"}
 gravity_proto = {path = "../gravity_proto/"}
 
-deep_space = "2.1"
+deep_space = "2.4.3"
 serde_derive = "1.0"
-clarity = "0.4"
+clarity = "0.4.11"
 docopt = "1"
 serde = "1.0"
 actix-rt = "2"
 lazy_static = "1"
-web30 = "0.12"
+web30 = "0.14.4"
 num256 = "0.3"
 log = "0.4"
 env_logger = "0.8"

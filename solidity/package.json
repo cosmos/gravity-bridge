@@ -30,6 +30,7 @@
     "@typescript-eslint/eslint-plugin": "^3.10.1",
     "@typescript-eslint/parser": "^3.10.1",
     "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "axios": "0.21.1",
     "chai": "^4.2.0",
     "command-line-args": "^5.1.1",
     "commitizen": "^4.2.1",
@@ -45,6 +46,7 @@
     "hardhat-typechain": "^0.3.4",
     "husky": "^4.3.0",
     "mocha": "^8.1.3",
+    "nexe": "^4.0.0-beta.18",
     "prettier": "^2.1.2",
     "prettier-plugin-solidity": "^1.0.0-beta.1",
     "shelljs": "^0.8.4",
@@ -55,10 +57,12 @@
     "ts-generator": "^0.1.1",
     "ts-node": "^8.10.2",
     "typechain": "^4.0.1",
-    "typescript": "^3.9.7",
-    "axios": "0.21.1"
+    "typescript": "^3.9.7"
   },
   "dependencies": {
-    "pkg": "^4.4.9"
+    "@cosmjs/stargate": "^0.25.3",
+    "@cosmjs/tendermint-rpc": "^0.25.3",
+    "pkg": "^4.4.9",
+    "ts-proto": "^1.81.1"
   }
 }

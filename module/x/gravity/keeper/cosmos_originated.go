@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 func (k Keeper) getCosmosOriginatedDenom(ctx sdk.Context, tokenContract string) (string, bool) {
@@ -44,7 +44,6 @@ func (k Keeper) setCosmosOriginatedDenomToERC20(ctx sdk.Context, denom string, t
 func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, common.Address, error) {
 	// First try parsing the ERC20 out of the denom
 	tc1, err := types.GravityDenomToERC20(denom)
-
 	if err != nil {
 		// Look up ERC20 contract in index and error if it's not in there.
 		tc2, exists := k.getCosmosOriginatedERC20(ctx, denom)

@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 func (k Keeper) recordEventVote(
@@ -22,8 +22,14 @@ func (k Keeper) recordEventVote(
 	// but checking it here gives individual eth signers a chance to retry,
 	// and prevents validators from submitting two claims with the same nonce
 	lastEventNonce := k.getLastEventNonceByValidator(ctx, val)
-	if event.GetEventNonce() != lastEventNonce+1 {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "non contiguous event nonce")
+	expectedNonce := lastEventNonce + 1
+	if event.GetEventNonce() != expectedNonce {
+		return nil, sdkerrors.Wrapf(types.ErrInvalid,
+			"non contiguous event nonce expected %v observed %v for validator %v",
+			expectedNonce,
+			event.GetEventNonce(),
+			val,
+		)
 	}
 
 	// Tries to get an EthereumEventVoteRecord with the same eventNonce and event as the event that was submitted.
@@ -141,11 +147,6 @@ func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, c
 		k.cdc.MustUnmarshalBinaryBare(bz, &out)
 		return &out
 	}
-}
-
-// deleteEthereumEventVoteRecord deletes an attestation given an event nonce and claim
-func (k Keeper) deleteEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.EthereumEventVoteRecord) {
-	ctx.KVStore(k.storeKey).Delete(types.MakeEthereumEventVoteRecordKey(eventNonce, claimHash))
 }
 
 // GetEthereumEventVoteRecordMapping returns a mapping of eventnonce -> attestations at that nonce

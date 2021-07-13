@@ -92,8 +92,13 @@ pub async fn estimate_valset_cost(
             gas: Some(gas_limit.into()),
             value: Some(zero.into()),
             data: Some(
-                encode_valset_payload(new_valset.clone(), old_valset.clone(), confirms, gravity_id)?
-                    .into(),
+                encode_valset_payload(
+                    new_valset.clone(),
+                    old_valset.clone(),
+                    confirms,
+                    gravity_id,
+                )?
+                .into(),
             ),
         })
         .await?;
@@ -106,7 +111,7 @@ pub async fn estimate_valset_cost(
 
 /// Encodes the payload bytes for the validator set update call, useful for
 /// estimating the cost of submitting a validator set
-fn encode_valset_payload(
+pub fn encode_valset_payload(
     new_valset: Valset,
     old_valset: Valset,
     confirms: &[ValsetConfirmResponse],
@@ -150,8 +155,11 @@ fn encode_valset_payload(
         sig_arrays.r,
         sig_arrays.s,
     ];
-    let payload = clarity::abi::encode_call("updateValset(address[],uint256[],uint256,address[],uint256[],uint256,uint8[],bytes32[],bytes32[])",
-    tokens).unwrap();
+
+    let payload = clarity::abi::encode_call(
+        "updateValset(address[],uint256[],uint256,address[],uint256[],uint256,uint8[],bytes32[],bytes32[])",
+        tokens,
+    ).unwrap();
 
     Ok(payload)
 }

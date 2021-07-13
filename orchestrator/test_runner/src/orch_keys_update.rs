@@ -11,7 +11,7 @@ use deep_space::Contact;
 use futures::future::join_all;
 use gravity_proto::gravity::{
     query_client::QueryClient as GravityQueryClient, DelegateKeysByEthereumSignerRequest,
-    DelegateKeysByOrchestratorAddress,
+    DelegateKeysByOrchestratorRequest,
 };
 use rand::Rng;
 use std::time::Duration;
@@ -44,7 +44,7 @@ pub async fn orch_keys_update(
         assert_eq!(parsed_response_orch_address, orch_address);
 
         let orchestrator_response = grpc_client
-            .delegate_keys_by_orchestrator(DelegateKeysByOrchestratorAddress {
+            .delegate_keys_by_orchestrator(DelegateKeysByOrchestratorRequest {
                 orchestrator_address: orch_address.to_string(),
             })
             .await

@@ -1,9 +1,9 @@
 use abscissa_core::{Command, Options, Runnable};
 use bip32::{Mnemonic, XPrv};
-use pkcs8::ToPrivateKey;
 use rand_core::OsRng;
-use signatory::keystore::FsKeyStore;
+use signatory::FsKeyStore;
 use std::path::Path;
+use k256::pkcs8::ToPrivateKey;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct AddCosmosKeyCmd {
@@ -21,13 +21,12 @@ impl Runnable for AddCosmosKeyCmd {
         let seed = mnemonic.to_seed("TREZOR"); // todo: password argument
         let xprv = XPrv::new(&seed).unwrap();
         let private_key_der = k256::SecretKey::from(xprv.private_key()).to_pkcs8_der();
+        let private_key_der = private_key_der.unwrap();
 
         // todo: where the keys go? load from config? for now use /tmp for testing
         let keystore_path = Path::new("/tmp/keystore");
-        if !keystore_path.exists() {
-            FsKeyStore::create(keystore_path).unwrap();
-        }
-        let keystore = FsKeyStore::open(keystore_path).unwrap();
-        keystore.store(&self.name, &private_key_der).unwrap();
+        let keystore = FsKeyStore::create_or_open(keystore_path).unwrap();
+        let key_name = &self.name.parse().unwrap();
+        keystore.store(key_name, &private_key_der).unwrap();
     }
 }

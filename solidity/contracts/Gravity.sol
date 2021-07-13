@@ -35,9 +35,9 @@ contract Gravity is ReentrancyGuard {
 	mapping(address => uint256) public state_lastBatchNonces;
 	mapping(bytes32 => uint256) public state_invalidationMapping;
 	uint256 public state_lastValsetNonce = 0;
-    // event nonce zero is reserved by the Cosmos module as a special
-    // value indicating that no events have yet been submitted
-    uint256 public state_lastEventNonce = 1;
+	// event nonce zero is reserved by the Cosmos module as a special
+	// value indicating that no events have yet been submitted
+	uint256 public state_lastEventNonce = 1;
 
 	// These are set once at initialization
 	bytes32 public state_gravityId;
@@ -119,6 +119,7 @@ contract Gravity is ReentrancyGuard {
 	function lastBatchNonce(address _erc20Address) public view returns (uint256) {
 		return state_lastBatchNonces[_erc20Address];
 	}
+
 	function lastLogicCallNonce(bytes32 _invalidation_id) public view returns (uint256) {
 		return state_invalidationMapping[_invalidation_id];
 	}
@@ -275,8 +276,8 @@ contract Gravity is ReentrancyGuard {
 		state_lastValsetNonce = _newValsetNonce;
 
 		// LOGS
-
-		emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
+		state_lastEventNonce = state_lastEventNonce.add(1);
+		emit ValsetUpdatedEvent(_newValsetNonce, state_lastEventNonce, _newValidators, _newPowers);
 	}
 
 	// submitBatch processes a batch of Cosmos -> Ethereum transactions by sending the tokens in the transactions
@@ -595,7 +596,6 @@ contract Gravity is ReentrancyGuard {
 
 		// LOGS
 
-		state_lastEventNonce = state_lastEventNonce.add(1);
-	    emit ValsetUpdatedEvent(_newValsetNonce, state_lastEventNonce, _newValidators, _newPowers);
+		emit ValsetUpdatedEvent(state_lastValsetNonce, state_lastEventNonce, _validators, _powers);
 	}
 }

@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/keeper"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 func TestHandleMsgSendToEthereum(t *testing.T) {
@@ -288,7 +288,7 @@ func TestMsgSetDelegateAddresses(t *testing.T) {
 		cosmosAddress  sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
 		ethAddress2                   = "0x26126048c706fB45a5a6De8432F428e794d0b952"
 		cosmosAddress2 sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
-		valAddress     sdk.ValAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		valAddress     sdk.ValAddress = bytes.Repeat([]byte{0x3}, sdk.AddrLen)
 		blockTime                     = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
 		blockTime2                    = time.Date(2020, 9, 15, 15, 20, 10, 0, time.UTC)
 		blockHeight    int64          = 200

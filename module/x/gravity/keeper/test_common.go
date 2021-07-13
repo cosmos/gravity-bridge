@@ -54,7 +54,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 var (
@@ -220,6 +220,10 @@ func (input TestInput) AddSendToEthTxsToPool(t *testing.T, ctx sdk.Context, toke
 		_, err := input.GravityKeeper.createSendToEthereum(ctx, sender, receiver.Hex(), amount, fee)
 		require.NoError(t, err)
 	}
+}
+
+func (input TestInput) AddBalanceToBank(ctx sdk.Context, addr sdk.AccAddress, balances sdk.Coins) error {
+	return input.BankKeeper.SetBalances(ctx, addr, balances)
 }
 
 // SetupFiveValChain does all the initialization for a 5 Validator chain using the keys here

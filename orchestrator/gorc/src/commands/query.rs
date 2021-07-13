@@ -1,5 +1,9 @@
 //! `query` subcommand
 
+mod cosmos;
+
+mod eth;
+
 use abscissa_core::{Command, Options, Runnable};
 
 /// `query` subcommand
@@ -10,7 +14,9 @@ use abscissa_core::{Command, Options, Runnable};
 ///
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
-pub struct QueryCmd {
+pub enum QueryCmd {
+    Cosmos(cosmos::Cosmos),
+    Eth(eth::Eth),
     // Example `--foobar` (with short `-f` argument)
     // #[options(short = "f", help = "foobar path"]
     // foobar: Option<PathBuf>

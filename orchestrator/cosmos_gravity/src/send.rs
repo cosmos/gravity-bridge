@@ -12,19 +12,17 @@ use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::service_client::ServiceClient as TxServiceClient;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastMode;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastTxRequest;
-use gravity_proto::gravity::MsgSubmitEthereumEvent;
-use gravity_proto::gravity::{SendToCosmosEvent,ContractCallExecutedEvent,Erc20DeployedEvent, BatchExecutedEvent};
-use gravity_proto::gravity::MsgSubmitEthereumSignature;
-use gravity_proto::gravity::{ContractCallTxSignature,BatchTxSignature};
-use gravity_proto::gravity::MsgRequestBatchTx;
-use gravity_proto::gravity::MsgSendToEthereum;
-use gravity_proto::gravity::MsgDelegateKeys;
+use gravity_proto::gravity as proto;
 
 use gravity_utils::message_signatures::{
     encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
 };
 use gravity_utils::types::*;
 use std::{collections::HashMap, time::Duration};
+
+use bytes::BytesMut;
+use prost::Message;
+use prost_types::Any;
 
 pub const MEMO: &str = "Sent using Althea Orchestrator";
 pub const TIMEOUT: Duration = Duration::from_secs(60);
@@ -50,10 +48,10 @@ pub async fn update_gravity_delegate_addresses(
         .unwrap();
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
 
-    let msg_set_orch_address = MsgDelegateKeys {
+    let msg_set_orch_address = proto::MsgDelegateKeys {
         validator_address: our_valoper_address.to_string(),
         orchestrator_address: delegate_cosmos_address.to_string(),
-        eth_address: delegate_eth_address.to_string(),
+        ethereum_address: delegate_eth_address.to_string(),
     };
 
     let fee = Fee {
@@ -63,10 +61,7 @@ pub async fn update_gravity_delegate_addresses(
         payer: None,
     };
 
-    let msg = Msg::new(
-        "/gravity.v1.MsgSetOrchestratorAddress",
-        msg_set_orch_address,
-    );
+    let msg = Msg::new("/gravity.v1.MsgDelegateKeys", msg_set_orch_address);
 
     let args = contact.get_message_args(our_address, fee).await?;
     trace!("got optional tx info");
@@ -77,7 +72,7 @@ pub async fn update_gravity_delegate_addresses(
     let response = txrpc
         .broadcast_tx(BroadcastTxRequest {
             tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
+            mode: BroadcastMode::Block.into(),
         })
         .await?;
     let response = response.into_inner();
@@ -114,13 +109,28 @@ pub async fn send_valset_confirms(
         trace!("Submitting signature for valset {:?}", valset);
         let message = encode_valset_confirm(gravity_id.clone(), valset.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
-        trace!(
-            "Sending valset update with address {} and sig {}",
+        info!(
+            "Sending valset update address {} sig {} hash {}",
             our_eth_address,
-            bytes_to_hex_str(&eth_signature.to_bytes())
+            bytes_to_hex_str(&eth_signature.to_bytes()),
+            bytes_to_hex_str(&message),
         );
-        let confirm = todo!();
-        let msg = Msg::new("/gravity.v1.MsgValsetConfirm", confirm);
+        let confirm = proto::SignerSetTxConfirmation {
+            ethereum_signer: our_eth_address.to_string(),
+            signer_set_nonce: valset.nonce,
+            signature: eth_signature.to_bytes().to_vec(),
+        };
+        let size = Message::encoded_len(&confirm);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumTxConfirmation {
+            signer: our_address.to_string(),
+            confirmation: Some(Any {
+                type_url: "/gravity.v1.SignerSetTxConfirmation".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -132,7 +142,7 @@ pub async fn send_valset_confirms(
     let response = txrpc
         .broadcast_tx(BroadcastTxRequest {
             tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
+            mode: BroadcastMode::Block.into(),
         })
         .await?;
     let response = response.into_inner();
@@ -164,40 +174,43 @@ pub async fn send_batch_confirm(
     let mut messages = Vec::new();
 
     for batch in transaction_batches {
-        trace!("Submitting signature for batch {:?}", batch);
+        info!("Submitting signature for batch {:?}", batch);
         let message = encode_tx_batch_confirm(gravity_id.clone(), batch.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
-        trace!(
-            "Sending batch update with address {} and sig {}",
+        info!(
+            "Sending batch update address {} sig {} hash {}",
             our_eth_address,
-            bytes_to_hex_str(&eth_signature.to_bytes())
+            bytes_to_hex_str(&eth_signature.to_bytes()),
+            bytes_to_hex_str(&message),
         );
-        let confirm = BatchTxSignature {
+        let confirm = proto::BatchTxConfirmation {
             token_contract: batch.token_contract.to_string(),
-            nonce: batch.nonce,
-            eth_signer: our_eth_address.to_string(),
-            signature: bytes_to_hex_str(&eth_signature.to_bytes()).as_bytes().to_vec(),
+            batch_nonce: batch.nonce,
+            ethereum_signer: our_eth_address.to_string(),
+            signature: eth_signature.to_bytes().to_vec(),
         };
-        let msg = Msg::new("/gravity.v1.MsgConfirmBatch", confirm);
+        let size = Message::encoded_len(&confirm);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.BatchTxConfirmation".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
-    trace!("got optional tx info");
+    info!("got optional tx info");
 
     let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
-
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 /// Send in a confirmation for a specific logic call
@@ -225,18 +238,30 @@ pub async fn send_logic_call_confirm(
         trace!("Submitting signature for LogicCall {:?}", call);
         let message = encode_logic_call_confirm(gravity_id.clone(), call.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
-        trace!(
-            "Sending LogicCall update with address {} and sig {}",
+        info!(
+            "Sending LogicCall update address {} sig {} hash {}",
             our_eth_address,
-            bytes_to_hex_str(&eth_signature.to_bytes())
+            bytes_to_hex_str(&eth_signature.to_bytes()),
+            bytes_to_hex_str(&message),
         );
-        let confirm = ContractCallTxSignature {
-            eth_signer: our_eth_address.to_string(),
-            signature: bytes_to_hex_str(&eth_signature.to_bytes()).as_bytes().to_vec(),
-            invalidation_id: bytes_to_hex_str(&call.invalidation_scope).as_bytes().to_vec(),
+        let confirm = proto::ContractCallTxConfirmation {
+            ethereum_signer: our_eth_address.to_string(),
+            signature: eth_signature.to_bytes().to_vec(),
+            // TODO JEHAN: this will break
+            invalidation_scope: bytes_to_hex_str(&call.invalidation_id).as_bytes().to_vec(),
             invalidation_nonce: call.invalidation_nonce,
         };
-        let msg = Msg::new("/gravity.v1.MsgConfirmLogicCall", confirm);
+        let size = Message::encoded_len(&confirm);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&confirm, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumTxConfirmation {
+            signer: our_address.to_string(),
+            confirmation: Some(Any {
+                type_url: "/gravity.v1.ContractCallTxConfirmation".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumTxConfirmation", wrapper);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -244,18 +269,10 @@ pub async fn send_logic_call_confirm(
 
     let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
-
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 pub async fn send_ethereum_claims(
@@ -265,6 +282,7 @@ pub async fn send_ethereum_claims(
     withdraws: Vec<TransactionBatchExecutedEvent>,
     erc20_deploys: Vec<Erc20DeployedEvent>,
     logic_calls: Vec<LogicCallExecutedEvent>,
+    valsets: Vec<ValsetUpdatedEvent>,
     fee: Coin,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
@@ -279,49 +297,111 @@ pub async fn send_ethereum_claims(
     // We index the events by event nonce in an unordered hashmap and then play them back in order into a vec
     let mut unordered_msgs = HashMap::new();
     for deposit in deposits {
-        let claim = SendToCosmosEvent {
-            event_nonce: deposit.event_nonce,
-            ethereum_height: deposit.ethereum_height,
-            token_contract: deposit.token_contract.to_string(),
+        let event = proto::SendToCosmosEvent {
+            event_nonce: downcast_uint256(deposit.event_nonce.clone()).unwrap(),
+            ethereum_height: downcast_uint256(deposit.block_height).unwrap(),
+            token_contract: deposit.erc20.to_string(),
             amount: deposit.amount.to_string(),
-            cosmos_receiver: deposit.cosmos_receiver.to_string(),
-            ethereum_sender: deposit.ethereum_sender.to_string(),
+            cosmos_receiver: deposit.destination.to_string(),
+            ethereum_sender: deposit.sender.to_string(),
         };
-        let msg = Msg::new("/gravity.v1.MsgDepositClaim", claim);
-        unordered_msgs.insert(deposit.event_nonce.clone(), msg);
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.SendToCosmosEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
+        unordered_msgs.insert(deposit.event_nonce, msg);
     }
     for withdraw in withdraws {
-        let claim = BatchExecutedEvent {
+        let event = proto::BatchExecutedEvent {
             event_nonce: downcast_uint256(withdraw.event_nonce.clone()).unwrap(),
+            batch_nonce: downcast_uint256(withdraw.batch_nonce.clone()).unwrap(),
             ethereum_height: downcast_uint256(withdraw.block_height).unwrap(),
             token_contract: withdraw.erc20.to_string(),
         };
-        let msg = Msg::new("/gravity.v1.MsgWithdrawClaim", claim);
-        unordered_msgs.insert(downcast_uint256(withdraw.event_nonce.clone()).unwrap(), msg);
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.BatchExecutedEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
+        unordered_msgs.insert(withdraw.event_nonce, msg);
     }
     for deploy in erc20_deploys {
-        let claim = Erc20DeployedEvent {
-            event_nonce: deploy.event_nonce,
-            ethereum_height: deploy.ethereum_height,
+        let event = proto::Erc20DeployedEvent {
+            event_nonce: downcast_uint256(deploy.event_nonce.clone()).unwrap(),
+            ethereum_height: downcast_uint256(deploy.block_height).unwrap(),
             cosmos_denom: deploy.cosmos_denom,
-            token_contract: deploy.token_contract.to_string(),
-            erc20_name: deploy.erc20_name,
-            erc20_symbol: deploy.erc20_symbol,
-            erc20_decimals: deploy.erc20_decimals as u64,
+            token_contract: deploy.erc20_address.to_string(),
+            erc20_name: deploy.name,
+            erc20_symbol: deploy.symbol,
+            erc20_decimals: deploy.decimals as u64,
         };
-        let msg = Msg::new("/gravity.v1.MsgERC20DeployedClaim", claim);
-        unordered_msgs.insert(deploy.event_nonce.clone(), msg);
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.ERC20DeployedEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
+        unordered_msgs.insert(deploy.event_nonce, msg);
     }
     for call in logic_calls {
-        let claim = ContractCallExecutedEvent {
+        let event = proto::ContractCallExecutedEvent {
             event_nonce: downcast_uint256(call.event_nonce.clone()).unwrap(),
             ethereum_height: downcast_uint256(call.block_height).unwrap(),
             invalidation_id: call.invalidation_id,
             invalidation_nonce: downcast_uint256(call.invalidation_nonce).unwrap(),
         };
-        let msg = Msg::new("/gravity.v1.MsgLogicCallExecutedClaim", claim);
-        unordered_msgs.insert(downcast_uint256(call.event_nonce.clone()).unwrap(), msg);
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.ContractCallExecutedEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
+        unordered_msgs.insert(call.event_nonce, msg);
     }
+    for valset in valsets {
+        let event = proto::SignerSetTxExecutedEvent {
+            event_nonce: downcast_uint256(valset.event_nonce.clone()).unwrap(),
+            signer_set_tx_nonce: downcast_uint256(valset.valset_nonce.clone()).unwrap(),
+            ethereum_height: downcast_uint256(valset.block_height).unwrap(),
+            members: valset.members.iter().map(|v| v.into()).collect(),
+        };
+        let size = Message::encoded_len(&event);
+        let mut buf = BytesMut::with_capacity(size);
+        Message::encode(&event, &mut buf).expect("Failed to encode!"); // encoding should never fail so long as the buffer is big enough
+        let wrapper = proto::MsgSubmitEthereumEvent {
+            signer: our_address.to_string(),
+            event: Some(Any {
+                type_url: "/gravity.v1.SignerSetTxExecutedEvent".into(),
+                value: buf.to_vec(),
+            }),
+        };
+        let msg = Msg::new("/gravity.v1.MsgSubmitEthereumEvent", wrapper);
+        unordered_msgs.insert(valset.event_nonce, msg);
+    }
+
     let mut keys = Vec::new();
     for (key, _) in unordered_msgs.iter() {
         keys.push(key.clone());
@@ -335,7 +415,7 @@ pub async fn send_ethereum_claims(
 
     let fee = Fee {
         amount: vec![fee],
-        gas_limit: 500_000_000u64,
+        gas_limit: 500_000_000u64 * (msgs.len() as u64),
         granter: None,
         payer: None,
     };
@@ -345,18 +425,10 @@ pub async fn send_ethereum_claims(
 
     let msg_bytes = private_key.sign_std_msg(&msgs, args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
-
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
@@ -396,9 +468,9 @@ pub async fn send_to_eth(
         )));
     }
 
-    let msg_send_to_eth = MsgSendToEthereum {
+    let msg_send_to_eth = proto::MsgSendToEthereum {
         sender: our_address.to_string(),
-        eth_recipient: destination.to_string(),
+        ethereum_recipient: destination.to_string(),
         amount: Some(amount.into()),
         bridge_fee: Some(fee.clone().into()),
     };
@@ -410,25 +482,17 @@ pub async fn send_to_eth(
         payer: None,
     };
 
-    let msg = Msg::new("/gravity.v1.MsgSendToEth", msg_send_to_eth);
+    let msg = Msg::new("/gravity.v1.MsgSendToEthereum", msg_send_to_eth);
 
     let args = contact.get_message_args(our_address, fee).await?;
     trace!("got optional tx info");
 
     let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
-
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 pub async fn send_request_batch(
@@ -439,7 +503,7 @@ pub async fn send_request_batch(
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
 
-    let msg_request_batch = MsgRequestBatchTx {
+    let msg_request_batch = proto::MsgRequestBatchTx {
         signer: our_address.to_string(),
         denom,
     };
@@ -451,23 +515,15 @@ pub async fn send_request_batch(
         payer: None,
     };
 
-    let msg = Msg::new("/gravity.v1.MsgRequestBatch", msg_request_batch);
+    let msg = Msg::new("/gravity.v1.MsgRequestBatchTx", msg_request_batch);
 
     let args = contact.get_message_args(our_address, fee).await?;
     trace!("got optional tx info");
 
     let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
 
-    let mut txrpc = TxServiceClient::connect(contact.get_url()).await?;
-    let response = txrpc
-        .broadcast_tx(BroadcastTxRequest {
-            tx_bytes: msg_bytes,
-            mode: BroadcastMode::Sync.into(),
-        })
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
-    let response = response.into_inner();
-
-    contact
-        .wait_for_tx(response.tx_response.unwrap(), TIMEOUT)
-        .await
+    contact.wait_for_tx(response, TIMEOUT).await
 }

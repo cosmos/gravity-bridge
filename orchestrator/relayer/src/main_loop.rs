@@ -26,18 +26,13 @@ pub async fn relayer_main_loop(
         let loop_start = Instant::now();
 
         let our_ethereum_address = ethereum_key.to_public_key().unwrap();
-        let current_valset = find_latest_valset(
-            &mut grpc_client,
-            our_ethereum_address,
-            gravity_contract_address,
-            &web3,
-        )
-        .await;
-        if current_valset.is_err() {
-            error!("Could not get current valset! {:?}", current_valset);
+        let current_eth_valset =
+            find_latest_valset(&mut grpc_client, gravity_contract_address, &web3).await;
+        if current_eth_valset.is_err() {
+            error!("Could not get current valset! {:?}", current_eth_valset);
             continue;
         }
-        let current_valset = current_valset.unwrap();
+        let current_eth_valset = current_eth_valset.unwrap();
 
         let gravity_id =
             get_gravity_id(gravity_contract_address, our_ethereum_address, &web3).await;
@@ -49,7 +44,7 @@ pub async fn relayer_main_loop(
         let gravity_id = String::from_utf8(gravity_id.clone()).expect("Invalid GravityID");
 
         relay_valsets(
-            current_valset.clone(),
+            current_eth_valset.clone(),
             ethereum_key,
             &web3,
             &mut grpc_client,
@@ -60,7 +55,7 @@ pub async fn relayer_main_loop(
         .await;
 
         relay_batches(
-            current_valset.clone(),
+            current_eth_valset.clone(),
             ethereum_key,
             &web3,
             &mut grpc_client,
@@ -71,7 +66,7 @@ pub async fn relayer_main_loop(
         .await;
 
         relay_logic_calls(
-            current_valset,
+            current_eth_valset,
             ethereum_key,
             &web3,
             &mut grpc_client,
