@@ -5,7 +5,7 @@ mod delete;
 mod import;
 mod list;
 mod show;
-mod update;
+mod rename;
 
 use abscissa_core::{Command, Options, Runnable};
 
@@ -20,8 +20,8 @@ pub enum EthKeysCmd {
     #[options(help = "delete [name]")]
     Delete(delete::DeleteEthKeyCmd),
 
-    #[options(help = "update [name] [new-name]")]
-    Update(update::UpdateEthKeyCmd),
+    #[options(help = "rename [name] [new-name]")]
+    Rename(rename::RenameEthKeyCmd),
 
     #[options(help = "list")]
     List(list::ListEthKeyCmd),

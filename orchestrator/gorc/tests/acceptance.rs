@@ -19,7 +19,7 @@
 )]
 
 use abscissa_core::testing::prelude::*;
-use gorc::config::GorcConfig;
+// use gorc::config::GorcConfig;
 use once_cell::sync::Lazy;
 
 /// Executes your application binary via `cargo run`.

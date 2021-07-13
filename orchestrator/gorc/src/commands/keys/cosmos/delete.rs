@@ -15,6 +15,6 @@ impl Runnable for DeleteCosmosKeyCmd {
         let keystore = FsKeyStore::create_or_open(keystore_path).unwrap();
         pub const EXAMPLE_KEY: &str = "example-key";
         let key_name = EXAMPLE_KEY.parse().unwrap();
-        let delete_key = FsKeyStore::delete(&keystore, &key_name).unwrap();
+        let _delete_key = FsKeyStore::delete(&keystore, &key_name).unwrap();
     }
 }

@@ -6,7 +6,7 @@ pub struct ListEthKeyCmd {
     pub name: String,
 }
 
-/// The `gork keys eth list` subcommand: list keys
+/// The `gorc keys eth list` subcommand: list keys
 impl Runnable for ListEthKeyCmd {
     fn run(&self) {
         // todo(shella): glue with signatory crate to list keys

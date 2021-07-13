@@ -1,7 +1,7 @@
 use abscissa_core::{Command, Options, Runnable};
 
 #[derive(Command, Debug, Default, Options)]
-pub struct UpdateCosmosKeyCmd {
+pub struct RenameEthKeyCmd {
     #[options(short = "n", long = "name", help = "update [name] [new-name]")]
     pub name: String,
 
@@ -9,8 +9,8 @@ pub struct UpdateCosmosKeyCmd {
     pub new_name: String,
 }
 
-/// The `gork keys cosmos update [name] [new-name]` subcommand: show keys
-impl Runnable for UpdateCosmosKeyCmd {
+/// The `gorc keys eth update [name] [new-name]` subcommand: show keys
+impl Runnable for RenameEthKeyCmd {
     fn run(&self) {
         // todo(shella): glue with signatory crate to update keys
     }

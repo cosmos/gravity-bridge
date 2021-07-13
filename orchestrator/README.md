@@ -64,10 +64,10 @@ test_runner
 
 ## PROPOSED
 
-Proposing the name `gork` for the binary. This is short for `gravity-orchestrator`.
+Proposing the name `gorc` for the binary. This is short for `gravity-orchestrator`.
 
 ```
-gork
+gorc
   tx
     eth
       send-to-cosmos [from-eth-key] [to-cosmos-addr] [erc20 conract] [erc20 amount] [[--times=int]]

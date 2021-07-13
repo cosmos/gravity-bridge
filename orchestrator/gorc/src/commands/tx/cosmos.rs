@@ -57,7 +57,7 @@ fn parse_denom(s: &str) -> (String, String) {
     (amount.as_str().to_string(), denom.as_str().to_string())
 }
 
-fn get_cosmos_key(key_name: &str) -> CosmosPrivateKey {
+fn get_cosmos_key(_key_name: &str) -> CosmosPrivateKey {
     unimplemented!()
 }
 
@@ -185,9 +185,9 @@ impl Runnable for Send {
     /// Start the application.
     fn run(&self) {
         assert!(self.free.len() == 3);
-        let from_key = self.free[0].clone();
-        let to_addr = self.free[1].clone();
-        let coin_amount = self.free[2].clone();
+        let _from_key = self.free[0].clone();
+        let _to_addr = self.free[1].clone();
+        let _coin_amount = self.free[2].clone();
 
         abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
             status_err!("executor exited with error: {}", e);

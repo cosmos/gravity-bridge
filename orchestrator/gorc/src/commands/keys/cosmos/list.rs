@@ -6,7 +6,7 @@ pub struct ListCosmosKeyCmd {
     pub name: String,
 }
 
-/// The `gork keys cosmos list` subcommand: list keys
+/// The `gorc keys cosmos list` subcommand: list keys
 impl Runnable for ListCosmosKeyCmd {
     fn run(&self) {
         // todo(shella): glue with signatory crate to list keys

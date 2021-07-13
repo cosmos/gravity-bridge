@@ -17,7 +17,7 @@ pub struct ImportEthKeyCmd {
     pub privkey: String,
 }
 
-/// The `gork cosmos import [name] [privkey]` subcommand: import key
+/// The `gorc cosmos import [name] [privkey]` subcommand: import key
 impl Runnable for ImportEthKeyCmd {
     fn run(&self) {
         // todo(shella): glue with signatory crate to import key

@@ -79,7 +79,7 @@ impl Runnable for CosmosErc20 {
                 exit(1);
             }
 
-            let res = deploy_erc20(
+            deploy_erc20(
                 denom.clone(),
                 erc20_name,
                 erc20_symbol,

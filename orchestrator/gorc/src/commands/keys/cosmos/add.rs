@@ -7,11 +7,11 @@ use k256::pkcs8::ToPrivateKey;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct AddCosmosKeyCmd {
-    #[options(short = "n", long = "name", help = "add private key [name]")]
+    #[options(short = "n", long = "name", help = "add private key")]
     pub name: String,
 }
 
-/// The `gork keys cosmos add [name] ` subcommand: add private key & save to disk
+/// The `gorc keys cosmos add [name] ` subcommand: add private key & save to disk
 impl Runnable for AddCosmosKeyCmd {
     fn run(&self) {
         let mnemonic = Mnemonic::random(&mut OsRng, Default::default());
