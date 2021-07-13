@@ -164,10 +164,8 @@ func CmdContractCallTx() *cobra.Command {
 				return err
 			}
 
-			var ( // args
-				invalidationScope []byte // TODO(levi) init and validate from args[0]
-				invalidationNonce uint64 // TODO(levi) init and validate from args[1]
-			)
+			invalidationScope := []byte(args[0])
+			invalidationNonce, err := strconv.ParseUint(args[1], 10, 64)
 
 			req := types.ContractCallTxRequest{
 				InvalidationScope: invalidationScope,
@@ -198,16 +196,7 @@ func CmdSignerSetTxs() *cobra.Command {
 				return err
 			}
 
-			// // var count int64
-			// if len(args) > 0 {
-			// 	if count, err = parseCount(args[0]); err != nil {
-			// 		return err
-			// 	}
-			// }
-
-			req := types.SignerSetTxsRequest{
-				// Count: count,
-			}
+			req := types.SignerSetTxsRequest{}
 
 			res, err := queryClient.SignerSetTxs(cmd.Context(), &req)
 			if err != nil {
@@ -277,7 +266,7 @@ func CmdContractCallTxs() *cobra.Command {
 func CmdSignerSetTxConfirmations() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "signer-set-tx-ethereum-signatures [nonce]",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		Short: "", // TODO(levi) provide short description
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, queryClient, err := newContextAndQueryClient(cmd)
@@ -285,9 +274,10 @@ func CmdSignerSetTxConfirmations() *cobra.Command {
 				return err
 			}
 
-			var ( // args
-				nonce uint64 // TODO(levi) init and validate from args[0]
-			)
+			nonce, err := parseNonce(args[0])
+			if err != nil {
+				return err
+			}
 
 			req := types.SignerSetTxConfirmationsRequest{
 				SignerSetNonce: nonce,
@@ -360,10 +350,11 @@ func CmdContractCallTxConfirmations() *cobra.Command {
 				return err
 			}
 
-			var ( // args
-				invalidationScope []byte // TODO(levi) init and validate from args[0]
-				invalidationNonce uint64 // TODO(levi) init and validate from args[1]
-			)
+			invalidationScope := []byte(args[0])
+			invalidationNonce, err := parseNonce(args[1])
+			if err != nil {
+				return err
+			}
 
 			req := types.ContractCallTxConfirmationsRequest{
 				InvalidationNonce: invalidationNonce,
@@ -394,10 +385,7 @@ func CmdUnsignedSignerSetTxs() *cobra.Command {
 				return err
 			}
 
-			var ( // args
-				address string // TODO(levi) init and validate from args[0]
-			)
-
+			address := args[0]
 			req := types.UnsignedSignerSetTxsRequest{
 				Address: address,
 			}
@@ -426,10 +414,7 @@ func CmdUnsignedBatchTxs() *cobra.Command {
 				return err
 			}
 
-			var ( // args
-				address string // TODO(levi) init and validate from args[0]
-			)
-
+			address := args[0]
 			req := types.UnsignedBatchTxsRequest{
 				Address: address,
 			}
@@ -458,10 +443,7 @@ func CmdUnsignedContractCallTxs() *cobra.Command {
 				return err
 			}
 
-			var ( // args
-				address string // TODO(levi) init and validate from args[0]
-			)
-
+			address := args[0]
 			req := types.UnsignedContractCallTxsRequest{
 				Address: address,
 			}
@@ -490,10 +472,7 @@ func CmdLastSubmittedEthereumEvent() *cobra.Command {
 				return err
 			}
 
-			var ( // args
-				address string // TODO(levi) init and validate from args[0]
-			)
-
+			address := args[0]
 			req := types.LastSubmittedEthereumEventRequest{
 				Address: address, // TODO(levi) what kind of address is this??
 			}
