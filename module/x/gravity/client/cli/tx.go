@@ -140,18 +140,22 @@ func CmdSetDelegateKeys() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-delegate-keys [validator-address] [orchestrator-address] [ethereum-address]",
 		Args:  cobra.ExactArgs(3),
-		Short: "", // TODO(levi) provide short description
+		Short: "Set gravity delegate keys",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			var ( // args
-				valAddr sdk.ValAddress // TODO(levi) init and validate from args[0]
-				orcAddr sdk.AccAddress // TODO(levi) init and validate from args[1]
-				ethAddr string         // TODO(levi) init and validate from args[2]
-			)
+			valAddr, err := sdk.ValAddressFromHex(args[0])
+			if err != nil {
+				return err
+			}
+			orcAddr, err := sdk.AccAddressFromHex(args[1])
+			if err != nil {
+				return err
+			}
+			ethAddr := args[2]
 
 			msg := types.NewMsgDelegateKeys(valAddr, orcAddr, ethAddr)
 			if err = msg.ValidateBasic(); err != nil {
