@@ -17,6 +17,6 @@ impl Runnable for DeleteCosmosKeyCmd {
         // Collect key name from args.
         let key_name = &self.name.parse().unwrap();
         // Delete keyname after locating file from path and key name.
-        let delete_key = FsKeyStore::delete(&keystore, &key_name).unwrap();
+        let _delete_key = FsKeyStore::delete(&keystore, &key_name).unwrap();
     }
 }
