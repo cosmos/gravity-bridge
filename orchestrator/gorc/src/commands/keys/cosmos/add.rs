@@ -18,13 +18,15 @@ impl Runnable for AddCosmosKeyCmd {
         println!{"**Important** write this mnemonic in a safe place.\n"}
 
         println!{"{}", mnemonic.phrase()};
-        let seed = mnemonic.to_seed("TREZOR"); // todo: password argument
+        // Would the password remain static as TREZOR?
+        let seed = mnemonic.to_seed("TREZOR");
         let xprv = XPrv::new(&seed).unwrap();
         let private_key_der = k256::SecretKey::from(xprv.private_key()).to_pkcs8_der();
         let private_key_der = private_key_der.unwrap();
 
-        // todo: where the keys go? load from config? for now use /tmp for testing
-        let keystore_path = Path::new("keystore");
+        // Keys are stored in tmp folder in disk.
+        let keystore_path = Path::new("/tmp/keystore");
+        // Create path and add key to path.
         let keystore = FsKeyStore::create_or_open(keystore_path).unwrap();
         let key_name = &self.name.parse().unwrap();
         keystore.store(key_name, &private_key_der).unwrap();
