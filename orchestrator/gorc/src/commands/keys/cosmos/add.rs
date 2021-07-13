@@ -24,7 +24,7 @@ impl Runnable for AddCosmosKeyCmd {
         let private_key_der = private_key_der.unwrap();
 
         // todo: where the keys go? load from config? for now use /tmp for testing
-        let keystore_path = Path::new("/tmp/keystore");
+        let keystore_path = Path::new("keystore");
         let keystore = FsKeyStore::create_or_open(keystore_path).unwrap();
         let key_name = &self.name.parse().unwrap();
         keystore.store(key_name, &private_key_der).unwrap();

@@ -11,10 +11,9 @@ pub struct DeleteCosmosKeyCmd {
 /// The `gork keys cosmos delete [name] ` subcommand: delete the given key
 impl Runnable for DeleteCosmosKeyCmd {
     fn run(&self) {
-        let keystore_path = Path::new("/tmp/keystore");
+        let keystore_path = Path::new("keystore");
         let keystore = FsKeyStore::create_or_open(keystore_path).unwrap();
-        pub const EXAMPLE_KEY: &str = "example-key";
-        let key_name = EXAMPLE_KEY.parse().unwrap();
+        let key_name = &self.name.parse().unwrap();
         let delete_key = FsKeyStore::delete(&keystore, &key_name).unwrap();
     }
 }
