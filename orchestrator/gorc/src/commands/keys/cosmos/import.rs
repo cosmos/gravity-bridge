@@ -1,6 +1,6 @@
-use crate::application::APP;
 use abscissa_core::{Application, Command, Options, Runnable};
 use bip32;
+use crate::application::APP;
 use k256::pkcs8::ToPrivateKey;
 use signatory;
 use std::path;
@@ -9,12 +9,15 @@ use std::path;
 pub struct ImportCosmosKeyCmd {
     #[options(free, help = "import [name] (mnemonic) (password)")]
     pub args: Vec<String>,
+
+    #[options(help = "overwrite existing key")]
+    pub overwrite: bool,
 }
 
-// Args:
-// - name is required
-// - mnemonic is optional; when absent the user will be prompted to enter it
-// - password is optional; when absent the user will be prompted to enter it
+// `gorc keys cosmos import [name] (mnemonic) (password)`
+// - [name] required; key name
+// - (mnemonic) optional; when absent the user will be prompted to enter it
+// - (password) optional; when absent the user will be prompted to enter it
 impl Runnable for ImportCosmosKeyCmd {
     fn run(&self) {
         let config = APP.config();
@@ -24,8 +27,10 @@ impl Runnable for ImportCosmosKeyCmd {
         let name = self.args.get(0).expect("name is required");
         let name = name.parse().expect("Could not parse name");
         if let Ok(_info) = keystore.info(&name) {
-            println!("Key already exists, exiting.");
-            return;
+            if !self.overwrite {
+                println!("Key already exists, exiting.");
+                return;
+            }
         }
 
         let mnemonic = match self.args.get(1) {
