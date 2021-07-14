@@ -45,7 +45,9 @@ impl Runnable for ImportCosmosKeyCmd {
 
         let mnemonic = bip32::Mnemonic::new(mnemonic.trim_end(), Default::default()).unwrap();
 
-        let key = bip32::XPrv::new(mnemonic.to_seed(&password)).unwrap();
+        let seed = mnemonic.to_seed(&password);
+        let path = "m/44'/118'/0'/0/0".parse::<bip32::DerivationPath>().unwrap();
+        let key = bip32::XPrv::derive_from_path(seed, &path).unwrap();
         let key = k256::SecretKey::from(key.private_key());
         let key = key.to_pkcs8_der().unwrap();
 

@@ -1,5 +1,5 @@
-use abscissa_core::{Application, Command, Options, Runnable};
 use crate::application::APP;
+use abscissa_core::{Application, Command, Options, Runnable};
 use k256::pkcs8::ToPrivateKey;
 use std::path;
 
@@ -43,7 +43,9 @@ impl Runnable for ImportEthKeyCmd {
 
         let mnemonic = bip32::Mnemonic::new(mnemonic.trim_end(), Default::default()).unwrap();
 
-        let key = bip32::XPrv::new(mnemonic.to_seed(&password)).unwrap();
+        let seed = mnemonic.to_seed(&password);
+        let path = "m/44'/60'/0'/0/0".parse::<bip32::DerivationPath>().unwrap();
+        let key = bip32::XPrv::derive_from_path(seed, &path).unwrap();
         let key = k256::SecretKey::from(key.private_key());
         let key = key.to_pkcs8_der().unwrap();
 

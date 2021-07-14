@@ -37,13 +37,13 @@ impl Runnable for AddEthKeyCmd {
             None => rpassword::read_password_from_tty(Some("Password: ")).unwrap(),
         };
 
-        // TODO(levi) we need to account for paths still https://github.com/satoshilabs/slips/blob/master/slip-0044.md
-
         let mnemonic = bip32::Mnemonic::random(&mut OsRng, Default::default());
         println! {"**Important** record this mnemonic in a safe place:"}
         println! {"{}", mnemonic.phrase()};
 
-        let key = bip32::XPrv::new(mnemonic.to_seed(&password)).unwrap();
+        let seed = mnemonic.to_seed(&password);
+        let path = "m/44'/60'/0'/0/0".parse::<bip32::DerivationPath>().unwrap();
+        let key = bip32::XPrv::derive_from_path(seed, &path).unwrap();
         let key = k256::SecretKey::from(key.private_key());
         let key = key.to_pkcs8_der().unwrap();
 
