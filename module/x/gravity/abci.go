@@ -68,7 +68,8 @@ func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	powerDiff := types.EthereumSigners(k.CurrentSignerSet(ctx)).PowerDiff(latestSignerSetTx.Signers)
 
 	shouldCreate := (lastUnbondingHeight == blockHeight) || (powerDiff > 0.05)
-	ctx.Logger().Info("considering signer set tx creation",
+	k.Logger(ctx).Info(
+		"considering signer set tx creation",
 		"blockHeight", blockHeight,
 		"lastUnbondingHeight", lastUnbondingHeight,
 		"latestSignerSetTx.Nonce", latestSignerSetTx.Nonce,

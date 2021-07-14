@@ -8,17 +8,14 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/types/query"
-
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/cosmos/cosmos-sdk/codec"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
@@ -59,6 +56,10 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 	}
 
 	return k
+}
+
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", "x/"+types.ModuleName)
 }
 
 /////////////////////////////
@@ -217,13 +218,13 @@ func (k Keeper) getEthereumAddressesByOrchestrator(ctx sdk.Context, orch sdk.Acc
 	return
 }
 
-
 // CreateSignerSetTx gets the current signer set from the staking keeper, increments the nonce,
 // creates the signer set tx object, emits an event and sets the signer set in state
 func (k Keeper) CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	nonce := k.incrementLatestSignerSetTxNonce(ctx)
 	currSignerSet := k.CurrentSignerSet(ctx)
 	newSignerSetTx := types.NewSignerSetTx(nonce, uint64(ctx.BlockHeight()), currSignerSet)
+
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeMultisigUpdateRequest,
@@ -234,7 +235,8 @@ func (k Keeper) CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 		),
 	)
 	k.SetOutgoingTx(ctx, newSignerSetTx)
-	ctx.Logger().Info("SignerSetTx created",
+	k.Logger(ctx).Info(
+		"SignerSetTx created",
 		"nonce", newSignerSetTx.Nonce,
 		"height", newSignerSetTx.Height,
 		"signers", len(newSignerSetTx.Signers),
@@ -331,11 +333,6 @@ func (k Keeper) getGravityID(ctx sdk.Context) string {
 	var a string
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyGravityID, &a)
 	return a
-}
-
-// logger returns a module-specific logger.
-func (k Keeper) logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
 // getDelegateKeys iterates both the EthAddress and Orchestrator address indexes to produce
