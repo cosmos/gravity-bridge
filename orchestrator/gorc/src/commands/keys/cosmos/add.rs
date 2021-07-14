@@ -37,6 +37,8 @@ impl Runnable for AddCosmosKeyCmd {
             None => rpassword::read_password_from_tty(Some("Password: ")).unwrap(),
         };
 
+        // TODO(levi) we need to account for paths still https://github.com/satoshilabs/slips/blob/master/slip-0044.md
+
         let mnemonic = bip32::Mnemonic::random(&mut OsRng, Default::default());
         println! {"**Important** record this mnemonic in a safe place:"}
         println! {"{}", mnemonic.phrase()};
