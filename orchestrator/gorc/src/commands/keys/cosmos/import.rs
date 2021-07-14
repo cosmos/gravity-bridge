@@ -46,11 +46,11 @@ impl Runnable for ImportCosmosKeyCmd {
         let mnemonic = bip32::Mnemonic::new(mnemonic.trim_end(), Default::default()).unwrap();
 
         let seed = mnemonic.to_seed(&password);
-        let path = "m/44'/118'/0'/0/0".parse::<bip32::DerivationPath>().unwrap();
+        let path = config.cosmos.key_derivation_path.clone();
+        let path = path.parse::<bip32::DerivationPath>().expect("Could not parse derivation path");
         let key = bip32::XPrv::derive_from_path(seed, &path).unwrap();
         let key = k256::SecretKey::from(key.private_key());
         let key = key.to_pkcs8_der().unwrap();
-
         keystore.store(&name, &key).expect("Could not store key");
     }
 }
