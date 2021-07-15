@@ -1,6 +1,7 @@
-use abscissa_core::{Command, Options, Runnable};
+use crate::application::APP;
+use abscissa_core::{Application, Command, Options, Runnable};
 use signatory::FsKeyStore;
-use std::path::Path;
+use std::path;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct DeleteCosmosKeyCmd {
@@ -11,9 +12,10 @@ pub struct DeleteCosmosKeyCmd {
 /// The `gork keys cosmos delete [name] ` subcommand: delete the given key
 impl Runnable for DeleteCosmosKeyCmd {
     fn run(&self) {
+        let config = APP.config();
         // Path where key is stored.
-        let keystore_path = Path::new("/tmp/keystore");
-        let keystore = FsKeyStore::create_or_open(keystore_path).unwrap();
+        let keystore = path::Path::new(&config.keystore);
+        let keystore = signatory::FsKeyStore::create_or_open(keystore).unwrap();
         // Collect key name from args.
         let key_name = &self.name.parse().unwrap();
         // Delete keyname after locating file from path and key name.

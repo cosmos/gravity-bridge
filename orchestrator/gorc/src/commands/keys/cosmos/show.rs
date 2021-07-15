@@ -1,6 +1,7 @@
-use abscissa_core::{Command, Options, Runnable};
+use crate::application::APP;
+use abscissa_core::{Application, Command, Options, Runnable};
 use signatory::FsKeyStore;
-use std::path::Path;
+use std::path;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct ShowCosmosKeyCmd {
@@ -12,10 +13,10 @@ pub struct ShowCosmosKeyCmd {
 impl Runnable for ShowCosmosKeyCmd {
     fn run(&self) {
         // todo(shella): glue with signatory crate to list keys
-        let keystore_path = Path::new("/tmp/keystore");
-        let keystore = FsKeyStore::create_or_open(keystore_path).unwrap();
+        let config = APP.config();
+        let keystore = path::Path::new(&config.keystore);
+        let keystore = signatory::FsKeyStore::create_or_open(keystore).unwrap();
         let key_name = &self.name.parse().unwrap();
-        // let key_info = keystore.info(&key_name).unwrap();
         let show_key = FsKeyStore::info(&keystore, &key_name).unwrap();
         println!("{:?}", show_key)
     }
