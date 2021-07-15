@@ -15,7 +15,7 @@ impl Runnable for ShowCosmosKeyCmd {
         let keystore_path = Path::new("/tmp/keystore");
         let keystore = FsKeyStore::create_or_open(keystore_path).unwrap();
         let key_name = &self.name.parse().unwrap();
-        let key_info = keystore.info(&key_name).unwrap();
+        // let key_info = keystore.info(&key_name).unwrap();
         let show_key = FsKeyStore::info(&keystore, &key_name).unwrap();
         println!("{:?}", show_key)
     }
