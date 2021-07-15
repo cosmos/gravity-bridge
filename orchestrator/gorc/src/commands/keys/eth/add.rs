@@ -1,10 +1,10 @@
+use super::show::ShowEthKeyCmd;
+use crate::application::APP;
 use abscissa_core::{Application, Command, Options, Runnable};
 use bip32;
-use crate::application::APP;
 use k256::pkcs8::ToPrivateKey;
 use rand_core::OsRng;
 use std::path;
-use super::show::ShowEthKeyCmd;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct AddEthKeyCmd {
@@ -43,16 +43,19 @@ impl Runnable for AddEthKeyCmd {
         println! {"{}", mnemonic.phrase()};
 
         let seed = mnemonic.to_seed(&password);
-        let path = config.ethereum.key_derivation_path.clone();
+
+        let path = config.ethereum.key_derivation_path.trim();
         let path = path
             .parse::<bip32::DerivationPath>()
             .expect("Could not parse derivation path");
+
         let key = bip32::XPrv::derive_from_path(seed, &path).unwrap();
         let key = k256::SecretKey::from(key.private_key());
         let key = key.to_pkcs8_der().unwrap();
         keystore.store(&name, &key).expect("Could not store key");
 
-        let show_cmd = ShowEthKeyCmd { args: vec![name.to_string()] };
+        let args = vec![name.to_string()];
+        let show_cmd = ShowEthKeyCmd { args };
         show_cmd.run();
     }
 }

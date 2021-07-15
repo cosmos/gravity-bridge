@@ -1,8 +1,8 @@
-use abscissa_core::{Application, Command, Options, Runnable};
+use super::show::ShowEthKeyCmd;
 use crate::application::APP;
+use abscissa_core::{Application, Command, Options, Runnable};
 use k256::pkcs8::ToPrivateKey;
 use std::path;
-use super::show::ShowEthKeyCmd;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct ImportEthKeyCmd {
@@ -46,7 +46,7 @@ impl Runnable for ImportEthKeyCmd {
 
         let seed = mnemonic.to_seed(&password.trim());
 
-        let path = config.ethereum.key_derivation_path.clone();
+        let path = config.ethereum.key_derivation_path.trim();
         let path = path
             .parse::<bip32::DerivationPath>()
             .expect("Could not parse derivation path");
@@ -56,7 +56,8 @@ impl Runnable for ImportEthKeyCmd {
         let key = key.to_pkcs8_der().unwrap();
         keystore.store(&name, &key).expect("Could not store key");
 
-        let show_cmd = ShowEthKeyCmd { args: vec![name.to_string()] };
+        let args = vec![name.to_string()];
+        let show_cmd = ShowEthKeyCmd { args };
         show_cmd.run();
     }
 }
