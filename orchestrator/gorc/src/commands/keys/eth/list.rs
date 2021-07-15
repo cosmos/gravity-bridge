@@ -3,12 +3,9 @@ use abscissa_core::{Application, Command, Options, Runnable};
 use std::path;
 
 #[derive(Command, Debug, Default, Options)]
-pub struct ListEthKeyCmd {
-    #[options(short = "n", long = "name", help = "list keys")]
-    pub name: String,
-}
+pub struct ListEthKeyCmd {}
 
-/// The `gorc keys eth list` subcommand: list keys
+// Entry point for `gorc keys eth list`
 impl Runnable for ListEthKeyCmd {
     fn run(&self) {
         let config = APP.config();

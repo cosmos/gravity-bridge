@@ -1,6 +1,6 @@
+use crate::application::APP;
 use abscissa_core::{Application, Command, Options, Runnable};
 use bip32;
-use crate::application::APP;
 use k256::pkcs8::ToPrivateKey;
 use rand_core::OsRng;
 use std::path;
@@ -14,7 +14,7 @@ pub struct AddEthKeyCmd {
     pub overwrite: bool,
 }
 
-// `gorc keys eth add [name] (password)`
+// Entry point for `gorc keys eth add [name] (password)`
 // - [name] required; key name
 // - (password) optional; when absent the user will be prompted to enter it
 impl Runnable for AddEthKeyCmd {
@@ -43,7 +43,9 @@ impl Runnable for AddEthKeyCmd {
 
         let seed = mnemonic.to_seed(&password);
         let path = config.ethereum.key_derivation_path.clone();
-        let path = path.parse::<bip32::DerivationPath>().expect("Could not parse derivation path");
+        let path = path
+            .parse::<bip32::DerivationPath>()
+            .expect("Could not parse derivation path");
         let key = bip32::XPrv::derive_from_path(seed, &path).unwrap();
         let key = k256::SecretKey::from(key.private_key());
         let key = key.to_pkcs8_der().unwrap();

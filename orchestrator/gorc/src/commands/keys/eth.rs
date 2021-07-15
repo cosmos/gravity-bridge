@@ -11,10 +11,10 @@ use abscissa_core::{Command, Options, Runnable};
 
 #[derive(Command, Debug, Options, Runnable)]
 pub enum EthKeysCmd {
-    #[options(help = "add [name]")]
+    #[options(help = "add [name] (password)")]
     Add(add::AddEthKeyCmd),
 
-    #[options(help = "import [name] [privkey]")]
+    #[options(help = "import [name] (mnemonic) (password)")]
     Import(import::ImportEthKeyCmd),
 
     #[options(help = "delete [name]")]

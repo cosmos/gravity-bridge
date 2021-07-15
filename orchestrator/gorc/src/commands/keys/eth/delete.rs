@@ -1,5 +1,5 @@
-use abscissa_core::{Application, Command, Options, Runnable};
 use crate::application::APP;
+use abscissa_core::{Application, Command, Options, Runnable};
 use std::path;
 
 #[derive(Command, Debug, Default, Options)]
@@ -8,7 +8,7 @@ pub struct DeleteEthKeyCmd {
     pub args: Vec<String>,
 }
 
-// `gorc keys eth delete [name]`
+// Entry point for `gorc keys eth delete [name]`
 // - [name] required; key name
 impl Runnable for DeleteEthKeyCmd {
     fn run(&self) {

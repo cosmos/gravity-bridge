@@ -9,7 +9,7 @@ pub struct ShowEthKeyCmd {
     pub args: Vec<String>,
 }
 
-/// The `gorc keys eth show [name]` subcommand: show keys
+// Entry point for `gorc keys eth show [name]`
 impl Runnable for ShowEthKeyCmd {
     fn run(&self) {
         let config = APP.config();
