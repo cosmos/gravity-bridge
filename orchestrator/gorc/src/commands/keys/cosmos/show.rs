@@ -27,6 +27,6 @@ impl Runnable for ShowCosmosKeyCmd {
         let key = deep_space::private_key::PrivateKey::from_secret(&key.to_bytes());
 
         let address = key.to_address("cosmos").expect("Could not generate public key");
-        println!("{:?}", address)
+        println!("{}", address)
     }
 }
