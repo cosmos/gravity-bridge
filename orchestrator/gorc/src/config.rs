@@ -44,7 +44,7 @@ pub struct EthereumSection {
 impl Default for EthereumSection {
     fn default() -> Self {
         Self {
-            key_derivation_path: "m/44'/60'/0'/0/0".to_owned(),
+            key_derivation_path: "m/44'/60'/0'/0".to_owned(),
             rpc: "http://localhost:8545".to_owned(),
         }
     }
