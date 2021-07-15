@@ -1,17 +1,17 @@
-use abscissa_core::{Application, Command, Options, Runnable};
 use crate::application::APP;
+use abscissa_core::{Application, Command, Options, Runnable};
 use std::path;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct RenameEthKeyCmd {
-    #[options(free, help = "rename [name] [new_name]")]
+    #[options(free, help = "rename [name] [new-name]")]
     pub args: Vec<String>,
 
     #[options(help = "overwrite existing key")]
     pub overwrite: bool,
 }
 
-/// The `gorc keys cosmos rename [name] [new-name]` subcommand: show keys
+// Entry point for `gorc keys eth rename [name] [new-name]`
 impl Runnable for RenameEthKeyCmd {
     fn run(&self) {
         let config = APP.config();
@@ -22,7 +22,7 @@ impl Runnable for RenameEthKeyCmd {
         let name = name.parse().expect("Could not parse name");
 
         let new_name = self.args.get(1).expect("new_name is required");
-        let new_name = new_name.parse().expect("Could not parse new_name");
+        let new_name = new_name.parse().expect("Could not parse new-name");
         if let Ok(_info) = keystore.info(&new_name) {
             if !self.overwrite {
                 println!("Key already exists, exiting.");
@@ -35,4 +35,3 @@ impl Runnable for RenameEthKeyCmd {
         keystore.delete(&name).unwrap();
     }
 }
-

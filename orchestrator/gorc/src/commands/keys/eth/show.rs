@@ -9,7 +9,7 @@ pub struct ShowEthKeyCmd {
     pub args: Vec<String>,
 }
 
-/// The `gorc keys eth show [name]` subcommand: show keys
+// Entry point for `gorc keys eth show [name]`
 impl Runnable for ShowEthKeyCmd {
     fn run(&self) {
         let config = APP.config();
@@ -27,6 +27,6 @@ impl Runnable for ShowEthKeyCmd {
         let key = clarity::PrivateKey::from_slice(&key.to_bytes()).unwrap();
 
         let pub_key = key.to_public_key().unwrap();
-        println!("{}", pub_key);
+        println!("{}\t{}", name, pub_key);
     }
 }
