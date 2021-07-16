@@ -8,16 +8,16 @@ use std::path;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct ImportCosmosKeyCmd {
-    #[options(free, help = "import [name] (mnemonic)")]
+    #[options(free, help = "import [name] (bip39-mnemonic)")]
     pub args: Vec<String>,
 
     #[options(help = "overwrite existing key")]
     pub overwrite: bool,
 }
 
-// `gorc keys cosmos import [name] (mnemonic)`
+// `gorc keys cosmos import [name] (bip39-mnemonic)`
 // - [name] required; key name
-// - (mnemonic) optional; when absent the user will be prompted to enter it
+// - (bip39-mnemonic) optional; when absent the user will be prompted to enter it
 impl Runnable for ImportCosmosKeyCmd {
     fn run(&self) {
         let config = APP.config();
@@ -35,7 +35,7 @@ impl Runnable for ImportCosmosKeyCmd {
 
         let mnemonic = match self.args.get(1) {
             Some(mnemonic) => mnemonic.clone(),
-            None => rpassword::read_password_from_tty(Some("Mnemonic: "))
+            None => rpassword::read_password_from_tty(Some("> Enter your bip39 mnemonic:\n"))
                 .expect("Could not read mnemonic"),
         };
 

@@ -34,7 +34,7 @@ impl Runnable for AddEthKeyCmd {
         }
 
         let mnemonic = bip32::Mnemonic::random(&mut OsRng, Default::default());
-        eprintln!("**Important** record this mnemonic in a safe place:");
+        eprintln!("**Important** record this bip39-mnemonic in a safe place:");
         println!("{}", mnemonic.phrase());
 
         let seed = mnemonic.to_seed("");

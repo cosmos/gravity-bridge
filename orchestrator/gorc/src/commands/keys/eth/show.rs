@@ -25,9 +25,11 @@ impl Runnable for ShowEthKeyCmd {
             .to_pem()
             .parse::<k256::elliptic_curve::SecretKey<k256::Secp256k1>>()
             .expect("Could not parse key");
+
         let key = clarity::PrivateKey::from_slice(&key.to_bytes()).expect("Could not convert key");
 
         let pub_key = key.to_public_key().expect("Could not build public key");
+
         println!("{}\t{}", name, pub_key);
     }
 }
