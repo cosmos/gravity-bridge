@@ -186,6 +186,15 @@ message MsgDelegateKeys {
   string validator_address = 1;
   string orchestrator_address = 2;
   string ethereum_address = 3;
+  bytes  eth_signature = 4;
 }
 
 message MsgDelegateKeysResponse {}
+
+// DelegateKeysSignMsg defines the message structure an operator is expected to
+// sign when submitting a MsgDelegateKeys message. The resulting signature should
+// populate the eth_signature field.
+message DelegateKeysSignMsg {
+  string validator_address = 1;
+  uint64 nonce = 2;
+}
