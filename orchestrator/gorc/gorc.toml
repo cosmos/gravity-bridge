@@ -4,10 +4,7 @@ keystore = "/tmp/keystore"
 contract = "0x6b175474e89094c44da98b954eedeac495271d0f"
 
 [ethereum]
-# LEDGER_LIVE_PATH  :  m/44'/60'/0'/0/0
-# BIP44_PATH        :  m/44'/60'/0'/0
-# MEW_PATH          :  m/44'/60'/0'
-key_derivation_path = "m/44'/60'/0'/0"
+key_derivation_path = "m/44'/60'/0'/0/0"
 rpc = "http://localhost:8545"
 
 [cosmos]
