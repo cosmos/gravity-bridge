@@ -1,8 +1,8 @@
 use crate::application::APP;
 use abscissa_core::{Application, Command, Options, Runnable};
+use deep_space;
 use signatory;
 use std::path::Path;
-use deep_space;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct ShowCosmosKeyCmd {
@@ -26,7 +26,9 @@ impl Runnable for ShowCosmosKeyCmd {
             .expect("Could not parse key");
         let key = deep_space::private_key::PrivateKey::from_secret(&key.to_bytes());
 
-        let address = key.to_address("cosmos").expect("Could not generate public key");
-        println!("{}", address)
+        let address = key
+            .to_address("cosmos")
+            .expect("Could not generate public key");
+        println!("{}\t{}", key_name, address)
     }
 }
