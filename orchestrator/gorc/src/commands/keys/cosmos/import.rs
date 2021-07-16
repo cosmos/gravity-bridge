@@ -35,11 +35,11 @@ impl Runnable for ImportCosmosKeyCmd {
 
         let mnemonic = match self.args.get(1) {
             Some(mnemonic) => mnemonic.clone(),
-            None => rpassword::read_password_from_tty(Some("> Enter your bip39 mnemonic:\n"))
+            None => rpassword::read_password_from_tty(Some("> Enter your bip39-mnemonic:\n"))
                 .expect("Could not read mnemonic"),
         };
 
-        let mnemonic = bip32::Mnemonic::new(mnemonic.trim_end(), Default::default())
+        let mnemonic = bip32::Mnemonic::new(mnemonic.trim(), Default::default())
             .expect("Could not parse mnemonic");
 
         let seed = mnemonic.to_seed("");

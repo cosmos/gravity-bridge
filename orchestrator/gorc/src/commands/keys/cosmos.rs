@@ -1,11 +1,9 @@
-//! `cosmos keys` subcommand
-
 mod add;
 mod delete;
 mod import;
 mod list;
-mod show;
 mod rename;
+mod show;
 
 use abscissa_core::{Command, Options, Runnable};
 
@@ -14,7 +12,7 @@ pub enum CosmosKeysCmd {
     #[options(help = "add [name]")]
     Add(add::AddCosmosKeyCmd),
 
-    #[options(help = "import [name] [mnemnoic]")]
+    #[options(help = "import [name] (bip39-mnemnoic)")]
     Import(import::ImportCosmosKeyCmd),
 
     #[options(help = "delete [name]")]
@@ -29,4 +27,3 @@ pub enum CosmosKeysCmd {
     #[options(help = "show [name]")]
     Show(show::ShowCosmosKeyCmd),
 }
-

@@ -31,7 +31,7 @@ impl Runnable for ShowCosmosKeyCmd {
             .expect("Could not parse private key");
 
         let address = key
-            .to_address("cosmos")
+            .to_address(config.cosmos.prefix.trim())
             .expect("Could not generate public key");
 
         println!("{}\t{}", name, address)

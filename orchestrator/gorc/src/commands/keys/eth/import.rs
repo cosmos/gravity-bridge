@@ -34,7 +34,7 @@ impl Runnable for ImportEthKeyCmd {
 
         let mnemonic = match self.args.get(1) {
             Some(mnemonic) => mnemonic.clone(),
-            None => rpassword::read_password_from_tty(Some("> Enter your bip39 mnemonic:\n"))
+            None => rpassword::read_password_from_tty(Some("> Enter your bip39-mnemonic:\n"))
                 .expect("Could not read mnemonic"),
         };
 
