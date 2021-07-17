@@ -6,19 +6,19 @@ use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use ethereum_gravity::deploy_erc20::deploy_erc20;
 use gravity_proto::gravity::DenomToErc20Request;
-use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
+use gravity_utils::connection_prep::{create_rpc_connections};
 use std::time::Instant;
-use std::{process::exit, time::Duration, u128};
+use std::{process::exit, time::Duration};
 use tokio::time::sleep as delay_for;
 
-fn lookup_eth_key(key: String) -> EthPrivateKey {
+fn lookup_eth_key(_key: String) -> EthPrivateKey {
     todo!()
 }
 
 #[derive(Command, Debug, Options)]
 pub enum DeployCmd {
     #[options(help = "cosmos-erc20 [denom] [erc20_name] [erc20_symbol] [erc20_decimals]")]
-    Cosmos_Erc20(Cosmos_Erc20),
+    CosmosErc20(CosmosErc20),
 }
 
 impl Runnable for DeployCmd {
@@ -29,7 +29,7 @@ impl Runnable for DeployCmd {
 }
 
 #[derive(Command, Debug, Options)]
-pub struct Cosmos_Erc20 {
+pub struct CosmosErc20 {
     #[options(free)]
     free: Vec<String>,
 
@@ -37,7 +37,7 @@ pub struct Cosmos_Erc20 {
     help: bool,
 }
 
-impl Runnable for Cosmos_Erc20 {
+impl Runnable for CosmosErc20 {
     /// Start the application.
     fn run(&self) {
         assert!(self.free.len() == 4);
@@ -79,7 +79,7 @@ impl Runnable for Cosmos_Erc20 {
                 exit(1);
             }
 
-            let res = deploy_erc20(
+            deploy_erc20(
                 denom.clone(),
                 erc20_name,
                 erc20_symbol,
@@ -121,7 +121,7 @@ impl Runnable for Cosmos_Erc20 {
         })
         .unwrap_or_else(|e| {
             status_err!("executor exited with error: {}", e);
-            std::process::exit(1);
+            exit(1);
         });
     }
 }

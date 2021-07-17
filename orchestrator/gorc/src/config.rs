@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct GorcConfig {
+    pub keystore: String,
     pub gravity: GravitySection,
     pub ethereum: EthereumSection,
     pub cosmos: CosmosSection,
@@ -11,6 +12,7 @@ pub struct GorcConfig {
 impl Default for GorcConfig {
     fn default() -> Self {
         Self {
+            keystore: "/tmp/keystore".to_owned(),
             gravity: GravitySection::default(),
             ethereum: EthereumSection::default(),
             cosmos: CosmosSection::default(),
@@ -35,14 +37,14 @@ impl Default for GravitySection {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct EthereumSection {
-    pub key: String,
+    pub key_derivation_path: String,
     pub rpc: String,
 }
 
 impl Default for EthereumSection {
     fn default() -> Self {
         Self {
-            key: "testkey".to_owned(),
+            key_derivation_path: "m/44'/60'/0'/0/0".to_owned(),
             rpc: "http://localhost:8545".to_owned(),
         }
     }
@@ -51,7 +53,7 @@ impl Default for EthereumSection {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct CosmosSection {
-    pub key: String,
+    pub key_derivation_path: String,
     pub grpc: String,
     pub prefix: String,
 }
@@ -59,7 +61,7 @@ pub struct CosmosSection {
 impl Default for CosmosSection {
     fn default() -> Self {
         Self {
-            key: "testkey".to_owned(),
+            key_derivation_path: "m/44'/118'/0'/0/0".to_owned(),
             grpc: "http://localhost:9090".to_owned(),
             prefix: "cosmos".to_owned(),
         }

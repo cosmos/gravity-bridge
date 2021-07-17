@@ -31,7 +31,7 @@ pub struct SendToCosmos {
     help: bool,
 }
 
-fn lookup_eth_key(key: String) -> EthPrivateKey {
+fn lookup_eth_key(_key: String) -> EthPrivateKey {
     todo!()
 }
 

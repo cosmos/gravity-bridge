@@ -3,22 +3,21 @@
 use crate::{application::APP, prelude::*, utils::*};
 use abscissa_core::{Command, Options, Runnable};
 use clarity::Address as EthAddress;
-use clarity::Uint256;
-use cosmos_gravity::send::{send_request_batch, send_to_eth};
-use deep_space::address::Address as CosmosAddress;
+// use clarity::Uint256;
+use cosmos_gravity::send::{send_to_eth};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use gravity_proto::gravity::DenomToErc20Request;
-use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
+use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
 use regex::Regex;
-use std::{process::exit, time::Duration, u128};
+use std::process::exit;
 
-pub fn one_eth() -> f64 {
-    1000000000000000000f64
-}
+// pub fn one_eth() -> f64 {
+//     1000000000000000000f64
+// }
 
-pub fn one_atom() -> f64 {
-    1000000f64
-}
+// pub fn one_atom() -> f64 {
+//     1000000f64
+// }
 
 #[derive(Command, Debug, Options)]
 pub enum Cosmos {
@@ -58,21 +57,21 @@ fn parse_denom(s: &str) -> (String, String) {
     (amount.as_str().to_string(), denom.as_str().to_string())
 }
 
-fn get_cosmos_key(key_name: &str) -> CosmosPrivateKey {
+fn get_cosmos_key(_key_name: &str) -> CosmosPrivateKey {
     unimplemented!()
 }
 
-pub fn print_eth(input: Uint256) -> String {
-    let float: f64 = input.to_string().parse().unwrap();
-    let res = float / one_eth();
-    format!("{}", res)
-}
+// pub fn print_eth(input: Uint256) -> String {
+//     let float: f64 = input.to_string().parse().unwrap();
+//     let res = float / one_eth();
+//     format!("{}", res)
+// }
 
-pub fn print_atom(input: Uint256) -> String {
-    let float: f64 = input.to_string().parse().unwrap();
-    let res = float / one_atom();
-    format!("{}", res)
-}
+// pub fn print_atom(input: Uint256) -> String {
+//     let float: f64 = input.to_string().parse().unwrap();
+//     let res = float / one_atom();
+//     format!("{}", res)
+// }
 
 impl Runnable for SendToEth {
     fn run(&self) {
@@ -168,7 +167,7 @@ impl Runnable for SendToEth {
         })
         .unwrap_or_else(|e| {
             status_err!("executor exited with error: {}", e);
-            std::process::exit(1);
+            exit(1);
         });
     }
 }
@@ -186,13 +185,13 @@ impl Runnable for Send {
     /// Start the application.
     fn run(&self) {
         assert!(self.free.len() == 3);
-        let from_key = self.free[0].clone();
-        let to_addr = self.free[1].clone();
-        let coin_amount = self.free[2].clone();
+        let _from_key = self.free[0].clone();
+        let _to_addr = self.free[1].clone();
+        let _coin_amount = self.free[2].clone();
 
         abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
             status_err!("executor exited with error: {}", e);
-            std::process::exit(1);
+            exit(1);
         });
     }
 }

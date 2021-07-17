@@ -36,8 +36,8 @@ pub struct Orchestrator {
 impl Runnable for Orchestrator {
     fn run(&self) {
         assert!(self.free.len() == 2);
-        let contract_address = self.free[0].clone();
-        let fee_denom = self.free[1].clone();
+        let _contract_address = self.free[0].clone();
+        let _fee_denom = self.free[1].clone();
 
         abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
             status_err!("executor exited with error: {}", e);

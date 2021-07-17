@@ -1,6 +1,12 @@
 //! `keys` subcommand
 
+mod cosmos;
+mod eth;
+
 use abscissa_core::{Command, Options, Runnable};
+
+use crate::commands::keys::cosmos::CosmosKeysCmd;
+use crate::commands::keys::eth::EthKeysCmd;
 
 /// `keys` subcommand
 ///
@@ -9,24 +15,11 @@ use abscissa_core::{Command, Options, Runnable};
 /// for a more comprehensive example:
 ///
 /// <https://docs.rs/gumdrop/>
-#[derive(Command, Debug, Options)]
-pub struct KeysCmd {
-    // Example `--foobar` (with short `-f` argument)
-// #[options(short = "f", help = "foobar path"]
-// foobar: Option<PathBuf>
+#[derive(Command, Debug, Options, Runnable)]
+pub enum KeysCmd {
+    #[options(name = "cosmos")]
+    CosmosKeysCmd(CosmosKeysCmd),
 
-// Example `--baz` argument with no short version
-// #[options(no_short, help = "baz path")]
-// baz: Option<PathBuf>
-
-// "free" arguments don't have an associated flag
-// #[options(free)]
-// free_args: Vec<String>,
-}
-
-impl Runnable for KeysCmd {
-    /// Start the application.
-    fn run(&self) {
-        // Your code goes here
-    }
+    #[options(name = "eth")]
+    EthKeysCmd(EthKeysCmd),
 }

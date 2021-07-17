@@ -31,7 +31,7 @@ pub struct Balance {
 impl Runnable for Balance {
     fn run(&self) {
         assert!(self.free.len() == 1);
-        let key_name = self.free[0].clone();
+        let _key_name = self.free[0].clone();
 
         abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
             status_err!("executor exited with error: {}", e);
