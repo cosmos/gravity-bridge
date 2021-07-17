@@ -117,6 +117,7 @@ async fn main() {
         ethereum_address,
         cosmos_address,
         validator_key,
+        ethereum_key,
         fee.clone(),
     )
     .await

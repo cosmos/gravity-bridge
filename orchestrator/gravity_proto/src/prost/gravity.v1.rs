@@ -298,9 +298,21 @@ pub struct MsgDelegateKeys {
     pub orchestrator_address: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub ethereum_address: ::prost::alloc::string::String,
+    #[prost(bytes = "vec", tag = "4")]
+    pub eth_signature: ::prost::alloc::vec::Vec<u8>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgDelegateKeysResponse {}
+/// DelegateKeysSignMsg defines the message structure an operator is expected to
+/// sign when submitting a MsgDelegateKeys message. The resulting signature should
+/// populate the eth_signature field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DelegateKeysSignMsg {
+    #[prost(string, tag = "1")]
+    pub validator_address: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "2")]
+    pub nonce: u64,
+}
 #[doc = r" Generated client implementations."]
 pub mod msg_client {
     #![allow(unused_variables, dead_code, missing_docs)]
@@ -805,6 +817,13 @@ pub struct DelegateKeysByOrchestratorResponse {
     #[prost(string, tag = "2")]
     pub ethereum_signer: ::prost::alloc::string::String,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DelegateKeysRequest {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DelegateKeysResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub delegate_keys: ::prost::alloc::vec::Vec<MsgDelegateKeys>,
+}
 /// NOTE: if there is no sender address, return all
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchedSendToEthereumsRequest {
@@ -1225,6 +1244,20 @@ pub mod query_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/DelegateKeysByOrchestrator",
             );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn delegate_keys(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DelegateKeysRequest>,
+        ) -> Result<tonic::Response<super::DelegateKeysResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/DelegateKeys");
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
