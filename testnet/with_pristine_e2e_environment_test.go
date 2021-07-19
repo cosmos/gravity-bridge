@@ -22,9 +22,9 @@ import (
 	types2 "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	types4 "github.com/cosmos/cosmos-sdk/x/staking/types"
-	types5 "github.com/cosmos/gravity-bridge/module/x/gravity/types"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	types5 "github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 	"github.com/stretchr/testify/require"
 	json2 "github.com/tendermint/tendermint/libs/json"
 )
