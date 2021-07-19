@@ -74,9 +74,10 @@ jobs:
         with:
           files: |
             orchestrator/target/x86_64-unknown-linux-musl/release/client
+            orchestrator/target/x86_64-unknown-linux-musl/release/gorc
             orchestrator/target/x86_64-unknown-linux-musl/release/orchestrator
-            orchestrator/target/x86_64-unknown-linux-musl/release/relayer
             orchestrator/target/x86_64-unknown-linux-musl/release/register-delegate-keys
+            orchestrator/target/x86_64-unknown-linux-musl/release/relayer
             orchestrator/target/x86_64-unknown-linux-musl/release/test-runner
             module/build/gravity
             solidity/artifacts/contracts/Gravity.sol/Gravity.json
