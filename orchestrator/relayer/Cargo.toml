@@ -13,10 +13,10 @@ name = "relayer"
 path = "src/main.rs"
 
 [dependencies]
-ethereum_gravity = {path = "../ethereum_gravity"}
-cosmos_gravity = {path = "../cosmos_gravity"}
-gravity_utils = {path = "../gravity_utils"}
-gravity_proto = {path = "../gravity_proto/"}
+ethereum_gravity = { path = "../ethereum_gravity" }
+cosmos_gravity = { path = "../cosmos_gravity" }
+gravity_utils = { path = "../gravity_utils" }
+gravity_proto = { path = "../gravity_proto" }
 
 deep_space = "2.4.3"
 serde_derive = "1.0"

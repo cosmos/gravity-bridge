@@ -12,20 +12,18 @@
 
 mod deploy;
 mod keys;
+mod orchestrator;
 mod query;
-mod start;
 mod tests;
 mod tx;
 mod version;
 
 use self::{
-    keys::KeysCmd, query::QueryCmd, start::StartCmd, tests::TestsCmd, tx::TxCmd,
+    keys::KeysCmd, orchestrator::OrchestratorCmd, query::QueryCmd, tests::TestsCmd, tx::TxCmd,
     version::VersionCmd,
 };
 use crate::config::GorcConfig;
-use abscissa_core::{
-    Command, Configurable, Help, Options, Runnable,
-};
+use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use std::path::PathBuf;
 
 /// Gorc Configuration Filename
@@ -34,8 +32,14 @@ pub const CONFIG_FILE: &str = "gorc.toml";
 /// Gorc Subcommands
 #[derive(Command, Debug, Options, Runnable)]
 pub enum GorcCmd {
-    #[options(help = "create transactions on either ethereum or cosmos chains")]
-    Tx(TxCmd),
+    #[options(help = "get usage information")]
+    Help(Help<Self>),
+
+    #[options(help = "key management commands")]
+    Keys(KeysCmd),
+
+    #[options(help = "orchestrator")]
+    Orchestrator(OrchestratorCmd),
 
     #[options(help = "query state on either ethereum or cosmos chains")]
     Query(QueryCmd),
@@ -43,14 +47,8 @@ pub enum GorcCmd {
     #[options(help = "run tests against configured chains")]
     Tests(TestsCmd),
 
-    #[options(help = "start the application")]
-    Start(StartCmd),
-
-    #[options(help = "key management commands")]
-    Keys(KeysCmd),
-
-    #[options(help = "get usage information")]
-    Help(Help<Self>),
+    #[options(help = "create transactions on either ethereum or cosmos chains")]
+    Tx(TxCmd),
 
     #[options(help = "display version information")]
     Version(VersionCmd),

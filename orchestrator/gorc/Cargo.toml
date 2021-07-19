@@ -10,10 +10,13 @@ serde = { version = "1", features = ["serde_derive"] }
 thiserror = "1"
 regex = "1.5.4"
 
-ethereum_gravity = { path = "../ethereum_gravity" }
 cosmos_gravity = { path = "../cosmos_gravity" }
+ethereum_gravity = { path = "../ethereum_gravity" }
+gravity_proto = { path = "../gravity_proto" }
 gravity_utils = { path = "../gravity_utils" }
-gravity_proto = { path = "../gravity_proto/" }
+orchestrator = { path = "../orchestrator" }
+relayer = { path = "../relayer" }
+
 deep_space = "2.4.3"
 clarity = "0.4.12"
 actix-rt = "2.2"
@@ -24,9 +27,10 @@ pkcs8 = { version = "0.7", features = ["pem"] }
 signatory = "0.23.0-pre"
 rand_core = { version = "0.6", features = ["std"] }
 
-abscissa_tokio = "0.6.0-pre.1"
+abscissa_tokio = { version = "0.6.0-pre.2", features = ["actix"] }
 web30 = "0.14"
 tokio = "1"
+tonic = "0.4"
 
 [dependencies.abscissa_core]
 version = "0.6.0-pre.1"

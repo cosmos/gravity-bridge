@@ -1,4 +1,5 @@
 [workspace]
+default-members = ["gorc", "orchestrator", "test_runner"]
 members = [
 	"orchestrator",
 	"cosmos_gravity",
@@ -12,4 +13,3 @@ members = [
 	"register_delegate_keys",
 	"gorc",
 ]
-default-members = ["orchestrator", "test_runner"]

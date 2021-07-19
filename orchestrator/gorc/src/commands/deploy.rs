@@ -6,7 +6,7 @@ use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use ethereum_gravity::deploy_erc20::deploy_erc20;
 use gravity_proto::gravity::DenomToErc20Request;
-use gravity_utils::connection_prep::{create_rpc_connections};
+use gravity_utils::connection_prep::create_rpc_connections;
 use std::time::Instant;
 use std::{process::exit, time::Duration};
 use tokio::time::sleep as delay_for;
