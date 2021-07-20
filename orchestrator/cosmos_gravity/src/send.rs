@@ -58,12 +58,11 @@ pub async fn update_gravity_delegate_addresses(
         validator_address: our_valoper_address.clone(),
         nonce:*sequence,
     };
-    let mut bytes = Vec::new();
-
-
-    eth_sign_msg.encode(&mut bytes).map_err(|x|CosmosGrpcError::BadInput(x.to_string()))?;
-
-    let eth_signature = eth_private_key.sign_ethereum_msg(&bytes).to_bytes().to_vec();
+    let size = Message::encoded_len(&eth_sign_msg);
+    let mut buf = BytesMut::with_capacity(size);
+    Message::encode(&eth_sign_msg, &mut buf).expect("Failed to encode DelegateKeysSignMsg!");
+    
+    let eth_signature = eth_private_key.sign_ethereum_msg(&buf).to_bytes().to_vec();
 
 
 
