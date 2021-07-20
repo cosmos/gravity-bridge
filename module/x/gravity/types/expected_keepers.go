@@ -40,3 +40,9 @@ type BankKeeper interface {
 type SlashingKeeper interface {
 	GetValidatorSigningInfo(ctx sdk.Context, address sdk.ConsAddress) (info slashingtypes.ValidatorSigningInfo, found bool)
 }
+
+// AccountKeeper defines the interface contract required for account
+// functionality.
+type AccountKeeper interface {
+	GetSequence(ctx sdk.Context, addr sdk.AccAddress) (uint64, error)
+}

@@ -8,8 +8,8 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/cosmos/cosmos-sdk v0.42.4-0.20210623214207-eb0fc466c99b
-	github.com/cosmos/go-bip39 v1.0.0
-	github.com/ethereum/go-ethereum v1.9.23
+	github.com/cosmos/go-bip39 v1.0.0 // indirect
+	github.com/ethereum/go-ethereum v1.9.23 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/moby/term v0.0.0-20210610120745-9d4ed1856297 // indirect
 	github.com/opencontainers/runc v1.0.0-rc95 // indirect

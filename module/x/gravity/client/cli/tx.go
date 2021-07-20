@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/spf13/cobra"
 
 	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
@@ -143,9 +144,12 @@ func CmdRequestBatchTx() *cobra.Command {
 
 func CmdSetDelegateKeys() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-delegate-keys [validator-address] [orchestrator-address] [ethereum-address]",
-		Args:  cobra.ExactArgs(3),
+		Use:   "set-delegate-keys [validator-address] [orchestrator-address] [ethereum-address] [ethereum-signature]",
+		Args:  cobra.ExactArgs(4),
 		Short: "Set gravity delegate keys",
+		Long: `Set a validator's Ethereum and orchestrator addresses. The validator must
+sign over a binary Proto-encoded DelegateKeysSignMsg message. The message contains
+the validator's address and operator account current nonce.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -156,19 +160,27 @@ func CmdSetDelegateKeys() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			orcAddr, err := sdk.AccAddressFromBech32(args[1])
 			if err != nil {
 				return err
 			}
+
 			ethAddr, err := parseContractAddress(args[2])
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgDelegateKeys(valAddr, orcAddr, ethAddr)
+			ethSig, err := hexutil.Decode(args[3])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgDelegateKeys(valAddr, orcAddr, ethAddr, ethSig)
 			if err = msg.ValidateBasic(); err != nil {
 				return err
 			}
+
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}

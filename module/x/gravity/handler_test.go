@@ -7,8 +7,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/peggyjv/gravity-bridge/module/x/gravity/keeper"
 	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
@@ -283,57 +285,96 @@ func TestMsgSubmitEthreumEventSendToCosmosMultiValidator(t *testing.T) {
 }
 
 func TestMsgSetDelegateAddresses(t *testing.T) {
+	ethPrivKey, err := ethCrypto.GenerateKey()
+	ethPrivKey2, err := ethCrypto.GenerateKey()
+
 	var (
-		ethAddress                    = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
+		ethAddress                    = crypto.PubkeyToAddress(ethPrivKey.PublicKey)
 		cosmosAddress  sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-		ethAddress2                   = "0x26126048c706fB45a5a6De8432F428e794d0b952"
+		ethAddress2                   = crypto.PubkeyToAddress(ethPrivKey2.PublicKey)
 		cosmosAddress2 sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
-		valAddress     sdk.ValAddress = bytes.Repeat([]byte{0x3}, sdk.AddrLen)
-		blockTime                     = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
-		blockTime2                    = time.Date(2020, 9, 15, 15, 20, 10, 0, time.UTC)
-		blockHeight    int64          = 200
-		blockHeight2   int64          = 210
+		cosmosAddress3 sdk.AccAddress = bytes.Repeat([]byte{0x3}, sdk.AddrLen)
+
+		valAddress   sdk.ValAddress = bytes.Repeat([]byte{0x3}, sdk.AddrLen)
+		blockTime                   = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+		blockTime2                  = time.Date(2020, 9, 15, 15, 20, 10, 0, time.UTC)
+		blockHeight  int64          = 200
+		blockHeight2 int64          = 210
 	)
+
 	input := keeper.CreateTestEnv(t)
 	input.GravityKeeper.StakingKeeper = keeper.NewStakingKeeperMock(valAddress)
 	ctx := input.Context
 	wctx := sdk.WrapSDKContext(ctx)
+
+	acc := input.AccountKeeper.NewAccountWithAddress(ctx, cosmosAddress)
+	acc2 := input.AccountKeeper.NewAccountWithAddress(ctx, cosmosAddress2)
+	acc3 := input.AccountKeeper.NewAccountWithAddress(ctx, cosmosAddress3)
+
+	// Set the sequence to 1 because the antehandler will do this in the full
+	// chain.
+	acc.SetSequence(1)
+	acc2.SetSequence(1)
+	acc3.SetSequence(1)
+
+	input.AccountKeeper.SetAccount(ctx, acc)
+	input.AccountKeeper.SetAccount(ctx, acc2)
+	input.AccountKeeper.SetAccount(ctx, acc3)
+
+	ethMsg := types.DelegateKeysSignMsg{
+		ValidatorAddress: valAddress.String(),
+		Nonce:            0,
+	}
+	signMsgBz := input.Marshaler.MustMarshalBinaryBare(&ethMsg)
+
+	sig, err := types.NewEthereumSignature(signMsgBz, ethPrivKey)
+	require.NoError(t, err)
+
 	k := input.GravityKeeper
 	h := NewHandler(input.GravityKeeper)
 	ctx = ctx.WithBlockTime(blockTime)
 
-	msg := types.NewMsgDelegateKeys(valAddress, cosmosAddress, ethAddress)
+	msg := types.NewMsgDelegateKeys(valAddress, cosmosAddress, ethAddress.String(), sig)
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
-	_, err := h(ctx, msg)
+	_, err = h(ctx, msg)
 	require.NoError(t, err)
 
-	require.Equal(t, ethAddress, k.GetValidatorEthereumAddress(ctx, valAddress).Hex())
+	require.Equal(t, ethAddress.String(), k.GetValidatorEthereumAddress(ctx, valAddress).Hex())
 	require.Equal(t, valAddress, k.GetOrchestratorValidatorAddress(ctx, cosmosAddress))
-	require.Equal(t, cosmosAddress, k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(ethAddress)))
+	require.Equal(t, cosmosAddress, k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(ethAddress.String())))
 
 	_, err = k.DelegateKeysByOrchestrator(wctx, &types.DelegateKeysByOrchestratorRequest{OrchestratorAddress: cosmosAddress.String()})
 	require.NoError(t, err)
 
-	_, err = k.DelegateKeysByEthereumSigner(wctx, &types.DelegateKeysByEthereumSignerRequest{EthereumSigner: ethAddress})
+	_, err = k.DelegateKeysByEthereumSigner(wctx, &types.DelegateKeysByEthereumSignerRequest{EthereumSigner: ethAddress.String()})
 	require.NoError(t, err)
 
 	_, err = k.DelegateKeysByValidator(wctx, &types.DelegateKeysByValidatorRequest{ValidatorAddress: valAddress.String()})
 	require.NoError(t, err)
 
 	// delegate new orch and eth addrs for same validator
-	msg = types.NewMsgDelegateKeys(valAddress, cosmosAddress2, ethAddress2)
+	ethMsg = types.DelegateKeysSignMsg{
+		ValidatorAddress: valAddress.String(),
+		Nonce:            0,
+	}
+	signMsgBz = input.Marshaler.MustMarshalBinaryBare(&ethMsg)
+
+	sig, err = types.NewEthereumSignature(signMsgBz, ethPrivKey2)
+	require.NoError(t, err)
+
+	msg = types.NewMsgDelegateKeys(valAddress, cosmosAddress2, ethAddress2.String(), sig)
 	ctx = ctx.WithBlockTime(blockTime2).WithBlockHeight(blockHeight2)
 	_, err = h(ctx, msg)
 	require.NoError(t, err)
 
-	require.Equal(t, ethAddress2, k.GetValidatorEthereumAddress(ctx, valAddress).Hex())
+	require.Equal(t, ethAddress2.String(), k.GetValidatorEthereumAddress(ctx, valAddress).Hex())
 	require.Equal(t, valAddress, k.GetOrchestratorValidatorAddress(ctx, cosmosAddress2))
-	require.Equal(t, cosmosAddress2, k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(ethAddress2)))
+	require.Equal(t, cosmosAddress2, k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(ethAddress2.String())))
 
 	_, err = k.DelegateKeysByOrchestrator(wctx, &types.DelegateKeysByOrchestratorRequest{OrchestratorAddress: cosmosAddress2.String()})
 	require.NoError(t, err)
 
-	_, err = k.DelegateKeysByEthereumSigner(wctx, &types.DelegateKeysByEthereumSignerRequest{EthereumSigner: ethAddress2})
+	_, err = k.DelegateKeysByEthereumSigner(wctx, &types.DelegateKeysByEthereumSignerRequest{EthereumSigner: ethAddress2.String()})
 	require.NoError(t, err)
 
 	_, err = k.DelegateKeysByValidator(wctx, &types.DelegateKeysByValidatorRequest{ValidatorAddress: valAddress.String()})

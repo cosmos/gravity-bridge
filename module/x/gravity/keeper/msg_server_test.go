@@ -302,10 +302,9 @@ func TestMsgServer_SetDelegateKeys(t *testing.T) {
 	require.NoError(t, err)
 
 	var (
-		env = CreateTestEnv(t)
-		ctx = env.Context
-		gk  = env.GravityKeeper
-
+		env         = CreateTestEnv(t)
+		ctx         = env.Context
+		gk          = env.GravityKeeper
 		orcAddr1, _ = sdk.AccAddressFromBech32("cosmos1dg55rtevlfxh46w88yjpdd08sqhh5cc3xhkcej")
 		valAddr1    = sdk.ValAddress(orcAddr1)
 		ethAddr1    = crypto.PubkeyToAddress(ethPrivKey.PublicKey)
@@ -314,12 +313,28 @@ func TestMsgServer_SetDelegateKeys(t *testing.T) {
 	// setup for getSignerValidator
 	gk.StakingKeeper = NewStakingKeeperMock(valAddr1)
 
+	// Set the sequence to 1 because the antehandler will do this in the full
+	// chain.
+	acc := env.AccountKeeper.NewAccountWithAddress(ctx, orcAddr1)
+	acc.SetSequence(1)
+	env.AccountKeeper.SetAccount(ctx, acc)
+
 	msgServer := NewMsgServerImpl(gk)
+
+	ethMsg := types.DelegateKeysSignMsg{
+		ValidatorAddress: valAddr1.String(),
+		Nonce:            0,
+	}
+	signMsgBz := env.Marshaler.MustMarshalBinaryBare(&ethMsg)
+
+	sig, err := types.NewEthereumSignature(signMsgBz, ethPrivKey)
+	require.NoError(t, err)
 
 	msg := &types.MsgDelegateKeys{
 		ValidatorAddress:    valAddr1.String(),
 		OrchestratorAddress: orcAddr1.String(),
 		EthereumAddress:     ethAddr1.String(),
+		EthSignature:        sig,
 	}
 
 	_, err = msgServer.SetDelegateKeys(sdk.WrapSDKContext(ctx), msg)

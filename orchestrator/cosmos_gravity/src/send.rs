@@ -13,6 +13,8 @@ use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::service_client::Servic
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastMode;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastTxRequest;
 use gravity_proto::gravity as proto;
+use bytes::{Buf, BufMut};
+
 
 use gravity_utils::message_signatures::{
     encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
@@ -34,6 +36,7 @@ pub async fn update_gravity_delegate_addresses(
     delegate_eth_address: EthAddress,
     delegate_cosmos_address: Address,
     private_key: PrivateKey,
+    eth_private_key: EthPrivateKey,
     fee: Coin,
 ) -> Result<TxResponse, CosmosGrpcError> {
     trace!("Updating Gravity Delegate addresses");
@@ -48,10 +51,27 @@ pub async fn update_gravity_delegate_addresses(
         .unwrap();
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
 
+    let sequence = &contact.get_account_info(private_key
+        .to_address(&contact.get_prefix()).unwrap()).await?.sequence;
+
+    let eth_sign_msg = proto::DelegateKeysSignMsg{
+        validator_address: our_valoper_address.clone(),
+        nonce:*sequence,
+    };
+    let mut bytes = Vec::new();
+
+
+    eth_sign_msg.encode(&mut bytes).map_err(|x|CosmosGrpcError::BadInput(x.to_string()))?;
+
+    let eth_signature = eth_private_key.sign_ethereum_msg(&bytes).to_bytes().to_vec();
+
+
+
     let msg_set_orch_address = proto::MsgDelegateKeys {
         validator_address: our_valoper_address.to_string(),
         orchestrator_address: delegate_cosmos_address.to_string(),
         ethereum_address: delegate_eth_address.to_string(),
+        eth_signature
     };
 
     let fee = Fee {
