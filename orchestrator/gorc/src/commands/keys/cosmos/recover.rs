@@ -1,28 +1,28 @@
 use super::show::ShowCosmosKeyCmd;
 use crate::application::APP;
 use abscissa_core::{Application, Command, Options, Runnable};
-use bip32;
 use k256::pkcs8::ToPrivateKey;
 use signatory::FsKeyStore;
 use std::path;
 
 #[derive(Command, Debug, Default, Options)]
-pub struct ImportCosmosKeyCmd {
-    #[options(free, help = "import [name] (bip39-mnemonic)")]
+pub struct RecoverCosmosKeyCmd {
+    #[options(free, help = "recover [name] (bip39-mnemonic)")]
     pub args: Vec<String>,
 
     #[options(help = "overwrite existing key")]
     pub overwrite: bool,
 }
 
-// `gorc keys cosmos import [name] (bip39-mnemonic)`
+// `gorc keys cosmos recover [name] (bip39-mnemonic)`
 // - [name] required; key name
 // - (bip39-mnemonic) optional; when absent the user will be prompted to enter it
-impl Runnable for ImportCosmosKeyCmd {
+impl Runnable for RecoverCosmosKeyCmd {
     fn run(&self) {
         let config = APP.config();
         let keystore = path::Path::new(&config.keystore);
-        let keystore = FsKeyStore::create_or_open(keystore).expect("Could not open keystore");
+        let keystore =
+            FsKeyStore::create_or_open(keystore).expect("Could not open keystore");
 
         let name = self.args.get(0).expect("name is required");
         let name = name.parse().expect("Could not parse name");
@@ -35,8 +35,10 @@ impl Runnable for ImportCosmosKeyCmd {
 
         let mnemonic = match self.args.get(1) {
             Some(mnemonic) => mnemonic.clone(),
-            None => rpassword::read_password_from_tty(Some("> Enter your bip39-mnemonic:\n"))
-                .expect("Could not read mnemonic"),
+            None => rpassword::read_password_from_tty(Some(
+                "> Enter your bip39-mnemonic:\n",
+            ))
+            .expect("Could not read mnemonic"),
         };
 
         let mnemonic = bip32::Mnemonic::new(mnemonic.trim(), Default::default())

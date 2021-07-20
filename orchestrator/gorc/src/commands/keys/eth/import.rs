@@ -1,22 +1,26 @@
 use super::show::ShowEthKeyCmd;
 use crate::application::APP;
 use abscissa_core::{Application, Command, Options, Runnable};
-use k256::pkcs8::ToPrivateKey;
+use k256::{pkcs8::ToPrivateKey, SecretKey};
+
 use signatory::FsKeyStore;
 use std::path;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct ImportEthKeyCmd {
-    #[options(free, help = "import [name] (bip39-mnemonic)")]
+    #[options(free, help = "import [name] (private-key)")]
     pub args: Vec<String>,
 
     #[options(help = "overwrite existing key")]
     pub overwrite: bool,
+
+    #[options(help = "show private key")]
+    show_private_key: bool,
 }
 
-// Entry point for `gorc keys eth import [name] (bip39-mnemonic)`
+// Entry point for `gorc keys eth import [name] (private-key)`
 // - [name] required; key name
-// - (bip39-mnemonic) optional; when absent the user will be prompted to enter it
+// - (private-key) optional; when absent the user will be prompted to enter it
 impl Runnable for ImportEthKeyCmd {
     fn run(&self) {
         let config = APP.config();
@@ -32,32 +36,29 @@ impl Runnable for ImportEthKeyCmd {
             }
         }
 
-        let mnemonic = match self.args.get(1) {
-            Some(mnemonic) => mnemonic.clone(),
-            None => rpassword::read_password_from_tty(Some("> Enter your bip39-mnemonic:\n"))
-                .expect("Could not read mnemonic"),
+        let key = match self.args.get(1) {
+            Some(private_key) => private_key.clone(),
+            None => rpassword::read_password_from_tty(Some("> Enter your private-key:\n"))
+                .expect("Could not read private-key"),
         };
 
-        let mnemonic = bip32::Mnemonic::new(mnemonic.trim(), Default::default())
-            .expect("Could not parse mnemonic");
+        let key = key
+            .parse::<clarity::PrivateKey>()
+            .expect("Could not parse private-key");
 
-        let seed = mnemonic.to_seed("");
+        let key = SecretKey::from_bytes(key.to_bytes()).expect("Could not convert private-key");
 
-        let path = config.ethereum.key_derivation_path.trim();
-        let path = path
-            .parse::<bip32::DerivationPath>()
-            .expect("Could not parse derivation path");
-
-        let key = bip32::XPrv::derive_from_path(seed, &path).expect("Could not derive key");
-        let key = k256::SecretKey::from(key.private_key());
         let key = key
             .to_pkcs8_der()
             .expect("Could not PKCS8 encod private key");
 
         keystore.store(&name, &key).expect("Could not store key");
 
-        let args = vec![name.to_string()];
-        let show_cmd = ShowEthKeyCmd { args };
+        let show_cmd = ShowEthKeyCmd {
+            args: vec![name.to_string()],
+            show_private_key: self.show_private_key,
+            show_name: false,
+        };
         show_cmd.run();
     }
 }
