@@ -6,7 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	types2 "github.com/cosmos/cosmos-sdk/x/bank/types"
-	gravitytypes "github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	gravitytypes "github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 type Auth struct {
