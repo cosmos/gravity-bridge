@@ -5,6 +5,11 @@ use abscissa_core::{Application, Command, Options, Runnable};
 pub struct ShowEthKeyCmd {
     #[options(free, help = "show [name]")]
     pub args: Vec<String>,
+
+    #[options(help = "show private key")]
+    pub show_private_key: bool,
+
+    pub show_name: bool,
 }
 
 // Entry point for `gorc keys eth show [name]`
@@ -16,6 +21,14 @@ impl Runnable for ShowEthKeyCmd {
 
         let pub_key = key.to_public_key().expect("Could not build public key");
 
-        println!("{}\t{}", name, pub_key);
+        if self.show_name {
+            print!("{}\t", name);
+        }
+
+        if self.show_private_key {
+            println!("{}\t{}", pub_key, key);
+        } else {
+            println!("{}", pub_key);
+        }
     }
 }

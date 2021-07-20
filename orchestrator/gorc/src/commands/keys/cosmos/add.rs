@@ -1,7 +1,6 @@
 use super::show::ShowCosmosKeyCmd;
 use crate::application::APP;
 use abscissa_core::{Application, Command, Options, Runnable};
-use bip32;
 use k256::pkcs8::ToPrivateKey;
 use rand_core::OsRng;
 use signatory::FsKeyStore;
