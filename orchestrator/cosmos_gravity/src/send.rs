@@ -13,8 +13,6 @@ use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::service_client::Servic
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastMode;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastTxRequest;
 use gravity_proto::gravity as proto;
-use bytes::{Buf, BufMut};
-
 
 use gravity_utils::message_signatures::{
     encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,

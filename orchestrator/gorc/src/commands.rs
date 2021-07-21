@@ -1,19 +1,11 @@
 //! Gorc Subcommands
-//!
 //! This is where you specify the subcommands of your application.
-//!
-//! The default application comes with two subcommands:
-//!
-//! - `start`: launches the application
-//! - `version`: print application version
-//!
-//! See the `impl Configurable` below for how to specify the path to the
-//! application's configuration file.
 
 mod deploy;
 mod keys;
 mod orchestrator;
 mod query;
+mod sign_delegate_keys;
 mod tests;
 mod tx;
 mod version;
@@ -43,6 +35,9 @@ pub enum GorcCmd {
 
     #[options(help = "query state on either ethereum or cosmos chains")]
     Query(QueryCmd),
+
+    #[options(help = "sign delegate keys")]
+    SignDelegateKeys(sign_delegate_keys::SignDelegateKeysCmd),
 
     #[options(help = "run tests against configured chains")]
     Tests(TestsCmd),
