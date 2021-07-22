@@ -326,8 +326,8 @@ func TestMsgSetDelegateAddresses(t *testing.T) {
 		Nonce:            0,
 	}
 	signMsgBz := input.Marshaler.MustMarshalBinaryBare(&ethMsg)
-
-	sig, err := types.NewEthereumSignature(signMsgBz, ethPrivKey)
+	hash := crypto.Keccak256Hash(signMsgBz).Bytes()
+	sig, err := types.NewEthereumSignature(hash, ethPrivKey)
 	require.NoError(t, err)
 
 	k := input.GravityKeeper
@@ -358,8 +358,9 @@ func TestMsgSetDelegateAddresses(t *testing.T) {
 		Nonce:            0,
 	}
 	signMsgBz = input.Marshaler.MustMarshalBinaryBare(&ethMsg)
+	hash = crypto.Keccak256Hash(signMsgBz).Bytes()
 
-	sig, err = types.NewEthereumSignature(signMsgBz, ethPrivKey2)
+	sig, err = types.NewEthereumSignature(hash, ethPrivKey2)
 	require.NoError(t, err)
 
 	msg = types.NewMsgDelegateKeys(valAddress, cosmosAddress2, ethAddress2.String(), sig)

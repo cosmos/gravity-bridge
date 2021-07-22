@@ -1,15 +1,18 @@
 package keeper
 
 import (
+	"bytes"
+	"crypto/ecdsa"
+	"fmt"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
-	ethCrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 func TestMsgServer_SubmitEthereumSignature(t *testing.T) {
@@ -326,8 +329,9 @@ func TestMsgServer_SetDelegateKeys(t *testing.T) {
 		Nonce:            0,
 	}
 	signMsgBz := env.Marshaler.MustMarshalBinaryBare(&ethMsg)
+	hash := crypto.Keccak256Hash(signMsgBz).Bytes()
 
-	sig, err := types.NewEthereumSignature(signMsgBz, ethPrivKey)
+	sig, err := types.NewEthereumSignature(hash, ethPrivKey)
 	require.NoError(t, err)
 
 	msg := &types.MsgDelegateKeys{
@@ -339,4 +343,59 @@ func TestMsgServer_SetDelegateKeys(t *testing.T) {
 
 	_, err = msgServer.SetDelegateKeys(sdk.WrapSDKContext(ctx), msg)
 	require.NoError(t, err)
+}
+
+func TestEthVerify(t *testing.T) {
+	// Replace privKeyHexStr and addrHexStr with your own private key and address
+	// HEX values.
+	privKeyHexStr := "0xee63225c8a0928168d362147cd19859de6459e972ffcf9294a69382b4ad99720"
+	addrHexStr := "0xA093773C30Ad5c3e83B20E66CB4e6136aEa098B7"
+
+	// ==========================================================================
+	// setup
+	// ==========================================================================
+	privKeyBz, err := hexutil.Decode(privKeyHexStr)
+	require.NoError(t, err)
+
+	privKey, err := crypto.ToECDSA(privKeyBz)
+	require.NoError(t, err)
+	require.NotNil(t, privKey)
+
+	require.True(t, bytes.Equal(privKeyBz, crypto.FromECDSA(privKey)))
+	require.Equal(t, privKeyHexStr, hexutil.Encode(crypto.FromECDSA(privKey)))
+
+	publicKey := privKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	require.True(t, ok)
+
+	address := crypto.PubkeyToAddress(*publicKeyECDSA)
+	require.Equal(t, addrHexStr, address.Hex())
+
+	// ==========================================================================
+	// signature verification
+	// ==========================================================================
+	cdc := MakeTestMarshaler()
+
+	valAddr := "cosmosvaloper16k7rf90uvt4tgslqh280wvdzxp5q9ah6nxxupc"
+	signMsgBz, err := cdc.MarshalBinaryBare(&types.DelegateKeysSignMsg{
+		ValidatorAddress: valAddr,
+		Nonce:            0,
+	})
+
+	require.NoError(t, err)
+
+	fmt.Println("MESSAGE BYTES TO SIGN:", hexutil.Encode(signMsgBz))
+	hash := crypto.Keccak256Hash(signMsgBz).Bytes()
+
+	sig, err := types.NewEthereumSignature(hash, privKey)
+	sig[64] += 27 // change the V value
+	require.NoError(t, err)
+
+	err = types.ValidateEthereumSignature(hash, sig, address)
+	require.NoError(t, err)
+
+	// replace gorcSig with what the following command produces:
+	// $ gorc sign-delegate-keys <your-eth-key-name> cosmosvaloper1dmly9yyhd5lyhyl8qhs7wtcd4xt7gyxlesgvmc 0
+	gorcSig := "0xbda7037e448ca07ac91f5f386b72df37b6bbacf102b2c8f5acb58b5e053d68d96875ce9e442433bea55ac083230f492670ca2c07a8303c332dca06b1c0758c661b"
+	require.Equal(t, hexutil.Encode(sig), gorcSig)
 }
