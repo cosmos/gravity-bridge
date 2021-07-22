@@ -378,17 +378,17 @@ func TestEthVerify(t *testing.T) {
 	valAddr := "cosmosvaloper1dmly9yyhd5lyhyl8qhs7wtcd4xt7gyxlesgvmc"
 	signMsgBz, err := cdc.MarshalBinaryBare(&types.DelegateKeysSignMsg{
 		ValidatorAddress: valAddr,
-		Nonce:            0,
+		Nonce:            1,
 	})
 	require.NoError(t, err)
 
-	fmt.Printf("MESSAGE BYTES TO SIGN: 0x%x\n", signMsgBz)
+	fmt.Println("MESSAGE BYTES TO SIGN:", hexutil.Encode(signMsgBz))
 
 	sig, err := types.NewEthereumSignature(signMsgBz, privKey)
 	require.NoError(t, err)
 
 	// replace gorcSig with what the following command produces:
 	// $ gorc sign-delegate-keys <your-eth-key-name> cosmosvaloper1dmly9yyhd5lyhyl8qhs7wtcd4xt7gyxlesgvmc 0
-	gorcSig := "0xd3a39b687ec211d5bf6a71fa03e94a44547206d35f5a52bdded80949a6f848603e208665797b46d4a355fcc9f9f33cf15957b1f4256db86abd5203e033f4be111c"
+	gorcSig := "0xd34881c746b8498926bdea191529d5af66aa34938349e789aefab90cf0fc4ffe3cbffb85313cef0107d49b17af83f3175c63db00cd5edee58d2369bd507410551c"
 	require.Equal(t, hexutil.Encode(sig), gorcSig)
 }
