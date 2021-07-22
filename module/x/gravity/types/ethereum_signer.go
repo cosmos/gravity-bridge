@@ -60,7 +60,7 @@ func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress common.
 	}
 
 	if addr := crypto.PubkeyToAddress(*pubkey); addr != ethAddress {
-		return sdkerrors.Wrapf(ErrInvalid, "signature not matching addr %x sig %x hash %x", addr, sigCopy, hash)
+		return sdkerrors.Wrapf(ErrInvalid, "signature not matching addr %x sig %x hash %x", addr, signature, hash)
 	}
 
 	return nil
