@@ -286,19 +286,17 @@ func (k Keeper) CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 // implementations are involved.
 func (k Keeper) CurrentSignerSet(ctx sdk.Context) types.EthereumSigners {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-	ethereumSigners := make([]*types.EthereumSigner, len(validators))
+	ethereumSigners := make([]*types.EthereumSigner, 0)
 	var totalPower uint64
-	// TODO someone with in depth info on Cosmos staking should determine
-	// if this is doing what I think it's doing
-	for i, validator := range validators {
+	for _, validator := range validators {
 		val := validator.GetOperator()
 
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
-		totalPower += p
 
-		ethereumSigners[i] = &types.EthereumSigner{Power: p}
 		if ethAddr := k.GetValidatorEthereumAddress(ctx, val); ethAddr.Hex() != "0x0000000000000000000000000000000000000000" {
-			ethereumSigners[i].EthereumAddress = ethAddr.Hex()
+			es := &types.EthereumSigner{Power: p, EthereumAddress: ethAddr.Hex()}
+			ethereumSigners = append(ethereumSigners, es)
+			totalPower += p
 		}
 	}
 	// normalize power values
