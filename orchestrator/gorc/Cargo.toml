@@ -31,6 +31,7 @@ abscissa_tokio = { version = "0.6.0-pre.2", features = ["actix"] }
 web30 = "0.14"
 tokio = "1"
 tonic = "0.4"
+toml = "0.5"
 
 prost = "0.7"
 bytes = "1"
