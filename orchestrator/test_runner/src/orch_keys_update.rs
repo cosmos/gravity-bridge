@@ -82,6 +82,7 @@ pub async fn orch_keys_update(
             eth_key.to_public_key().unwrap(),
             cosmos_address,
             k.validator_key,
+            k.eth_key,
             get_fee(),
         ));
     }

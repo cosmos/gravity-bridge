@@ -34,6 +34,7 @@ pub async fn update_gravity_delegate_addresses(
     delegate_eth_address: EthAddress,
     delegate_cosmos_address: Address,
     private_key: PrivateKey,
+    eth_private_key: EthPrivateKey,
     fee: Coin,
 ) -> Result<TxResponse, CosmosGrpcError> {
     trace!("Updating Gravity Delegate addresses");
@@ -48,10 +49,26 @@ pub async fn update_gravity_delegate_addresses(
         .unwrap();
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
 
+    let sequence = &contact.get_account_info(private_key
+        .to_address(&contact.get_prefix()).unwrap()).await?.sequence;
+
+    let eth_sign_msg = proto::DelegateKeysSignMsg{
+        validator_address: our_valoper_address.clone(),
+        nonce:*sequence,
+    };
+    let size = Message::encoded_len(&eth_sign_msg);
+    let mut buf = BytesMut::with_capacity(size);
+    Message::encode(&eth_sign_msg, &mut buf).expect("Failed to encode DelegateKeysSignMsg!");
+    
+    let eth_signature = eth_private_key.sign_ethereum_msg(&buf).to_bytes().to_vec();
+
+
+
     let msg_set_orch_address = proto::MsgDelegateKeys {
         validator_address: our_valoper_address.to_string(),
         orchestrator_address: delegate_cosmos_address.to_string(),
         ethereum_address: delegate_eth_address.to_string(),
+        eth_signature
     };
 
     let fee = Fee {

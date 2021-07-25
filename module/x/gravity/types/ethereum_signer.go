@@ -17,13 +17,14 @@ func NewEthereumSignature(hash []byte, privateKey *ecdsa.PrivateKey) ([]byte, er
 	if privateKey == nil {
 		return nil, sdkerrors.Wrap(ErrInvalid, "did not pass in private key")
 	}
-	protectedHash := crypto.Keccak256Hash(append([]uint8(signaturePrefix), hash...))
+	protectedHash := crypto.Keccak256Hash(append([]byte(signaturePrefix), hash...))
 	return crypto.Sign(protectedHash.Bytes(), privateKey)
 }
 
 // ValidateEthereumSignature takes a message, an associated signature and public key and
 // returns an error if the signature isn't valid
 func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress common.Address) error {
+
 	/// signature to public key: invalid signature length: invalid
 	/// signature not matching: invalid: invalid
 	if len(signature) < 65 {
@@ -60,7 +61,7 @@ func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress common.
 	}
 
 	if addr := crypto.PubkeyToAddress(*pubkey); addr != ethAddress {
-		return sdkerrors.Wrapf(ErrInvalid, "signature not matching addr %x sig %x hash %x", addr, sigCopy, hash)
+		return sdkerrors.Wrapf(ErrInvalid, "signature not matching addr %x sig %x hash %x", addr, signature, hash)
 	}
 
 	return nil

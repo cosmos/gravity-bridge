@@ -10,6 +10,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
@@ -29,40 +30,74 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys) (*types.MsgDelegateKeysResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// these errors are checked in validate basic
-	val, _ := sdk.ValAddressFromBech32(msg.ValidatorAddress)
-	orch, _ := sdk.AccAddressFromBech32(msg.OrchestratorAddress)
-	eth := common.HexToAddress(msg.EthereumAddress)
+	valAddr, err := sdk.ValAddressFromBech32(msg.ValidatorAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	orchAddr, err := sdk.AccAddressFromBech32(msg.OrchestratorAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	ethAddr := common.HexToAddress(msg.EthereumAddress)
 
 	// ensure that the validator exists
-	if k.Keeper.StakingKeeper.Validator(ctx, val) == nil {
-		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, val.String())
+	if k.Keeper.StakingKeeper.Validator(ctx, valAddr) == nil {
+		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, valAddr.String())
 	}
 
-	// check ethereum address is not currently used
-	validators := k.getValidatorsByEthereumAddress(ctx, eth)
+	// check if the Ethereum address is currently not used
+	validators := k.getValidatorsByEthereumAddress(ctx, ethAddr)
 	if len(validators) > 0 {
-		return nil, sdkerrors.Wrap(fmt.Errorf("ethereum address %s in use", eth.String()), fmt.Sprintf("%s", validators))
+		return nil, sdkerrors.Wrapf(types.ErrDelegateKeys, "ethereum address %s in use", ethAddr)
 	}
 
-	// check orchestrator is not currently used
-	ethAddrs := k.getEthereumAddressesByOrchestrator(ctx, orch)
+	// check if the orchestrator address is currently not used
+	ethAddrs := k.getEthereumAddressesByOrchestrator(ctx, orchAddr)
 	if len(ethAddrs) > 0 {
-		return nil, sdkerrors.Wrap(fmt.Errorf("orchestrator address %s in use", orch.String()), fmt.Sprintf("%s", ethAddrs))
+		return nil, sdkerrors.Wrapf(types.ErrDelegateKeys, "orchestrator address %s in use", orchAddr)
 	}
 
-	// set the three indexes
-	k.SetOrchestratorValidatorAddress(ctx, val, orch)
-	k.setValidatorEthereumAddress(ctx, val, eth)
-	k.setEthereumOrchestratorAddress(ctx, eth, orch)
+	valAccAddr := sdk.AccAddress(valAddr)
+	valAccSeq, err := k.accountKeeper.GetSequence(ctx, valAccAddr)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(types.ErrDelegateKeys, "failed to get sequence for validator account %s", valAccAddr)
+	}
+
+	var nonce uint64
+	if valAccSeq > 0 {
+		nonce = valAccSeq - 1
+	}
+
+	signMsgBz := k.cdc.MustMarshalBinaryBare(&types.DelegateKeysSignMsg{
+		ValidatorAddress: valAddr.String(),
+		// We decrement since we process the message after the ante-handler which
+		// increments the nonce.
+		Nonce: nonce,
+	})
+
+	hash := crypto.Keccak256Hash(signMsgBz).Bytes()
+
+	if err = types.ValidateEthereumSignature(hash, msg.EthSignature, ethAddr); err != nil {
+		return nil, sdkerrors.Wrapf(
+			types.ErrDelegateKeys,
+			"failed to validate delegate keys signature for Ethereum address %X; %s",
+			ethAddr, err,
+		)
+	}
+
+	k.SetOrchestratorValidatorAddress(ctx, valAddr, orchAddr)
+	k.setValidatorEthereumAddress(ctx, valAddr, ethAddr)
+	k.setEthereumOrchestratorAddress(ctx, ethAddr, orchAddr)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeySetOrchestratorAddr, orch.String()),
-			sdk.NewAttribute(types.AttributeKeySetEthereumAddr, eth.Hex()),
-			sdk.NewAttribute(types.AttributeKeyValidatorAddr, val.String()),
+			sdk.NewAttribute(types.AttributeKeySetOrchestratorAddr, orchAddr.String()),
+			sdk.NewAttribute(types.AttributeKeySetEthereumAddr, ethAddr.Hex()),
+			sdk.NewAttribute(types.AttributeKeyValidatorAddr, valAddr.String()),
 		),
 	)
 

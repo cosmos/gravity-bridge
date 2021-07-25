@@ -4,27 +4,24 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/codec/unknownproto"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	"github.com/cosmos/cosmos-sdk/types/tx"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	"github.com/tendermint/tendermint/p2p"
-	"github.com/tendermint/tendermint/privval"
 	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/codec/unknownproto"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/tx"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -34,11 +31,14 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/go-bip39"
-	"github.com/cosmos/gravity-bridge/module/app"
-	gravitytypes "github.com/cosmos/gravity-bridge/module/x/gravity/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/peggyjv/gravity-bridge/module/app"
+	gravitytypes "github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 	cfg "github.com/tendermint/tendermint/config"
+	tmos "github.com/tendermint/tendermint/libs/os"
+	"github.com/tendermint/tendermint/p2p"
+	"github.com/tendermint/tendermint/privval"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -328,6 +328,7 @@ func (v *Validator) generateEthereumKey() (err error) {
 	if err != nil {
 		return err
 	}
+
 	privateKeyBytes := crypto.FromECDSA(privateKey)
 
 	publicKey := privateKey.Public()
@@ -384,11 +385,38 @@ func (v *Validator) buildCreateValidatorMsg(amount sdktypes.Coin) (sdktypes.Msg,
 }
 
 func (v *Validator) buildDelegateKeysMsg() sdktypes.Msg {
-	return &gravitytypes.MsgDelegateKeys{
-		EthereumAddress:     v.EthereumKey.Address,
-		ValidatorAddress:    sdktypes.ValAddress(v.KeyInfo.GetAddress()).String(),
-		OrchestratorAddress: v.Chain.Orchestrators[v.Index].KeyInfo.GetAddress().String(),
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+	interfaceRegistry.RegisterImplementations((*sdktypes.Msg)(nil), &types.MsgCreateValidator{}, &gravitytypes.MsgDelegateKeys{})
+	interfaceRegistry.RegisterImplementations((*cryptotypes.PubKey)(nil), &secp256k1.PubKey{}, &ed25519.PubKey{})
+	marshaller := codec.NewProtoCodec(interfaceRegistry)
+
+	privKeyBz, err := hexutil.Decode(v.EthereumKey.PrivateKey)
+	if err != nil {
+		panic(fmt.Sprintf("failed to HEX decode private key: %s", err))
 	}
+
+	privKey, err := crypto.ToECDSA(privKeyBz)
+	if err != nil {
+		panic(fmt.Sprintf("failed to convert private key: %s", err))
+	}
+
+	signMsg := gravitytypes.DelegateKeysSignMsg{
+		ValidatorAddress: sdktypes.ValAddress(v.KeyInfo.GetAddress()).String(),
+		Nonce:            0,
+	}
+
+	signMsgBz := marshaller.MustMarshalBinaryBare(&signMsg)
+	ethSig, err := gravitytypes.NewEthereumSignature(signMsgBz, privKey)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create Ethereum signature: %s", err))
+	}
+
+	return gravitytypes.NewMsgDelegateKeys(
+		sdktypes.ValAddress(v.KeyInfo.GetAddress()),
+		v.Chain.Orchestrators[v.Index].KeyInfo.GetAddress(),
+		v.EthereumKey.Address,
+		ethSig,
+	)
 }
 
 func (v *Validator) instanceName() string {

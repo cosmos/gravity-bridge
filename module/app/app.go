@@ -384,6 +384,7 @@ func NewGravityApp(
 		appCodec,
 		keys[gravitytypes.StoreKey],
 		app.GetSubspace(gravitytypes.ModuleName),
+		app.accountKeeper,
 		stakingKeeper,
 		app.bankKeeper,
 		app.slashingKeeper,

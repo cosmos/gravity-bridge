@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	cfg "github.com/tendermint/tendermint/config"
@@ -44,9 +45,9 @@ func GenTxCmd(mbm module.BasicManager, txEncCfg client.TxEncodingConfig, genBalI
 	fsCreateValidator, defaultsDesc := cli.CreateValidatorMsgFlagSet(ipDefault)
 
 	cmd := &cobra.Command{
-		Use:   "gentx [key_name] [amount] [eth-address] [orchestrator-address]",
+		Use:   "gentx [key_name] [amount] [eth-address] [orchestrator-address] [eth-sig]",
 		Short: "Generate a genesis tx carrying a self delegation, oracle key delegation and orchestrator key delegation",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(5),
 		Long: fmt.Sprintf(`Generate a genesis transaction that creates a validator with a self-delegation, oracle key 
 delegation and orchestrator key delegation that is signed by the key in the Keyring referenced by a given name. A node 
 ID and Bech32 consensus pubkey may optionally be provided. If they are omitted, they will be retrieved from the 
@@ -54,7 +55,7 @@ priv_validator.json file. The following default parameters are included:
     %s
 
 Example:
-$ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn --home=/path/to/home/dir --keyring-backend=os --chain-id=test-chain-1 \
+$ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn 0x12...AF --home=/path/to/home/dir --keyring-backend=os --chain-id=test-chain-1 \
     --moniker="myvalidator" \
     --commission-max-change-rate=0.01 \
     --commission-max-rate=1.0 \
@@ -180,10 +181,16 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 				return errors.Wrap(err, "failed to build create-validator message")
 			}
 
+			ethSig, err := hexutil.Decode(args[4])
+			if err != nil {
+				return err
+			}
+
 			delegateGravityMsg := &gravitytypes.MsgDelegateKeys{
 				ValidatorAddress:    sdk.ValAddress(key.GetAddress()).String(),
 				OrchestratorAddress: orchAddress.String(),
 				EthereumAddress:     ethAddress,
+				EthSignature:        ethSig,
 			}
 
 			msgs := []sdk.Msg{msg, delegateGravityMsg}
