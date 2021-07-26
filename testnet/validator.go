@@ -406,7 +406,8 @@ func (v *Validator) buildDelegateKeysMsg() sdktypes.Msg {
 	}
 
 	signMsgBz := marshaller.MustMarshalBinaryBare(&signMsg)
-	ethSig, err := gravitytypes.NewEthereumSignature(signMsgBz, privKey)
+	hash := crypto.Keccak256Hash(signMsgBz).Bytes()
+	ethSig, err := gravitytypes.NewEthereumSignature(hash, privKey)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create Ethereum signature: %s", err))
 	}
