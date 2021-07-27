@@ -13,8 +13,8 @@ func TestValidatorOut(t *testing.T) {
 		pool *dockertest.Pool,
 		network *dockertest.Network,
 	) {
-		err := pool.RemoveContainerByName("gravity0")
-		require.NoError(t, err, "error removing gravity0")
+		err := pool.RemoveContainerByName("gravity1")
+		require.NoError(t, err, "error removing gravity1")
 
 		buildAndRunTestRunner(t, wd, pool, network, "VALIDATOR_OUT")
 	})
