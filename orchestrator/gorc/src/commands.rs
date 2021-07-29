@@ -10,10 +10,6 @@ mod tests;
 mod tx;
 mod version;
 
-use self::{
-    keys::KeysCmd, orchestrator::OrchestratorCmd, query::QueryCmd, tests::TestsCmd, tx::TxCmd,
-    version::VersionCmd,
-};
 use crate::config::GorcConfig;
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use std::path::PathBuf;
@@ -27,26 +23,29 @@ pub enum GorcCmd {
     #[options(help = "get usage information")]
     Help(Help<Self>),
 
-    #[options(help = "key management commands")]
-    Keys(KeysCmd),
+    #[options(help = "tools for contract deployment")]
+    Deploy(deploy::DeployCmd),
 
-    #[options(help = "orchestrator")]
-    Orchestrator(OrchestratorCmd),
+    #[options(help = "key management commands")]
+    Keys(keys::KeysCmd),
+
+    #[options(help = "orchestrator management commands")]
+    Orchestrator(orchestrator::OrchestratorCmd),
 
     #[options(help = "query state on either ethereum or cosmos chains")]
-    Query(QueryCmd),
+    Query(query::QueryCmd),
 
     #[options(help = "sign delegate keys")]
     SignDelegateKeys(sign_delegate_keys::SignDelegateKeysCmd),
 
     #[options(help = "run tests against configured chains")]
-    Tests(TestsCmd),
+    Tests(tests::TestsCmd),
 
     #[options(help = "create transactions on either ethereum or cosmos chains")]
-    Tx(TxCmd),
+    Tx(tx::TxCmd),
 
     #[options(help = "display version information")]
-    Version(VersionCmd),
+    Version(version::VersionCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
