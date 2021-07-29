@@ -37,6 +37,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdLastSubmittedEthereumEvent(),
 		CmdBatchTxFees(),
 		CmdERC20ToDenom(),
+		CmdDenomToERC20Params(),
 		CmdDenomToERC20(),
 		CmdUnbatchedSendToEthereums(),
 		CmdDelegateKeysByValidator(),
@@ -545,6 +546,38 @@ func CmdERC20ToDenom() *cobra.Command {
 				Erc20: contract,
 			})
 
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdDenomToERC20Params() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "denom-to-erc20-params [denom]",
+		Args:  cobra.ExactArgs(1),
+		Short: "given a cosmos base denom return the correct erc20 name, symbol and decimals",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, queryClient, err := newContextAndQueryClient(cmd)
+			if err != nil {
+				return err
+			}
+
+			if err := sdk.ValidateDenom(args[0]); err != nil {
+				return err
+			}
+
+			req := &types.DenomToERC20ParamsRequest{
+				Denom: args[0],
+			}
+
+			res, err := queryClient.DenomToERC20Params(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

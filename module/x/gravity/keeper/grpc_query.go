@@ -307,6 +307,45 @@ func (k Keeper) ERC20ToDenom(c context.Context, req *types.ERC20ToDenomRequest) 
 	return res, nil
 }
 
+func (k Keeper) DenomToERC20Params(c context.Context, req *types.DenomToERC20ParamsRequest) (*types.DenomToERC20ParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	if existingERC20, exists := k.getCosmosOriginatedERC20(ctx, req.Denom); exists {
+		return nil, sdkerrors.Wrapf(
+			types.ErrInvalidERC20Event,
+			"ERC20 token %s already exists for denom %s", existingERC20.Hex(), req.Denom,
+		)
+	}
+
+	// use metadata, if we can find it
+	if md := k.bankKeeper.GetDenomMetaData(ctx, req.Denom); md.Base != "" {
+		var erc20Decimals uint64
+		for _, denomUnit := range md.DenomUnits {
+			if denomUnit.Denom == md.Display {
+				erc20Decimals = uint64(denomUnit.Exponent)
+				break
+			}
+		}
+		res := &types.DenomToERC20ParamsResponse{
+			BaseDenom:     md.Base,
+			Erc20Name:     md.Display,
+			Erc20Symbol:   md.Display,
+			Erc20Decimals: erc20Decimals,
+		}
+		return res, nil
+	}
+
+	// TODO: verify req.Denom exists (meaning an account holds it) after we upgrade to 0.4.3
+
+	// no metadata, go with a zero decimal, no symbol erc-20
+	res := &types.DenomToERC20ParamsResponse{
+		BaseDenom:     req.Denom,
+		Erc20Name:     req.Denom,
+		Erc20Symbol:   "",
+		Erc20Decimals: 0,
+	}
+	return res, nil
+}
+
 func (k Keeper) DenomToERC20(c context.Context, req *types.DenomToERC20Request) (*types.DenomToERC20Response, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	cosmosOriginated, erc20, err := k.DenomToERC20Lookup(ctx, req.Denom)

@@ -3067,7 +3067,10 @@ func (m *MsgSendToEthereum) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -3136,7 +3139,10 @@ func (m *MsgSendToEthereumResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -3237,7 +3243,10 @@ func (m *MsgCancelSendToEthereum) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -3287,7 +3296,10 @@ func (m *MsgCancelSendToEthereumResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -3401,7 +3413,10 @@ func (m *MsgRequestBatchTx) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -3451,7 +3466,10 @@ func (m *MsgRequestBatchTxResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -3569,7 +3587,10 @@ func (m *MsgSubmitEthereumTxConfirmation) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -3738,7 +3759,10 @@ func (m *ContractCallTxConfirmation) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -3905,7 +3929,10 @@ func (m *BatchTxConfirmation) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -4040,7 +4067,10 @@ func (m *SignerSetTxConfirmation) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -4090,7 +4120,10 @@ func (m *MsgSubmitEthereumTxConfirmationResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -4208,7 +4241,10 @@ func (m *MsgSubmitEthereumEvent) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -4426,7 +4462,10 @@ func (m *SendToCosmosEvent) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -4565,7 +4604,10 @@ func (m *BatchExecutedEvent) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -4706,7 +4748,10 @@ func (m *ContractCallExecutedEvent) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -4941,7 +4986,10 @@ func (m *ERC20DeployedEvent) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -5082,7 +5130,10 @@ func (m *SignerSetTxExecutedEvent) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -5132,7 +5183,10 @@ func (m *MsgSubmitEthereumEventResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -5312,7 +5366,10 @@ func (m *MsgDelegateKeys) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -5362,7 +5419,10 @@ func (m *MsgDelegateKeysResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -5463,7 +5523,10 @@ func (m *DelegateKeysSignMsg) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {

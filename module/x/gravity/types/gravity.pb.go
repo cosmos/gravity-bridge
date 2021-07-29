@@ -1481,7 +1481,10 @@ func (m *EthereumEventVoteRecord) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -1569,7 +1572,10 @@ func (m *LatestEthereumBlockHeight) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -1670,7 +1676,10 @@ func (m *EthereumSigner) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -1792,7 +1801,10 @@ func (m *SignerSetTx) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -1965,7 +1977,10 @@ func (m *BatchTx) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2164,7 +2179,10 @@ func (m *SendToEthereum) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2439,7 +2457,10 @@ func (m *ContractCallTx) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2555,7 +2576,10 @@ func (m *ERC20Token) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2681,7 +2705,10 @@ func (m *IDSet) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {

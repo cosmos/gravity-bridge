@@ -87,6 +87,8 @@ func (a EthereumEventProcessor) verifyERC20DeployedEvent(ctx sdk.Context, event 
 		)
 	}
 
+	// TODO: verify event.CosmosDenom exists (meaning an account holds it) after we upgrade to 0.4.3
+
 	// We expect that all Cosmos-based tokens have metadata defined. In the case
 	// a token does not have metadata defined, e.g. an IBC token, we successfully
 	// handle the token under the following conditions:
@@ -100,40 +102,40 @@ func (a EthereumEventProcessor) verifyERC20DeployedEvent(ctx sdk.Context, event 
 	// NOTE: This path is not encouraged and all supported assets should have
 	// metadata defined. If metadata cannot be defined, consider adding the token's
 	// metadata on the fly.
-	metadata := a.keeper.bankKeeper.GetDenomMetaData(ctx, event.CosmosDenom)
-	if metadata.Base == "" {
-		if event.Erc20Name != event.CosmosDenom {
-			return sdkerrors.Wrapf(
-				types.ErrInvalidERC20Event,
-				"invalid ERC20 name for token without metadata; got: %s, expected: %s", event.Erc20Name, event.CosmosDenom,
-			)
-		}
 
-		if event.Erc20Symbol != "" {
-			return sdkerrors.Wrapf(
-				types.ErrInvalidERC20Event,
-				"expected empty ERC20 symbol for token without metadata; got: %s", event.Erc20Symbol,
-			)
-		}
-
-		if event.Erc20Decimals != 0 {
-			return sdkerrors.Wrapf(
-				types.ErrInvalidERC20Event,
-				"expected zero ERC20 decimals for token without metadata; got: %d", event.Erc20Decimals,
-			)
-		}
-
-		return nil
+	if md := a.keeper.bankKeeper.GetDenomMetaData(ctx, event.CosmosDenom); md.Base != "" {
+		return verifyERC20Token(md, event)
 	}
 
-	return verifyERC20Token(metadata, event)
+	if event.Erc20Name != event.CosmosDenom {
+		return sdkerrors.Wrapf(
+			types.ErrInvalidERC20Event,
+			"invalid ERC20 name for token without metadata; got: %s, expected: %s", event.Erc20Name, event.CosmosDenom,
+		)
+	}
+
+	if event.Erc20Symbol != "" {
+		return sdkerrors.Wrapf(
+			types.ErrInvalidERC20Event,
+			"expected empty ERC20 symbol for token without metadata; got: %s", event.Erc20Symbol,
+		)
+	}
+
+	if event.Erc20Decimals != 0 {
+		return sdkerrors.Wrapf(
+			types.ErrInvalidERC20Event,
+			"expected zero ERC20 decimals for token without metadata; got: %d", event.Erc20Decimals,
+		)
+	}
+
+	return nil
 }
 
 func verifyERC20Token(metadata banktypes.Metadata, event *types.ERC20DeployedEvent) error {
 	if event.Erc20Name != metadata.Display {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidERC20Event,
-			"ERC20 name %s does not match the denom display %s", event.Erc20Name, metadata.Description,
+			"ERC20 name %s does not match the denom display %s", event.Erc20Name, metadata.Display,
 		)
 	}
 
