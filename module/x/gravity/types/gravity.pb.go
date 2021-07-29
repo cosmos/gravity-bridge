@@ -205,9 +205,9 @@ func (m *EthereumSigner) GetEthereumAddress() string {
 // are used to check signatures on Ethereum in order to get significant gas
 // savings.
 type SignerSetTx struct {
-	Nonce   uint64          `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	Height  uint64          `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
-	Signers EthereumSigners `protobuf:"bytes,3,rep,name=signers,proto3,castrepeated=EthereumSigners" json:"signers,omitempty"`
+	Nonce   uint64            `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Height  uint64            `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	Signers []*EthereumSigner `protobuf:"bytes,3,rep,name=signers,proto3" json:"signers,omitempty"`
 }
 
 func (m *SignerSetTx) Reset()         { *m = SignerSetTx{} }
@@ -257,7 +257,7 @@ func (m *SignerSetTx) GetHeight() uint64 {
 	return 0
 }
 
-func (m *SignerSetTx) GetSigners() EthereumSigners {
+func (m *SignerSetTx) GetSigners() []*EthereumSigner {
 	if m != nil {
 		return m.Signers
 	}
@@ -1081,16 +1081,13 @@ func (m *ERC20Token) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	{
-		size := m.Amount.Size()
-		i -= size
-		if _, err := m.Amount.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintGravity(dAtA, i, uint64(size))
+	if len(m.Amount) > 0 {
+		i -= len(m.Amount)
+		copy(dAtA[i:], m.Amount)
+		i = encodeVarintGravity(dAtA, i, uint64(len(m.Amount)))
+		i--
+		dAtA[i] = 0x12
 	}
-	i--
-	dAtA[i] = 0x12
 	if len(m.Contract) > 0 {
 		i -= len(m.Contract)
 		copy(dAtA[i:], m.Contract)
@@ -1331,8 +1328,10 @@ func (m *ERC20Token) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovGravity(uint64(l))
 	}
-	l = m.Amount.Size()
-	n += 1 + l + sovGravity(uint64(l))
+	l = len(m.Amount)
+	if l > 0 {
+		n += 1 + l + sovGravity(uint64(l))
+	}
 	return n
 }
 
@@ -1481,10 +1480,7 @@ func (m *EthereumEventVoteRecord) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGravity
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -1572,10 +1568,7 @@ func (m *LatestEthereumBlockHeight) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGravity
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -1676,10 +1669,7 @@ func (m *EthereumSigner) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGravity
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -1801,10 +1791,7 @@ func (m *SignerSetTx) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGravity
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -1977,10 +1964,7 @@ func (m *BatchTx) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGravity
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2179,10 +2163,7 @@ func (m *SendToEthereum) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGravity
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2457,10 +2438,7 @@ func (m *ContractCallTx) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGravity
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2566,9 +2544,7 @@ func (m *ERC20Token) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.Amount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.Amount = github_com_cosmos_cosmos_sdk_types.Int(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -2576,10 +2552,7 @@ func (m *ERC20Token) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGravity
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2705,10 +2678,7 @@ func (m *IDSet) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGravity
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
