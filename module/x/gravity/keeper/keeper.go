@@ -85,9 +85,9 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // incrementLatestSignerSetTxNonce sets the latest valset nonce
 func (k Keeper) incrementLatestSignerSetTxNonce(ctx sdk.Context) uint64 {
 	current := k.GetLatestSignerSetTxNonce(ctx)
-	new := current + 1
-	ctx.KVStore(k.storeKey).Set([]byte{types.LatestSignerSetTxNonceKey}, sdk.Uint64ToBigEndian(new))
-	return new
+	next := current + 1
+	ctx.KVStore(k.storeKey).Set([]byte{types.LatestSignerSetTxNonceKey}, sdk.Uint64ToBigEndian(next))
+	return next
 }
 
 // GetLatestSignerSetTxNonce returns the latest valset nonce
@@ -182,7 +182,7 @@ func (k Keeper) GetOrchestratorValidatorAddress(ctx sdk.Context, orchAddr sdk.Ac
 	store := ctx.KVStore(k.storeKey)
 	key := types.MakeOrchestratorValidatorAddressKey(orchAddr)
 
-	return sdk.ValAddress(store.Get(key))
+	return store.Get(key)
 }
 
 ////////////////////////
@@ -236,7 +236,7 @@ func (k Keeper) GetEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.A
 	store := ctx.KVStore(k.storeKey)
 	key := types.MakeEthereumOrchestratorAddressKey(ethAddr)
 
-	return sdk.AccAddress(store.Get(key))
+	return store.Get(key)
 }
 
 func (k Keeper) getEthereumAddressesByOrchestrator(ctx sdk.Context, orch sdk.AccAddress) (ethAddrs []common.Address) {
@@ -310,7 +310,7 @@ func (k Keeper) CurrentSignerSet(ctx sdk.Context) types.EthereumSigners {
 		ethereumSigners[i].Power = sdk.NewUint(ethereumSigners[i].Power).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
 	}
 
-	return (types.EthereumSigners)(ethereumSigners)
+	return ethereumSigners
 }
 
 // GetSignerSetTxs returns all the signer set txs from the store
@@ -390,7 +390,7 @@ func (k Keeper) getDelegateKeys(ctx sdk.Context) (out []*types.MsgDelegateKeys) 
 	iter.Close()
 
 	for _, msg := range out {
-		msg.OrchestratorAddress = sdk.AccAddress(k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(msg.EthereumAddress))).String()
+		msg.OrchestratorAddress = k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(msg.EthereumAddress)).String()
 	}
 
 	// we iterated over a map, so now we have to sort to ensure the
@@ -415,8 +415,7 @@ func (k Keeper) GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAdd
 // OUTGOING TX //
 /////////////////
 
-// todo: outgoingTx prefix byte
-// GetOutgoingTx
+// GetOutgoingTx todo: outgoingTx prefix byte
 func (k Keeper) GetOutgoingTx(ctx sdk.Context, storeIndex []byte) (out types.OutgoingTx) {
 	if err := k.cdc.UnmarshalInterface(ctx.KVStore(k.storeKey).Get(types.MakeOutgoingTxKey(storeIndex)), &out); err != nil {
 		panic(err)
@@ -424,7 +423,6 @@ func (k Keeper) GetOutgoingTx(ctx sdk.Context, storeIndex []byte) (out types.Out
 	return out
 }
 
-// SetOutgoingTx
 func (k Keeper) SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx) {
 	any, err := types.PackOutgoingTx(outgoing)
 	if err != nil {
@@ -519,16 +517,17 @@ func (k Keeper) setLastObservedSignerSetTx(ctx sdk.Context, signerSet types.Sign
 // CreateContractCallTx xxx
 func (k Keeper) CreateContractCallTx(ctx sdk.Context, invalidationNonce uint64, invalidationScope tmbytes.HexBytes,
 	payload []byte, tokens []types.ERC20Token, fees []types.ERC20Token) *types.ContractCallTx {
+	params := k.GetParams(ctx)
 
 	newContractCallTx := &types.ContractCallTx{
 		InvalidationNonce: invalidationNonce,
 		InvalidationScope: invalidationScope,
 		Address:           k.getBridgeContractAddress(ctx),
 		Payload:           payload,
-		Timeout:           0,
+		Timeout:           params.TargetEthTxTimeout,
 		Tokens:            tokens,
 		Fees:              fees,
-		Height:            0,
+		Height:            uint64(ctx.BlockHeight()),
 	}
 
 	var tokenString []string
@@ -552,6 +551,7 @@ func (k Keeper) CreateContractCallTx(ctx sdk.Context, invalidationNonce uint64, 
 			sdk.NewAttribute(types.AttributeKeyContractCallPayload, string(payload)),
 			sdk.NewAttribute(types.AttributeKeyContractCallTokens, strings.Join(tokenString, "|")),
 			sdk.NewAttribute(types.AttributeKeyContractCallFees, strings.Join(feeString, "|")),
+			sdk.NewAttribute(types.AttributeKeyEthTxTimeout, strconv.FormatUint(params.TargetEthTxTimeout, 10)),
 		),
 	)
 	k.SetOutgoingTx(ctx, newContractCallTx)

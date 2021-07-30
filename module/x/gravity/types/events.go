@@ -29,4 +29,5 @@ const (
 	AttributeKeyContractCallPayload = "contract_call_payload"
 	AttributeKeyContractCallTokens = "contract_call_tokens"
 	AttributeKeyContractCallFees = "contract_call_fees"
+	AttributeKeyEthTxTimeout = "eth_tx_timeout"
 )
