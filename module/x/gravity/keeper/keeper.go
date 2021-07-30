@@ -34,6 +34,7 @@ type Keeper struct {
 	accountKeeper  types.AccountKeeper
 	bankKeeper     types.BankKeeper
 	SlashingKeeper types.SlashingKeeper
+	hooks          types.GravityHooks
 }
 
 // NewKeeper returns a new instance of the gravity keeper

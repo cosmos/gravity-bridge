@@ -46,11 +46,16 @@ func (a EthereumEventProcessor) Handle(ctx sdk.Context, eve types.EthereumEvent)
 			}
 		}
 
-		return a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins)
+		if err := a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
+			return err
+		}
+		a.keeper.AfterSendToCosmosEvent(ctx, *event)
+		return nil
 
 	case *types.BatchExecutedEvent:
 		a.keeper.batchTxExecuted(ctx, common.HexToAddress(event.TokenContract), event.BatchNonce)
-		return
+		a.keeper.AfterBatchExecutedEvent(ctx, *event)
+		return nil
 
 	case *types.ERC20DeployedEvent:
 		if err := a.verifyERC20DeployedEvent(ctx, event); err != nil {
@@ -59,10 +64,12 @@ func (a EthereumEventProcessor) Handle(ctx sdk.Context, eve types.EthereumEvent)
 
 		// add to denom-erc20 mapping
 		a.keeper.setCosmosOriginatedDenomToERC20(ctx, event.CosmosDenom, event.TokenContract)
+		a.keeper.AfterERC20DeployedEvent(ctx, *event)
 		return nil
 
 	case *types.ContractCallExecutedEvent:
-		// TODO: issue event hook for consumer modules
+		a.keeper.AfterContractCallExecutedEvent(ctx, *event)
+		return nil
 
 	case *types.SignerSetTxExecutedEvent:
 		// TODO here we should check the contents of the validator set against
@@ -72,11 +79,12 @@ func (a EthereumEventProcessor) Handle(ctx sdk.Context, eve types.EthereumEvent)
 			Nonce:   event.SignerSetTxNonce,
 			Signers: event.Members,
 		})
+		a.keeper.AfterSignerSetExecutedEvent(ctx, *event)
+		return nil
 
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %T", event)
 	}
-	return nil
 }
 
 func (a EthereumEventProcessor) verifyERC20DeployedEvent(ctx sdk.Context, event *types.ERC20DeployedEvent) error {
