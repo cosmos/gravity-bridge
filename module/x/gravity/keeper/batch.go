@@ -73,7 +73,7 @@ func (k Keeper) getBatchTimeoutHeight(ctx sdk.Context) uint64 {
 	projectedCurrentEthereumHeight := (projectedMillis / params.AverageEthereumBlockTime) + heights.EthereumHeight
 	// we convert our target time for block timeouts (lets say 12 hours) into a number of blocks to
 	// place on top of our projection of the current Ethereum block height.
-	blocksToAdd := params.TargetBatchTimeout / params.AverageEthereumBlockTime
+	blocksToAdd := params.TargetEthTxTimeout / params.AverageEthereumBlockTime
 	return projectedCurrentEthereumHeight + blocksToAdd
 }
 
