@@ -196,6 +196,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ rust-build, go-build, test-runner-build, solidity-build ]
     strategy:
+      fail-fast: false
       matrix:
         test_type: [
           # working tests
