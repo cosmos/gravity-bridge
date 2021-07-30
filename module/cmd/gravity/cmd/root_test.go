@@ -3,20 +3,22 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
+	"testing"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/cli"
-	"strings"
-	"testing"
 )
 
 type KeyOutput struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
+	Name    string `json:"name"`
+	Type    string `json:"type"`
 	Address string `json:"address"`
-	PubKey string `json:"pubkey"`
+	PubKey  string `json:"pubkey"`
 }
 
 func TestKeyGen(t *testing.T) {
@@ -25,7 +27,13 @@ func TestKeyGen(t *testing.T) {
 	// generate key from binary
 	keyCmd := keys.AddKeyCommand()
 	keyCmd.Flags().String(cli.OutputFlag, "json", "output flag")
-	keyCmd.SetArgs([]string{"--dry-run=true", "--output=json", "--recover=true", "orch"})
+	keyCmd.Flags().String(flags.FlagKeyringBackend, keyring.BackendTest, "Select keyring's backend (os|file|kwallet|pass|test|memory)")
+	keyCmd.SetArgs([]string{
+		"--dry-run=true",
+		"--output=json",
+		"--recover=true",
+		"orch",
+	})
 	keyCmd.SetIn(strings.NewReader(mnemonic + "\n"))
 
 	buf := bytes.NewBuffer(nil)

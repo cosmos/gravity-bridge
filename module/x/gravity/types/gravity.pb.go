@@ -421,7 +421,7 @@ func (m *SendToEthereum) GetErc20Fee() ERC20Token {
 	return ERC20Token{}
 }
 
-// ContractCallTx represents an individual arbitratry logic call transaction
+// ContractCallTx represents an individual arbitrary logic call transaction
 // from Cosmos to Ethereum.
 type ContractCallTx struct {
 	InvalidationNonce uint64                                               `protobuf:"varint,1,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`

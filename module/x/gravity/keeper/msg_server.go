@@ -70,7 +70,7 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 		nonce = valAccSeq - 1
 	}
 
-	signMsgBz := k.cdc.MustMarshalBinaryBare(&types.DelegateKeysSignMsg{
+	signMsgBz := k.cdc.MustMarshal(&types.DelegateKeysSignMsg{
 		ValidatorAddress: valAddr.String(),
 		// We decrement since we process the message after the ante-handler which
 		// increments the nonce.

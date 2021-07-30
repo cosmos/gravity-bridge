@@ -32,22 +32,24 @@ type Keeper struct {
 
 	storeKey       sdk.StoreKey
 	paramSpace     paramtypes.Subspace
-	cdc            codec.BinaryMarshaler
+	cdc            codec.Codec
 	accountKeeper  types.AccountKeeper
 	bankKeeper     types.BankKeeper
 	SlashingKeeper types.SlashingKeeper
+	PowerReduction sdk.Int
 	hooks          types.GravityHooks
 }
 
 // NewKeeper returns a new instance of the gravity keeper
 func NewKeeper(
-	cdc codec.BinaryMarshaler,
+	cdc codec.Codec,
 	storeKey sdk.StoreKey,
 	paramSpace paramtypes.Subspace,
 	accKeeper types.AccountKeeper,
 	stakingKeeper types.StakingKeeper,
 	bankKeeper types.BankKeeper,
 	slashingKeeper types.SlashingKeeper,
+	powerReduction sdk.Int,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
@@ -62,6 +64,7 @@ func NewKeeper(
 		StakingKeeper:  stakingKeeper,
 		bankKeeper:     bankKeeper,
 		SlashingKeeper: slashingKeeper,
+		PowerReduction: powerReduction,
 	}
 	k.EthereumEventProcessor = EthereumEventProcessor{
 		keeper:     k,
@@ -404,7 +407,7 @@ func (k Keeper) getDelegateKeys(ctx sdk.Context) (out []*types.MsgDelegateKeys) 
 // Adding here in gravity keeper as cdc is available inside endblocker.
 func (k Keeper) GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses {
 	unbondingValidators := stakingtypes.ValAddresses{}
-	k.cdc.MustUnmarshalBinaryBare(unbondingVals, &unbondingValidators)
+	k.cdc.MustUnmarshal(unbondingVals, &unbondingValidators)
 	return unbondingValidators
 }
 
@@ -429,7 +432,7 @@ func (k Keeper) SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx) {
 	}
 	ctx.KVStore(k.storeKey).Set(
 		types.MakeOutgoingTxKey(outgoing.GetStoreIndex()),
-		k.cdc.MustMarshalBinaryBare(any),
+		k.cdc.MustMarshal(any),
 	)
 }
 
@@ -447,7 +450,7 @@ func (k Keeper) PaginateOutgoingTxsByType(ctx sdk.Context, pageReq *query.PageRe
 		}
 
 		var any cdctypes.Any
-		k.cdc.MustUnmarshalBinaryBare(value, &any)
+		k.cdc.MustUnmarshal(value, &any)
 		var otx types.OutgoingTx
 		if err := k.cdc.UnpackAny(&any, &otx); err != nil {
 			panic(err)
@@ -467,7 +470,7 @@ func (k Keeper) IterateOutgoingTxsByType(ctx sdk.Context, prefixByte byte, cb fu
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var any cdctypes.Any
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &any)
+		k.cdc.MustUnmarshal(iter.Value(), &any)
 		var otx types.OutgoingTx
 		if err := k.cdc.UnpackAny(&any, &otx); err != nil {
 			panic(err)
@@ -485,7 +488,7 @@ func (k Keeper) iterateOutgoingTxs(ctx sdk.Context, cb func(key []byte, outgoing
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var any cdctypes.Any
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &any)
+		k.cdc.MustUnmarshal(iter.Value(), &any)
 		var otx types.OutgoingTx
 		if err := k.cdc.UnpackAny(&any, &otx); err != nil {
 			panic(err)
@@ -501,7 +504,7 @@ func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	key := []byte{types.LastObservedSignerSetKey}
 	if val := ctx.KVStore(k.storeKey).Get(key); val != nil {
 		var out types.SignerSetTx
-		k.cdc.MustUnmarshalBinaryBare(val, &out)
+		k.cdc.MustUnmarshal(val, &out)
 		return &out
 	}
 	return nil
@@ -510,7 +513,7 @@ func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 // setLastObservedSignerSetTx updates the last observed validator set in the stor e
 func (k Keeper) setLastObservedSignerSetTx(ctx sdk.Context, signerSet types.SignerSetTx) {
 	key := []byte{types.LastObservedSignerSetKey}
-	ctx.KVStore(k.storeKey).Set(key, k.cdc.MustMarshalBinaryBare(&signerSet))
+	ctx.KVStore(k.storeKey).Set(key, k.cdc.MustMarshal(&signerSet))
 }
 
 // CreateContractCallTx xxx

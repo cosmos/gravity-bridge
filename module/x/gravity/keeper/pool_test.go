@@ -25,8 +25,7 @@ func TestAddToOutgoingPool(t *testing.T) {
 
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	err = input.BankKeeper.SetBalances(ctx, mySender, allVouchers)
-	require.NoError(t, err)
+	require.NoError(t, fundAccount(ctx, input.BankKeeper, mySender, allVouchers))
 
 	// when
 	input.AddSendToEthTxsToPool(t, ctx, myTokenContractAddr, mySender, myReceiver, 2, 3, 2, 1)
@@ -44,11 +43,11 @@ func TestAddToOutgoingPool(t *testing.T) {
 		types.NewSendToEthereumTx(1, myTokenContractAddr, mySender, myReceiver, 100, 2),
 		types.NewSendToEthereumTx(4, myTokenContractAddr, mySender, myReceiver, 103, 1),
 	}
+
 	require.Equal(t, exp, got)
 	require.EqualValues(t, exp[0], got[0])
 	require.EqualValues(t, exp[1], got[1])
 	require.EqualValues(t, exp[2], got[2])
 	require.EqualValues(t, exp[3], got[3])
-
 	require.Len(t, got, 4)
 }

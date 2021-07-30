@@ -1,4 +1,4 @@
-package gravity
+package gravity_test
 
 import (
 	"bytes"
@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/peggyjv/gravity-bridge/module/app"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity"
 	"github.com/peggyjv/gravity-bridge/module/x/gravity/keeper"
 	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
@@ -33,7 +35,7 @@ func TestHandleMsgSendToEthereum(t *testing.T) {
 	// we start by depositing some funds into the users balance to send
 	input := keeper.CreateTestEnv(t)
 	ctx := input.Context
-	h := NewHandler(input.GravityKeeper)
+	h := gravity.NewHandler(input.GravityKeeper)
 	input.BankKeeper.MintCoins(ctx, types.ModuleName, startingCoins)
 	input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userCosmosAddr, startingCoins) // 150
 	balance1 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
@@ -79,7 +81,7 @@ func TestHandleMsgSendToEthereum(t *testing.T) {
 
 func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 	var (
-		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myOrchestratorAddr sdk.AccAddress = make([]byte, app.MaxAddrLen)
 		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
 		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
 		myNonce                           = uint64(1)
@@ -95,7 +97,7 @@ func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 	bk := input.BankKeeper
 	gk.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
 	gk.SetOrchestratorValidatorAddress(ctx, myValAddr, myOrchestratorAddr)
-	h := NewHandler(gk)
+	h := gravity.NewHandler(gk)
 
 	myErc20 := types.ERC20Token{
 		Amount:   amountA,
@@ -117,7 +119,7 @@ func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
 	_, err = h(ctx, msgSubmitEvent)
-	EndBlocker(ctx, gk)
+	gravity.EndBlocker(ctx, gk)
 	require.NoError(t, err)
 
 	// and attestation persisted
@@ -132,7 +134,7 @@ func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
 	_, err = h(ctx, msgSubmitEvent)
-	EndBlocker(ctx, gk)
+	gravity.EndBlocker(ctx, gk)
 	// then
 	require.Error(t, err)
 	balance = bk.GetAllBalances(ctx, myCosmosAddr)
@@ -158,7 +160,7 @@ func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 	_, err = h(ctx, msgSubmitEvent)
 	require.Error(t, err)
 
-	EndBlocker(ctx, gk)
+	gravity.EndBlocker(ctx, gk)
 	// then
 	balance = bk.GetAllBalances(ctx, myCosmosAddr)
 	require.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
@@ -179,7 +181,7 @@ func TestMsgSubmitEthreumEventSendToCosmosSingleValidator(t *testing.T) {
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
 	_, err = h(ctx, msgSubmitEvent)
-	EndBlocker(ctx, gk)
+	gravity.EndBlocker(ctx, gk)
 
 	// then
 	require.NoError(t, err)
@@ -207,7 +209,7 @@ func TestMsgSubmitEthreumEventSendToCosmosMultiValidator(t *testing.T) {
 	input.GravityKeeper.SetOrchestratorValidatorAddress(ctx, valAddr1, orchestratorAddr1)
 	input.GravityKeeper.SetOrchestratorValidatorAddress(ctx, valAddr2, orchestratorAddr2)
 	input.GravityKeeper.SetOrchestratorValidatorAddress(ctx, valAddr3, orchestratorAddr3)
-	h := NewHandler(input.GravityKeeper)
+	h := gravity.NewHandler(input.GravityKeeper)
 
 	myErc20 := types.ERC20Token{
 		Amount:   sdk.NewInt(12),
@@ -248,7 +250,7 @@ func TestMsgSubmitEthreumEventSendToCosmosMultiValidator(t *testing.T) {
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
 	_, err = h(ctx, ethClaim1Msg)
-	EndBlocker(ctx, input.GravityKeeper)
+	gravity.EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 	// and attestation persisted
 	a1 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim1.Hash())
@@ -260,7 +262,7 @@ func TestMsgSubmitEthreumEventSendToCosmosMultiValidator(t *testing.T) {
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
 	_, err = h(ctx, ethClaim2Msg)
-	EndBlocker(ctx, input.GravityKeeper)
+	gravity.EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 
 	// and attestation persisted
@@ -273,7 +275,7 @@ func TestMsgSubmitEthreumEventSendToCosmosMultiValidator(t *testing.T) {
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
 	_, err = h(ctx, ethClaim3Msg)
-	EndBlocker(ctx, input.GravityKeeper)
+	gravity.EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 
 	// and attestation persisted
@@ -290,12 +292,12 @@ func TestMsgSetDelegateAddresses(t *testing.T) {
 
 	var (
 		ethAddress                    = crypto.PubkeyToAddress(ethPrivKey.PublicKey)
-		cosmosAddress  sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		cosmosAddress  sdk.AccAddress = bytes.Repeat([]byte{0x1}, app.MaxAddrLen)
 		ethAddress2                   = crypto.PubkeyToAddress(ethPrivKey2.PublicKey)
-		cosmosAddress2 sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
-		cosmosAddress3 sdk.AccAddress = bytes.Repeat([]byte{0x3}, sdk.AddrLen)
+		cosmosAddress2 sdk.AccAddress = bytes.Repeat([]byte{0x2}, app.MaxAddrLen)
+		cosmosAddress3 sdk.AccAddress = bytes.Repeat([]byte{0x3}, app.MaxAddrLen)
 
-		valAddress   sdk.ValAddress = bytes.Repeat([]byte{0x3}, sdk.AddrLen)
+		valAddress   sdk.ValAddress = bytes.Repeat([]byte{0x3}, app.MaxAddrLen)
 		blockTime                   = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
 		blockTime2                  = time.Date(2020, 9, 15, 15, 20, 10, 0, time.UTC)
 		blockHeight  int64          = 200
@@ -325,13 +327,13 @@ func TestMsgSetDelegateAddresses(t *testing.T) {
 		ValidatorAddress: valAddress.String(),
 		Nonce:            0,
 	}
-	signMsgBz := input.Marshaler.MustMarshalBinaryBare(&ethMsg)
+	signMsgBz := input.Marshaler.MustMarshal(&ethMsg)
 	hash := crypto.Keccak256Hash(signMsgBz).Bytes()
 	sig, err := types.NewEthereumSignature(hash, ethPrivKey)
 	require.NoError(t, err)
 
 	k := input.GravityKeeper
-	h := NewHandler(input.GravityKeeper)
+	h := gravity.NewHandler(input.GravityKeeper)
 	ctx = ctx.WithBlockTime(blockTime)
 
 	msg := types.NewMsgDelegateKeys(valAddress, cosmosAddress, ethAddress.String(), sig)
@@ -357,7 +359,7 @@ func TestMsgSetDelegateAddresses(t *testing.T) {
 		ValidatorAddress: valAddress.String(),
 		Nonce:            0,
 	}
-	signMsgBz = input.Marshaler.MustMarshalBinaryBare(&ethMsg)
+	signMsgBz = input.Marshaler.MustMarshal(&ethMsg)
 	hash = crypto.Keccak256Hash(signMsgBz).Bytes()
 
 	sig, err = types.NewEthereumSignature(hash, ethPrivKey2)
