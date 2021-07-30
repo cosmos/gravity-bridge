@@ -33,7 +33,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			operators := make([]MockStakingValidatorData, len(spec.srcPowers))
 			for i, v := range spec.srcPowers {
-				cAddr := bytes.Repeat([]byte{byte(i)}, sdk.AddrLen)
+				cAddr := bytes.Repeat([]byte{byte(i)}, 20)
 				operators[i] = MockStakingValidatorData{
 					// any unique addr
 					Operator: cAddr,

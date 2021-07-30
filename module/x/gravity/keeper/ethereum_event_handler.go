@@ -18,11 +18,12 @@ type EthereumEventProcessor struct {
 }
 
 func (a EthereumEventProcessor) DetectMaliciousSupply(ctx sdk.Context, denom string, amount sdk.Int) (err error) {
-	currentSupply := a.keeper.bankKeeper.GetSupplyForDenom(ctx, denom)
-	newSupply := new(big.Int).Add(currentSupply.BigInt(), amount.BigInt())
+	currentSupply := a.keeper.bankKeeper.GetSupply(ctx, denom)
+	newSupply := new(big.Int).Add(currentSupply.Amount.BigInt(), amount.BigInt())
 	if newSupply.BitLen() > 256 {
 		return sdkerrors.Wrapf(types.ErrSupplyOverflow, "malicious supply of %s detected", denom)
 	}
+
 	return nil
 }
 
@@ -110,8 +111,7 @@ func (a EthereumEventProcessor) verifyERC20DeployedEvent(ctx sdk.Context, event 
 	// NOTE: This path is not encouraged and all supported assets should have
 	// metadata defined. If metadata cannot be defined, consider adding the token's
 	// metadata on the fly.
-
-	if md := a.keeper.bankKeeper.GetDenomMetaData(ctx, event.CosmosDenom); md.Base != "" {
+	if md, ok := a.keeper.bankKeeper.GetDenomMetaData(ctx, event.CosmosDenom); ok && md.Base != "" {
 		return verifyERC20Token(md, event)
 	}
 

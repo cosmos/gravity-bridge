@@ -1,4 +1,4 @@
-package gravity
+package gravity_test
 
 import (
 	"testing"
@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/peggyjv/gravity-bridge/module/app"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity"
 	"github.com/peggyjv/gravity-bridge/module/x/gravity/keeper"
 	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
@@ -43,7 +45,7 @@ func initializeTestingVars(t *testing.T) *testingVars {
 
 	tv.t = t
 
-	tv.myOrchestratorAddr = make([]byte, sdk.AddrLen)
+	tv.myOrchestratorAddr = make([]byte, app.MaxAddrLen)
 	tv.myValAddr = sdk.ValAddress(tv.myOrchestratorAddr) // revisit when proper mapping is impl in keeper
 
 	tv.erc20 = common.HexToAddress("0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e").Hex()
@@ -53,7 +55,7 @@ func initializeTestingVars(t *testing.T) *testingVars {
 	tv.ctx = tv.input.Context
 	tv.input.GravityKeeper.StakingKeeper = keeper.NewStakingKeeperMock(tv.myValAddr)
 	tv.input.GravityKeeper.SetOrchestratorValidatorAddress(tv.ctx, tv.myValAddr, tv.myOrchestratorAddr)
-	tv.h = NewHandler(tv.input.GravityKeeper)
+	tv.h = gravity.NewHandler(tv.input.GravityKeeper)
 
 	return &tv
 }
@@ -89,7 +91,7 @@ func addDenomToERC20Relation(tv *testingVars) {
 	_, err = tv.h(tv.ctx, msgSumbitEvent)
 	require.NoError(tv.t, err)
 
-	EndBlocker(tv.ctx, tv.input.GravityKeeper)
+	gravity.EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
 	// check if event vote record persisted
 	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, deployedEvent.Hash())
@@ -151,7 +153,7 @@ func lockCoinsInModule(tv *testingVars) {
 
 func acceptDepositEvent(tv *testingVars) {
 	var (
-		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myOrchestratorAddr sdk.AccAddress = make([]byte, app.MaxAddrLen)
 		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
 		myNonce                           = uint64(2)
 		anyETHAddr                        = "0xf9613b532673Cc223aBa451dFA8539B87e1F666D"
@@ -177,7 +179,7 @@ func acceptDepositEvent(tv *testingVars) {
 	msgSubmitEvent := &types.MsgSubmitEthereumEvent{eva, myOrchestratorAddr.String()}
 	_, err = tv.h(tv.ctx, msgSubmitEvent)
 	require.NoError(tv.t, err)
-	EndBlocker(tv.ctx, tv.input.GravityKeeper)
+	gravity.EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
 	// check that attestation persisted
 	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, sendToCosmosEvent.Hash())

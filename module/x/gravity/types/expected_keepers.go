@@ -28,13 +28,14 @@ type StakingKeeper interface {
 
 // BankKeeper defines the expected bank keeper methods
 type BankKeeper interface {
-	GetSupplyForDenom(tx sdk.Context, denom string) sdk.Int
+	GetSupply(ctx sdk.Context, denom string) sdk.Coin
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coins) error
 	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
 	BurnCoins(ctx sdk.Context, name string, amt sdk.Coins) error
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	GetDenomMetaData(ctx sdk.Context, denom string) bank.Metadata
+	GetDenomMetaData(ctx sdk.Context, denom string) (bank.Metadata, bool)
 }
 
 type SlashingKeeper interface {
