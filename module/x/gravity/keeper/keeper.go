@@ -7,6 +7,7 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -16,6 +17,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
@@ -509,4 +511,52 @@ func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 func (k Keeper) setLastObservedSignerSetTx(ctx sdk.Context, signerSet types.SignerSetTx) {
 	key := []byte{types.LastObservedSignerSetKey}
 	ctx.KVStore(k.storeKey).Set(key, k.cdc.MustMarshalBinaryBare(&signerSet))
+}
+
+// CreateContractCallTx xxx
+func (k Keeper) CreateContractCallTx(ctx sdk.Context, invalidationNonce uint64, invalidationScope tmbytes.HexBytes,
+	payload []byte, tokens []types.ERC20Token, fees []types.ERC20Token) *types.ContractCallTx {
+
+	newContractCallTx := &types.ContractCallTx{
+		InvalidationNonce: invalidationNonce,
+		InvalidationScope: invalidationScope,
+		Address:           k.getBridgeContractAddress(ctx),
+		Payload:           payload,
+		Timeout:           0,
+		Tokens:            tokens,
+		Fees:              fees,
+		Height:            0,
+	}
+
+	var tokenString []string
+	for _, token := range tokens {
+		tokenString = append(tokenString, token.String())
+	}
+
+	var feeString []string
+	for _, fee := range fees {
+		feeString = append(feeString, fee.String())
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMultisigUpdateRequest,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyContract, k.getBridgeContractAddress(ctx)),
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
+			sdk.NewAttribute(types.AttributeKeyContractCallInvalidationNonce, fmt.Sprint(invalidationNonce)),
+			sdk.NewAttribute(types.AttributeKeyContractCallInvalidationScope, fmt.Sprint(invalidationScope)),
+			sdk.NewAttribute(types.AttributeKeyContractCallPayload, string(payload)),
+			sdk.NewAttribute(types.AttributeKeyContractCallTokens, strings.Join(tokenString, "|")),
+			sdk.NewAttribute(types.AttributeKeyContractCallFees, strings.Join(feeString, "|")),
+		),
+	)
+	k.SetOutgoingTx(ctx, newContractCallTx)
+	k.Logger(ctx).Info(
+		"ContractCallTx created",
+		"invalidation_nonce", newContractCallTx.InvalidationNonce,
+		"invalidation_scope", newContractCallTx.InvalidationScope,
+		// todo: fill out all fields
+	)
+	return newContractCallTx
 }

@@ -65,7 +65,7 @@ message SendToEthereum {
   ERC20Token erc20_fee = 5 [ (gogoproto.nullable) = false ];
 }
 
-// ContractCallTx represents an individual arbitratry logic call transaction
+// ContractCallTx represents an individual arbitrary logic call transaction
 // from Cosmos to Ethereum.
 message ContractCallTx {
   uint64 invalidation_nonce = 1;
