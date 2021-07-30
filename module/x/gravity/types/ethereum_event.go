@@ -65,7 +65,7 @@ func (ccee *ContractCallExecutedEvent) Hash() tmbytes.HexBytes {
 	path := bytes.Join(
 		[][]byte{
 			sdk.Uint64ToBigEndian(ccee.EventNonce),
-			ccee.InvalidationId,
+			ccee.InvalidationScope,
 			sdk.Uint64ToBigEndian(ccee.InvalidationNonce),
 			sdk.Uint64ToBigEndian(ccee.EthereumHeight),
 		},
