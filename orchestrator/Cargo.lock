@@ -949,24 +949,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmos-sdk-proto"
-version = "0.5.0"
-source = "git+http://github.com/cosmos/cosmos-rust?branch=zaki/update-tm-0.21#32ded1e7766632221de25332354add128f812ed0"
-dependencies = [
- "prost",
- "prost-types",
- "tendermint-proto",
- "tonic",
-]
-
-[[package]]
 name = "cosmos_gravity"
 version = "0.1.0"
 dependencies = [
  "actix",
  "bytes 1.0.1",
  "clarity",
- "cosmos-sdk-proto 0.5.0 (git+http://github.com/cosmos/cosmos-rust?branch=main)",
+ "cosmos-sdk-proto",
  "deep_space 2.4.3",
  "env_logger",
  "ethereum_gravity",
@@ -1113,12 +1102,12 @@ dependencies = [
 [[package]]
 name = "deep_space"
 version = "2.4.3"
-source = "git+https://github.com/iqlusioninc/deep_space/?branch=zaki/tendermint_0_21#e27e7d50a2eda22ee42c1a610b78ec35d70436ea"
+source = "git+https://github.com/iqlusioninc/deep_space/?branch=zaki/tendermint_0_21#3aaf866c5c2bed69beda86d46d0f4a9465806e70"
 dependencies = [
  "base64",
  "bech32 0.8.0",
  "bytes 1.0.1",
- "cosmos-sdk-proto 0.5.0 (git+http://github.com/cosmos/cosmos-rust?branch=zaki/update-tm-0.21)",
+ "cosmos-sdk-proto",
  "hmac 0.11.0",
  "log",
  "num-bigint 0.4.0",
@@ -1555,7 +1544,7 @@ name = "gravity_proto"
 version = "0.1.0"
 dependencies = [
  "bytes 1.0.1",
- "cosmos-sdk-proto 0.5.0 (git+http://github.com/cosmos/cosmos-rust?branch=main)",
+ "cosmos-sdk-proto",
  "prost",
  "prost-types",
  "tonic",
@@ -1567,7 +1556,7 @@ version = "0.1.0"
 dependencies = [
  "actix",
  "clarity",
- "cosmos-sdk-proto 0.5.0 (git+http://github.com/cosmos/cosmos-rust?branch=main)",
+ "cosmos-sdk-proto",
  "deep_space 2.4.3",
  "gravity_proto",
  "log",
