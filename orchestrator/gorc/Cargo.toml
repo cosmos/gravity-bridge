@@ -17,7 +17,7 @@ gravity_utils = { path = "../gravity_utils" }
 orchestrator = { path = "../orchestrator" }
 relayer = { path = "../relayer" }
 
-deep_space = "2.4.3"
+deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="zaki/tendermint_0_21"}
 clarity = "0.4.12"
 actix-rt = "2.2"
 rpassword = "5"
