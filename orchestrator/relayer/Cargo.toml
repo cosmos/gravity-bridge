@@ -18,7 +18,7 @@ cosmos_gravity = { path = "../cosmos_gravity" }
 gravity_utils = { path = "../gravity_utils" }
 gravity_proto = { path = "../gravity_proto" }
 
-deep_space = "2.4.3"
+deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="zaki/tendermint_0_21"}
 serde_derive = "1.0"
 clarity = "0.4.11"
 docopt = "1"
