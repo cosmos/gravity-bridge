@@ -37,7 +37,7 @@ mod valset_stress;
 /// the timeout for individual requests
 const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
 /// the timeout for the total system
-const TOTAL_TIMEOUT: Duration = Duration::from_secs(1800);
+const TOTAL_TIMEOUT: Duration = Duration::from_secs(300);
 
 lazy_static! {
     static ref COSMOS_NODE_GRPC: String =
