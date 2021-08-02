@@ -1,5 +1,12 @@
 .DEFAULT_GOAL := e2e_slow_loris
 
+e2e_build_images:
+	@docker build -t gravity:prebuilt -f module/Dockerfile module/
+	@docker build -t solidity:prebuilt -f solidity/Dockerfile solidity/
+	@docker build -t orchestrator:prebuilt -f orchestrator/Dockerfile orchestrator/
+	@docker build -t test-runner:prebuilt -f orchestrator/testnet.Dockerfile orchestrator/
+
+
 e2e_slow_loris:
 	@make -s e2e_happy_path
 	@make -s e2e_v2_happy_path
@@ -9,7 +16,7 @@ e2e_slow_loris:
 	@make -s e2e_validator_out
 	@make -s e2e_valset_stress
 
-e2e_clean_slate:
+e2e_clean_slate: e2e_build_images
 	@docker rm --force \
 		$(shell docker ps -qa --filter="name=contract_deployer") \
 		$(shell docker ps -qa --filter="name=ethereum") \
