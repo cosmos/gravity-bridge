@@ -334,7 +334,12 @@ func (k Keeper) DenomToERC20Params(c context.Context, req *types.DenomToERC20Par
 		}, nil
 	}
 
-	// TODO: verify req.Denom exists (meaning an account holds it) after we upgrade to 0.4.3
+	if supply := k.bankKeeper.GetSupply(ctx, req.Denom); supply.IsZero() {
+		return nil, sdkerrors.Wrapf(
+			types.ErrInvalidERC20Event,
+			"no supply exists for token %s without metadata", req.Denom,
+		)
+	}
 
 	// no metadata, go with a zero decimal, no symbol erc-20
 	res := &types.DenomToERC20ParamsResponse{

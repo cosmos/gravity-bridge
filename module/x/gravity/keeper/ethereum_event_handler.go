@@ -96,8 +96,6 @@ func (a EthereumEventProcessor) verifyERC20DeployedEvent(ctx sdk.Context, event 
 		)
 	}
 
-	// TODO: verify event.CosmosDenom exists (meaning an account holds it) after we upgrade to 0.4.3
-
 	// We expect that all Cosmos-based tokens have metadata defined. In the case
 	// a token does not have metadata defined, e.g. an IBC token, we successfully
 	// handle the token under the following conditions:
@@ -113,6 +111,13 @@ func (a EthereumEventProcessor) verifyERC20DeployedEvent(ctx sdk.Context, event 
 	// metadata on the fly.
 	if md, ok := a.keeper.bankKeeper.GetDenomMetaData(ctx, event.CosmosDenom); ok && md.Base != "" {
 		return verifyERC20Token(md, event)
+	}
+
+	if supply := a.keeper.bankKeeper.GetSupply(ctx, event.CosmosDenom); supply.IsZero() {
+		return sdkerrors.Wrapf(
+			types.ErrInvalidERC20Event,
+			"no supply exists for token %s without metadata", event.CosmosDenom,
+		)
 	}
 
 	if event.Erc20Name != event.CosmosDenom {

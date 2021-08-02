@@ -940,8 +940,7 @@ checksum = "a2df960f5d869b2dd8532793fde43eb5427cceb126c929747a26823ab0eeb536"
 [[package]]
 name = "cosmos-sdk-proto"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78f4841c74e806ccb9198968db8312355830751a3e9849789c328692a65e4c6a"
+source = "git+http://github.com/cosmos/cosmos-rust?branch=main#c0c0e4e04fe0a79d4d619846f9337c94f1e13ecd"
 dependencies = [
  "prost",
  "prost-types",
@@ -1103,8 +1102,7 @@ dependencies = [
 [[package]]
 name = "deep_space"
 version = "2.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea6a81d9084ce357c7f6b07c2819f257846839fa76b209a3c89e9022c65be19b"
+source = "git+https://github.com/iqlusioninc/deep_space/?branch=zaki/tendermint_0_21#3aaf866c5c2bed69beda86d46d0f4a9465806e70"
 dependencies = [
  "base64",
  "bech32 0.8.0",
@@ -3320,9 +3318,9 @@ dependencies = [
 
 [[package]]
 name = "tendermint-proto"
-version = "0.19.0"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32bbc1bc55f09de4d00b5d69aa6b60392ba37c5e4761d869f76065d352bd3360"
+checksum = "bfd0371c6b0c7fc4f6b053b8a1bc868a2a47c49a1408c4cd6f595d9f3bd3c238"
 dependencies = [
  "anomaly",
  "bytes 1.0.1",

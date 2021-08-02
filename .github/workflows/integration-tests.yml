@@ -196,18 +196,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ rust-build, go-build, test-runner-build, solidity-build ]
     strategy:
+      fail-fast: false
       matrix:
         test_type: [
           # working tests
-            "ORCHESTRATOR_KEYS",
-            "ARBITRARY_LOGIC",
+            "OrchestratorKeys",
+            "ArbitraryLogic",
 
           # non-working tests
-#            "VALIDATOR_OUT",
-#            "BATCH_STRESS",
-#            "VALSET_STRESS",
-#            "HAPPY_PATH",
-#            "V2_HAPPY_PATH",
+#            "ValidatorOut",
+#            "BatchStress",
+#            "ValsetStress",
+#            "HappyPath",
+#            "V2HappyPath",
         ]
     steps:
       - name: Set up Go 1.16
@@ -268,6 +269,4 @@ jobs:
       - name: build go test binary
         run: cd testnet && go test -c
       - name: Run all up ci test
-        run: ./testnet/testnet.test -test.run PrebuiltCi -test.failfast -test.v
-        env:
-          TEST_TYPE: ${{ matrix.test_type}}
+        run: ./testnet/testnet.test -test.run Test${{ matrix.test_type }} -test.failfast -test.v

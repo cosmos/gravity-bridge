@@ -1,6 +1,6 @@
 use crate::{get_fee, one_eth, one_hundred_eth, utils::*, TOTAL_TIMEOUT};
 use clarity::Address as EthAddress;
-use cosmos_gravity::send::{send_request_batch, send_to_eth};
+use cosmos_gravity::send::{send_request_batch_tx, send_to_eth};
 use deep_space::coin::Coin;
 use deep_space::Contact;
 use ethereum_gravity::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
@@ -166,7 +166,7 @@ pub async fn transaction_stress_test(
 
     for denom in denoms {
         info!("Requesting batch for {}", denom);
-        let res = send_request_batch(keys[0].validator_key, denom, get_fee(), &contact)
+        let res = send_request_batch_tx(keys[0].validator_key, denom, get_fee(), &contact)
             .await
             .unwrap();
         info!("batch request response is {:?}", res);
