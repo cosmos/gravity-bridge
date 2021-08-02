@@ -8,7 +8,7 @@ use crate::TOTAL_TIMEOUT;
 use crate::{get_fee, utils::ValidatorKeys};
 use clarity::Address as EthAddress;
 use clarity::Uint256;
-use cosmos_gravity::send::{send_request_batch, send_to_eth};
+use cosmos_gravity::send::{send_request_batch_tx, send_to_eth};
 use deep_space::coin::Coin;
 use deep_space::Contact;
 use ethereum_gravity::{deploy_erc20::deploy_erc20, utils::get_event_nonce};
@@ -155,7 +155,7 @@ pub async fn happy_path_test_v2(
         amount_to_bridge, token_to_send_to_eth
     );
 
-    let res = send_request_batch(
+    let res = send_request_batch_tx(
         keys[0].validator_key,
         token_to_send_to_eth.clone(),
         get_fee(),

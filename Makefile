@@ -11,9 +11,9 @@ e2e_slow_loris:
 	@make -s e2e_happy_path
 	@make -s e2e_v2_happy_path
 	@make -s e2e_orchestrator_keys
-	@make -s e2e_batch_stress
 	@make -s e2e_arbitrary_logic
 	@make -s e2e_validator_out
+	@make -s e2e_batch_stress
 	@make -s e2e_valset_stress
 
 e2e_clean_slate: e2e_build_images

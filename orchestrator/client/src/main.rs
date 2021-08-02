@@ -15,7 +15,7 @@ extern crate lazy_static;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::Uint256;
-use cosmos_gravity::send::{send_request_batch, send_to_eth};
+use cosmos_gravity::send::{send_request_batch_tx, send_to_eth};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
@@ -250,7 +250,7 @@ async fn main() {
 
         if !args.flag_no_batch {
             println!("Requesting a batch to push transaction along immediately");
-            send_request_batch(cosmos_key, gravity_denom, bridge_fee, &contact)
+            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact)
                 .await
                 .expect("Failed to request batch");
         } else {
