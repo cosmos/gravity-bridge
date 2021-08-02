@@ -189,7 +189,7 @@ var (
 		SignedSignerSetTxsWindow:                  10,
 		UnbondSlashingSignerSetTxsWindow:          15,
 		EthereumSignaturesWindow:                  10,
-		TargetBatchTimeout:                        60001,
+		TargetEthTxTimeout:                        60001,
 		AverageBlockTime:                          5000,
 		AverageEthereumBlockTime:                  15000,
 		SlashFractionSignerSetTx:                  sdk.NewDecWithPrec(1, 2),

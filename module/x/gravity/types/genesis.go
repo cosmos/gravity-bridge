@@ -41,8 +41,8 @@ var (
 	// ParamsStoreKeyEthereumSignaturesWindow stores the signed blocks window
 	ParamsStoreKeyEthereumSignaturesWindow = []byte("EthereumSignaturesWindow")
 
-	// ParamsStoreKeyTargetBatchTimeout stores the signed blocks window
-	ParamsStoreKeyTargetBatchTimeout = []byte("TargetBatchTimeout")
+	// ParamsStoreKeyTargetEthTxTimeout stores the target ethereum transaction timeout
+	ParamsStoreKeyTargetEthTxTimeout = []byte("TargetEthTxTimeout")
 
 	// ParamsStoreKeyAverageBlockTime stores the signed blocks window
 	ParamsStoreKeyAverageBlockTime = []byte("AverageBlockTime")
@@ -119,7 +119,7 @@ func DefaultParams() *Params {
 		SignedSignerSetTxsWindow:                  10000,
 		SignedBatchesWindow:                       10000,
 		EthereumSignaturesWindow:                  10000,
-		TargetBatchTimeout:                        43200000,
+		TargetEthTxTimeout:                        43200000,
 		AverageBlockTime:                          5000,
 		AverageEthereumBlockTime:                  15000,
 		SlashFractionSignerSetTx:                  sdk.NewDec(1).Quo(sdk.NewDec(1000)),
@@ -144,7 +144,7 @@ func (p Params) ValidateBasic() error {
 	if err := validateBridgeChainID(p.BridgeChainId); err != nil {
 		return sdkerrors.Wrap(err, "bridge chain id")
 	}
-	if err := validateTargetBatchTimeout(p.TargetBatchTimeout); err != nil {
+	if err := validateTargetEthTxTimeout(p.TargetEthTxTimeout); err != nil {
 		return sdkerrors.Wrap(err, "Batch timeout")
 	}
 	if err := validateAverageBlockTime(p.AverageBlockTime); err != nil {
@@ -198,7 +198,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedBatchesWindow, &p.SignedBatchesWindow, validateSignedBatchesWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeyEthereumSignaturesWindow, &p.EthereumSignaturesWindow, validateEthereumSignaturesWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeyAverageBlockTime, &p.AverageBlockTime, validateAverageBlockTime),
-		paramtypes.NewParamSetPair(ParamsStoreKeyTargetBatchTimeout, &p.TargetBatchTimeout, validateTargetBatchTimeout),
+		paramtypes.NewParamSetPair(ParamsStoreKeyTargetEthTxTimeout, &p.TargetEthTxTimeout, validateTargetEthTxTimeout),
 		paramtypes.NewParamSetPair(ParamsStoreKeyAverageEthereumBlockTime, &p.AverageEthereumBlockTime, validateAverageEthereumBlockTime),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionSignerSetTx, &p.SlashFractionSignerSetTx, validateSlashFractionSignerSetTx),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionBatch, &p.SlashFractionBatch, validateSlashFractionBatch),
@@ -248,7 +248,7 @@ func validateBridgeChainID(i interface{}) error {
 	return nil
 }
 
-func validateTargetBatchTimeout(i interface{}) error {
+func validateTargetEthTxTimeout(i interface{}) error {
 	val, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
