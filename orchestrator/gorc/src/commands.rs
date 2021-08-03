@@ -9,6 +9,7 @@ mod sign_delegate_keys;
 mod tests;
 mod tx;
 mod version;
+mod cosmos_to_eth;
 
 use self::{
     keys::KeysCmd, orchestrator::OrchestratorCmd, query::QueryCmd, tests::TestsCmd, tx::TxCmd,
@@ -47,6 +48,9 @@ pub enum GorcCmd {
 
     #[options(help = "display version information")]
     Version(VersionCmd),
+
+    #[options(help = "Send Cosmos to Ethereum")]
+    CosmosToEth(cosmos_to_eth::CosmosToEthCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
