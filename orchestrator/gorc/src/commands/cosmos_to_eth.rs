@@ -1,5 +1,5 @@
 use crate::application::APP;
-use abscissa_core::{Application, Command, Options, Runnable};
+use abscissa_core::{Application, Command, Options, Runnable, status_err};
 use clarity::Address as EthAddress;
 use clarity::Uint256;
 use cosmos_gravity::send::{send_request_batch, send_to_eth};
@@ -12,7 +12,7 @@ const TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Command, Debug, Default, Options)]
 pub struct CosmosToEthCmd {
-    #[options(free, help = "add [name]")]
+    #[options(free, help = "cosmos-to-eth (name)")]
     pub args: Vec<String>,
     pub flag_no_batch: bool,
 }
@@ -173,6 +173,10 @@ impl Runnable for CosmosToEthCmd {
         } else {
             println!("--no-batch specified, your transfer will wait until someone requests a batch for this token type")
         }
+        })
+        .unwrap_or_else(|e| {
+            status_err!("executor exited with error: {}", e);
+            std::process::exit(1);
         });
     }
 }
