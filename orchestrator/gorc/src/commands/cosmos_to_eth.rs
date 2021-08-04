@@ -4,7 +4,7 @@ use clarity::Address as EthAddress;
 use clarity::Uint256;
 use cosmos_gravity::send::{send_request_batch, send_to_eth};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
-use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
+use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
 use gravity_proto::gravity::DenomToErc20Request;
 use std::{process::exit, time::Duration, u128};
 
@@ -176,7 +176,6 @@ impl Runnable for CosmosToEthCmd {
         })
         .unwrap_or_else(|e| {
             status_err!("executor exited with error: {}", e);
-            std::process::exit(1);
         });
     }
 }
