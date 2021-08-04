@@ -246,7 +246,7 @@ pub struct SendToCosmosEvent {
 }
 
 impl SendToCosmosEvent {
-    pub fn from_log(input: &Log) -> Result<SendToCosmosEvent, GravityError> {
+    pub fn from_log(input: &Log, prefix: &str) -> Result<SendToCosmosEvent, GravityError> {
         let topics = (
             input.topics.get(1),
             input.topics.get(2),
@@ -259,8 +259,7 @@ impl SendToCosmosEvent {
             // create an address from bytes.
             let mut c_address_bytes: [u8; 20] = [0; 20];
             c_address_bytes.copy_from_slice(&destination_data[12..32]);
-            let destination =
-                CosmosAddress::from_bytes(c_address_bytes, CosmosAddress::DEFAULT_PREFIX).unwrap();
+            let destination = CosmosAddress::from_bytes(c_address_bytes, prefix).unwrap();
             let amount = Uint256::from_bytes_be(&input.data[..32]);
             let event_nonce = Uint256::from_bytes_be(&input.data[32..]);
             let block_height = if let Some(bn) = input.block_number.clone() {
@@ -291,10 +290,13 @@ impl SendToCosmosEvent {
             ))
         }
     }
-    pub fn from_logs(input: &[Log]) -> Result<Vec<SendToCosmosEvent>, GravityError> {
+    pub fn from_logs(
+        input: &[Log],
+        prefix: &str,
+    ) -> Result<Vec<SendToCosmosEvent>, GravityError> {
         let mut res = Vec::new();
         for item in input {
-            res.push(SendToCosmosEvent::from_log(item)?);
+            res.push(Self::from_log(item, prefix)?);
         }
         Ok(res)
     }

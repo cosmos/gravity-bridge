@@ -30,7 +30,8 @@ pub async fn check_for_events(
     starting_block: Uint256,
     msg_sender: tokio::sync::mpsc::Sender<Vec<Msg>>,
 ) -> Result<Uint256, GravityError> {
-    let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
+    let prefix = contact.get_prefix();
+    let our_cosmos_address = cosmos_key.to_address(&prefix).unwrap();
     let latest_block = get_block_number_with_retry(web3).await;
     let latest_block = latest_block - get_block_delay(web3).await;
 
@@ -87,7 +88,7 @@ pub async fn check_for_events(
     if let (Ok(valsets), Ok(batches), Ok(deposits), Ok(deploys), Ok(logic_calls)) =
         (valsets, batches, deposits, erc20_deployed, logic_calls)
     {
-        let deposits = SendToCosmosEvent::from_logs(&deposits)?;
+        let deposits = SendToCosmosEvent::from_logs(&deposits, &prefix)?;
         debug!("parsed deposits {:?}", deposits);
 
         let batches = TransactionBatchExecutedEvent::from_logs(&batches)?;
