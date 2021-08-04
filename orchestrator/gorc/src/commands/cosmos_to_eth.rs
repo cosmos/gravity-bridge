@@ -2,13 +2,39 @@ use crate::application::APP;
 use abscissa_core::{Application, Command, Options, Runnable};
 use clarity::Address as EthAddress;
 use clarity::Uint256;
+use cosmos_gravity::send::{send_request_batch, send_to_eth};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
+use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
 use gravity_proto::gravity::DenomToErc20Request;
+use std::{process::exit, time::Duration, u128};
+
+const TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Command, Debug, Default, Options)]
 pub struct CosmosToEthCmd {
     #[options(free, help = "add [name]")]
     pub args: Vec<String>,
+    pub flag_no_batch: bool,
+}
+
+pub fn one_eth() -> f64 {
+    1000000000000000000f64
+}
+
+pub fn one_atom() -> f64 {
+    1000000f64
+}
+
+pub fn print_atom(input: Uint256) -> String {
+    let float: f64 = input.to_string().parse().unwrap();
+    let res = float / one_atom();
+    format!("{}", res)
+}
+
+pub fn print_eth(input: Uint256) -> String {
+    let float: f64 = input.to_string().parse().unwrap();
+    let res = float / one_eth();
+    format!("{}", res)
 }
 
 pub fn fraction_to_exponent(num: f64, exponent: u8) -> Uint256 {
@@ -27,8 +53,8 @@ impl Runnable for CosmosToEthCmd {
         let config = APP.config();
         let gravity_denom = self.args.get(0).expect("name is required");
         let is_cosmos_originated = !gravity_denom.starts_with("gravity");
-        let flag_amount = self.args.get(1).expect("name is required");
-        let flag_amount = flag_amount.parse().expect("cannot parse flag amount");
+        let flag_amount = self.args.get(1).expect("amount is required");
+        let flag_amount = flag_amount.parse().expect("cannot parse amount");
         let amount = if is_cosmos_originated {
             fraction_to_exponent(flag_amount, 6)
         } else {
@@ -40,11 +66,11 @@ impl Runnable for CosmosToEthCmd {
                 .expect("Failed to parse cosmos key phrase, does it have a password?");
         let cosmos_prefix = config.cosmos.prefix.trim();
         let cosmos_address = cosmos_key.to_address(&cosmos_prefix).unwrap();
-
         println!("Sending from Cosmos address {}", cosmos_address);
+        abscissa_tokio::run_with_actix(&APP, async {
         let connections = create_rpc_connections(
-            &self.args.get(3).expect("name is required"),
-            Some(self.args.get(4).expect("name is required")),
+            cosmos_prefix.to_string(),
+            Some(config.cosmos.grpc),
             None,
             TIMEOUT,
         )
@@ -79,7 +105,8 @@ impl Runnable for CosmosToEthCmd {
             amount: 1u64.into(),
         };
 
-        let eth_dest: EthAddress = self.args.get(5).parse().expect("name is required");
+        let eth_dest = self.args.get(3).expect("ethereum destination is required");
+        let eth_dest: EthAddress = eth_dest.parse().expect("cannot parse ethereum address");
         check_for_fee_denom(&gravity_denom, cosmos_address, &contact).await;
 
         let balances = contact
@@ -94,6 +121,9 @@ impl Runnable for CosmosToEthCmd {
         }
 
         println!("Cosmos balances {:?}", balances);
+
+        let times = self.args.get(4).expect("times is required");
+        let times = times.parse::<usize>().expect("cannot parse times");
 
         if found.is_none() {
             panic!("You don't have any {} tokens!", gravity_denom);
@@ -116,7 +146,7 @@ impl Runnable for CosmosToEthCmd {
         for _ in 0..times {
             println!(
                 "Locking {} / {} into the batch pool",
-                args.flag_amount.unwrap(),
+                flag_amount,
                 gravity_denom
             );
             let res = send_to_eth(
@@ -133,7 +163,7 @@ impl Runnable for CosmosToEthCmd {
             }
         }
 
-        if !args.flag_no_batch {
+        if !self.flag_no_batch {
             println!("Requesting a batch to push transaction along immediately");
             send_request_batch(cosmos_key, gravity_denom, bridge_fee, &contact)
                 .await
@@ -141,5 +171,6 @@ impl Runnable for CosmosToEthCmd {
         } else {
             println!("--no-batch specified, your transfer will wait until someone requests a batch for this token type")
         }
+        });
     }
 }
