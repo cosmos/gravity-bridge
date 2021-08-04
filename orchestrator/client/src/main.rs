@@ -15,16 +15,18 @@ extern crate lazy_static;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::Uint256;
-use cosmos_gravity::send::{send_request_batch, send_to_eth};
+use cosmos_gravity::send::{send_request_batch_tx, send_to_eth};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
 use env_logger::Env;
 use ethereum_gravity::deploy_erc20::deploy_erc20;
 use ethereum_gravity::send_to_cosmos::send_to_cosmos;
+use gravity_proto::gravity::DenomToErc20ParamsRequest;
 use gravity_proto::gravity::DenomToErc20Request;
 use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
 use std::time::Instant;
+use std::convert::TryFrom;
 use std::{process::exit, time::Duration, u128};
 use tokio::time::sleep as delay_for;
 use web30::{client::Web3, jsonrpc::error::Web3Error};
@@ -80,9 +82,6 @@ struct Args {
     flag_eth_destination: String,
     flag_no_batch: bool,
     flag_times: usize,
-    flag_erc20_name: String,
-    flag_erc20_symbol: String,
-    flag_erc20_decimals: u8,
     flag_cosmos_prefix: String,
     cmd_eth_to_cosmos: bool,
     cmd_cosmos_to_eth: bool,
@@ -94,7 +93,7 @@ lazy_static! {
     "Usage:
         {} cosmos-to-eth --cosmos-phrase=<key> --cosmos-grpc=<url> --cosmos-prefix=<prefix> --cosmos-denom=<denom> --amount=<amount> --eth-destination=<dest> [--no-batch] [--times=<number>]
         {} eth-to-cosmos --ethereum-key=<key> --ethereum-rpc=<url> --cosmos-prefix=<prefix> --contract-address=<addr> --erc20-address=<addr> --amount=<amount> --cosmos-destination=<dest> [--times=<number>]
-        {} deploy-erc20-representation --cosmos-grpc=<url> --cosmos-prefix=<prefix> --cosmos-denom=<denom> --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr> --erc20-name=<name> --erc20-symbol=<symbol> --erc20-decimals=<decimals>
+        {} deploy-erc20-representation --cosmos-grpc=<url> --cosmos-prefix=<prefix> --cosmos-denom=<denom> --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr>
         Options:
             -h --help                   Show this screen.
             --cosmos-phrase=<ckey>      The mnenmonic of the Cosmos account key of the validator
@@ -111,9 +110,6 @@ lazy_static! {
             --eth-destination=<dest>    A cosmos address to send tokens to
             --no-batch                  Don't request a batch when sending to Ethereum
             --times=<number>            The number of times this send should be preformed, useful for stress testing
-            --erc20-name=<name>         The 'name' value for the deployed ERC20 contract, must match Cosmos denom metadata
-            --erc20-symbol=<symbol>     The 'symbol 'value for the deployed ERC20 contract, must match the Cosmos denom metadata
-            --erc20-decimals=<decimals> The number of decimals the deployed ERC20 token will have, must match the resolution of the Cosmos asset to be adopted by the chain  
         Description:
             cosmos-to-eth               Locks up a Cosmos asset in the batch pool. Optionally this command will also request a batch.
             eth-to-cosmos               Sends an Ethereum ERC20 asset to a Cosmos destination address
@@ -254,7 +250,7 @@ async fn main() {
 
         if !args.flag_no_batch {
             println!("Requesting a batch to push transaction along immediately");
-            send_request_batch(cosmos_key, gravity_denom, bridge_fee, &contact)
+            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact)
                 .await
                 .expect("Failed to request batch");
         } else {
@@ -371,12 +367,20 @@ async fn main() {
             exit(1);
         }
 
+        let res = grpc
+            .denom_to_erc20_params(DenomToErc20ParamsRequest {
+                denom: denom.clone(),
+            })
+            .await
+            .expect("Couldn't get erc-20 params")
+            .into_inner();
+
         println!("Starting deploy of ERC20");
         let res = deploy_erc20(
-            denom.clone(),
-            args.flag_erc20_name,
-            args.flag_erc20_symbol,
-            args.flag_erc20_decimals,
+            res.base_denom,
+            res.erc20_name,
+            res.erc20_symbol,
+            u8::try_from(res.erc20_decimals).unwrap(),
             contract_address,
             &web3,
             Some(TIMEOUT),

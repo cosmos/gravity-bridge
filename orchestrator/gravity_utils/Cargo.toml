@@ -8,9 +8,8 @@ edition = "2018"
 
 [dependencies]
 gravity_proto = {path = "../gravity_proto/"}
-cosmos-sdk-proto = "0.5"
-
-deep_space = "2.4.3"
+cosmos-sdk-proto = {git="http://github.com/cosmos/cosmos-rust", branch="main"}
+deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="zaki/tendermint_0_21"}
 web30 = "0.14.4"
 clarity = "0.4.11"
 num256 = "0.3"

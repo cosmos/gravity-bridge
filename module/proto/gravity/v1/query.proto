@@ -105,6 +105,11 @@ service Query {
     // option (google.api.http).get =
     // "/gravity/v1/cosmos_originated/erc20_to_denom";
   }
+
+  // DenomToERC20Params implements a query that allows ERC-20 parameter information
+  // to be retrieved by a Cosmos base denomination.
+  rpc DenomToERC20Params(DenomToERC20ParamsRequest) returns (DenomToERC20ParamsResponse) {}
+
   // Query for info about denoms tracked by gravity
   rpc DenomToERC20(DenomToERC20Request) returns (DenomToERC20Response) {
     // option (google.api.http).get =
@@ -257,6 +262,14 @@ message ERC20ToDenomRequest { string erc20 = 1; }
 message ERC20ToDenomResponse {
   string denom = 1;
   bool cosmos_originated = 2;
+}
+
+message DenomToERC20ParamsRequest { string denom = 1; }
+message DenomToERC20ParamsResponse {
+  string base_denom = 1;
+  string erc20_name = 2;
+  string erc20_symbol = 3;
+  uint64 erc20_decimals = 4;
 }
 
 message DenomToERC20Request { string denom = 1; }

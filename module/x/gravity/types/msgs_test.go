@@ -1,4 +1,4 @@
-package types
+package types_test
 
 import (
 	"bytes"
@@ -6,13 +6,16 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/peggyjv/gravity-bridge/module/app"
+	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 func TestValidateMsgDelegateKeys(t *testing.T) {
 	var (
 		ethAddress                   = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
-		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-		valAddress    sdk.ValAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, app.MaxAddrLen)
+		valAddress    sdk.ValAddress = bytes.Repeat([]byte{0x1}, app.MaxAddrLen)
 	)
 	specs := map[string]struct {
 		srcCosmosAddr sdk.AccAddress
@@ -61,7 +64,7 @@ func TestValidateMsgDelegateKeys(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			msg := NewMsgDelegateKeys(spec.srcValAddr, spec.srcCosmosAddr, spec.srcETHAddr, []byte{0x1})
+			msg := types.NewMsgDelegateKeys(spec.srcValAddr, spec.srcCosmosAddr, spec.srcETHAddr, []byte{0x1})
 			err := msg.ValidateBasic()
 			if spec.expErr {
 				assert.Error(t, err)

@@ -369,17 +369,9 @@ func (v *Validator) buildCreateValidatorMsg(amount sdktypes.Coin) (sdktypes.Msg,
 	if err != nil {
 		return nil, err
 	}
-	pubKeyStr, err := sdktypes.Bech32ifyPubKey(sdktypes.Bech32PubKeyTypeConsPub, valPubKey)
-	if err != nil {
-		return nil, err
-	}
-	pubKey, err := sdktypes.GetPubKeyFromBech32(sdktypes.Bech32PubKeyTypeConsPub, pubKeyStr)
-	if err != nil {
-		return nil, err
-	}
 
 	msg, err := types.NewMsgCreateValidator(
-		sdktypes.ValAddress(v.KeyInfo.GetAddress()), pubKey, amount, description, commissionRates, minSelfDelegation,
+		sdktypes.ValAddress(v.KeyInfo.GetAddress()), valPubKey, amount, description, commissionRates, minSelfDelegation,
 	)
 	return msg, err
 }
@@ -405,7 +397,7 @@ func (v *Validator) buildDelegateKeysMsg() sdktypes.Msg {
 		Nonce:            0,
 	}
 
-	signMsgBz := marshaller.MustMarshalBinaryBare(&signMsg)
+	signMsgBz := marshaller.MustMarshal(&signMsg)
 	hash := crypto.Keccak256Hash(signMsgBz).Bytes()
 	ethSig, err := gravitytypes.NewEthereumSignature(hash, privKey)
 	if err != nil {
@@ -437,15 +429,13 @@ func decodeTx(txBytes []byte) (*tx.Tx, error) {
 		return nil, errors.Wrap(errors.ErrTxDecode, err.Error())
 	}
 
-	err = marshaller.UnmarshalBinaryBare(txBytes, &raw)
-	if err != nil {
+	if err := marshaller.Unmarshal(txBytes, &raw); err != nil {
 		return nil, err
 	}
 
 	var body tx.TxBody
 
-	err = marshaller.UnmarshalBinaryBare(raw.BodyBytes, &body)
-	if err != nil {
+	if err := marshaller.Unmarshal(raw.BodyBytes, &body); err != nil {
 		return nil, errors.Wrap(errors.ErrTxDecode, err.Error())
 	}
 
@@ -457,8 +447,7 @@ func decodeTx(txBytes []byte) (*tx.Tx, error) {
 		return nil, errors.Wrap(errors.ErrTxDecode, err.Error())
 	}
 
-	err = marshaller.UnmarshalBinaryBare(raw.AuthInfoBytes, &authInfo)
-	if err != nil {
+	if err := marshaller.Unmarshal(raw.AuthInfoBytes, &authInfo); err != nil {
 		return nil, errors.Wrap(errors.ErrTxDecode, err.Error())
 	}
 

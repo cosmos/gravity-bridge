@@ -116,6 +116,33 @@ message MsgSubmitEthereumEvent {
   string signer = 2;
 }
 
+
+message MsgSubmitEthereumEventResponse {}
+
+// MsgDelegateKey allows validators to delegate their voting responsibilities
+// to a given orchestrator address. This key is then used as an optional
+// authentication method for attesting events from Ethereum.
+message MsgDelegateKeys {
+  string validator_address = 1;
+  string orchestrator_address = 2;
+  string ethereum_address = 3;
+  bytes  eth_signature = 4;
+}
+
+message MsgDelegateKeysResponse {}
+
+// DelegateKeysSignMsg defines the message structure an operator is expected to
+// sign when submitting a MsgDelegateKeys message. The resulting signature should
+// populate the eth_signature field.
+message DelegateKeysSignMsg {
+  string validator_address = 1;
+  uint64 nonce = 2;
+}
+
+////////////
+// Events //
+////////////
+
 // SendToCosmosEvent is submitted when the SendToCosmosEvent is emitted by they
 // gravity contract. ERC20 representation coins are minted to the cosmosreceiver
 // address.
@@ -149,7 +176,7 @@ message BatchExecutedEvent {
 // investigate?
 message ContractCallExecutedEvent {
   uint64 event_nonce = 1;
-  bytes invalidation_id = 2
+  bytes invalidation_scope = 2
       [ (gogoproto.casttype) =
             "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
   uint64 invalidation_nonce = 3;
@@ -177,24 +204,3 @@ message SignerSetTxExecutedEvent {
   repeated EthereumSigner members = 4;
 }
 
-message MsgSubmitEthereumEventResponse {}
-
-// MsgDelegateKey allows validators to delegate their voting responsibilities
-// to a given orchestrator address. This key is then used as an optional
-// authentication method for attesting events from Ethereum.
-message MsgDelegateKeys {
-  string validator_address = 1;
-  string orchestrator_address = 2;
-  string ethereum_address = 3;
-  bytes  eth_signature = 4;
-}
-
-message MsgDelegateKeysResponse {}
-
-// DelegateKeysSignMsg defines the message structure an operator is expected to
-// sign when submitting a MsgDelegateKeys message. The resulting signature should
-// populate the eth_signature field.
-message DelegateKeysSignMsg {
-  string validator_address = 1;
-  uint64 nonce = 2;
-}

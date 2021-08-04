@@ -7,6 +7,7 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -16,6 +17,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
@@ -30,21 +32,24 @@ type Keeper struct {
 
 	storeKey       sdk.StoreKey
 	paramSpace     paramtypes.Subspace
-	cdc            codec.BinaryMarshaler
+	cdc            codec.Codec
 	accountKeeper  types.AccountKeeper
 	bankKeeper     types.BankKeeper
 	SlashingKeeper types.SlashingKeeper
+	PowerReduction sdk.Int
+	hooks          types.GravityHooks
 }
 
 // NewKeeper returns a new instance of the gravity keeper
 func NewKeeper(
-	cdc codec.BinaryMarshaler,
+	cdc codec.Codec,
 	storeKey sdk.StoreKey,
 	paramSpace paramtypes.Subspace,
 	accKeeper types.AccountKeeper,
 	stakingKeeper types.StakingKeeper,
 	bankKeeper types.BankKeeper,
 	slashingKeeper types.SlashingKeeper,
+	powerReduction sdk.Int,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
@@ -59,6 +64,7 @@ func NewKeeper(
 		StakingKeeper:  stakingKeeper,
 		bankKeeper:     bankKeeper,
 		SlashingKeeper: slashingKeeper,
+		PowerReduction: powerReduction,
 	}
 	k.EthereumEventProcessor = EthereumEventProcessor{
 		keeper:     k,
@@ -79,9 +85,9 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // incrementLatestSignerSetTxNonce sets the latest valset nonce
 func (k Keeper) incrementLatestSignerSetTxNonce(ctx sdk.Context) uint64 {
 	current := k.GetLatestSignerSetTxNonce(ctx)
-	new := current + 1
-	ctx.KVStore(k.storeKey).Set([]byte{types.LatestSignerSetTxNonceKey}, sdk.Uint64ToBigEndian(new))
-	return new
+	next := current + 1
+	ctx.KVStore(k.storeKey).Set([]byte{types.LatestSignerSetTxNonceKey}, sdk.Uint64ToBigEndian(next))
+	return next
 }
 
 // GetLatestSignerSetTxNonce returns the latest valset nonce
@@ -176,7 +182,7 @@ func (k Keeper) GetOrchestratorValidatorAddress(ctx sdk.Context, orchAddr sdk.Ac
 	store := ctx.KVStore(k.storeKey)
 	key := types.MakeOrchestratorValidatorAddressKey(orchAddr)
 
-	return sdk.ValAddress(store.Get(key))
+	return store.Get(key)
 }
 
 ////////////////////////
@@ -230,7 +236,7 @@ func (k Keeper) GetEthereumOrchestratorAddress(ctx sdk.Context, ethAddr common.A
 	store := ctx.KVStore(k.storeKey)
 	key := types.MakeEthereumOrchestratorAddressKey(ethAddr)
 
-	return sdk.AccAddress(store.Get(key))
+	return store.Get(key)
 }
 
 func (k Keeper) getEthereumAddressesByOrchestrator(ctx sdk.Context, orch sdk.AccAddress) (ethAddrs []common.Address) {
@@ -286,19 +292,17 @@ func (k Keeper) CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 // implementations are involved.
 func (k Keeper) CurrentSignerSet(ctx sdk.Context) types.EthereumSigners {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-	ethereumSigners := make([]*types.EthereumSigner, len(validators))
+	ethereumSigners := make([]*types.EthereumSigner, 0)
 	var totalPower uint64
-	// TODO someone with in depth info on Cosmos staking should determine
-	// if this is doing what I think it's doing
-	for i, validator := range validators {
+	for _, validator := range validators {
 		val := validator.GetOperator()
 
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
-		totalPower += p
 
-		ethereumSigners[i] = &types.EthereumSigner{Power: p}
 		if ethAddr := k.GetValidatorEthereumAddress(ctx, val); ethAddr.Hex() != "0x0000000000000000000000000000000000000000" {
-			ethereumSigners[i].EthereumAddress = ethAddr.Hex()
+			es := &types.EthereumSigner{Power: p, EthereumAddress: ethAddr.Hex()}
+			ethereumSigners = append(ethereumSigners, es)
+			totalPower += p
 		}
 	}
 	// normalize power values
@@ -306,7 +310,7 @@ func (k Keeper) CurrentSignerSet(ctx sdk.Context) types.EthereumSigners {
 		ethereumSigners[i].Power = sdk.NewUint(ethereumSigners[i].Power).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
 	}
 
-	return (types.EthereumSigners)(ethereumSigners)
+	return ethereumSigners
 }
 
 // GetSignerSetTxs returns all the signer set txs from the store
@@ -386,7 +390,7 @@ func (k Keeper) getDelegateKeys(ctx sdk.Context) (out []*types.MsgDelegateKeys) 
 	iter.Close()
 
 	for _, msg := range out {
-		msg.OrchestratorAddress = sdk.AccAddress(k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(msg.EthereumAddress))).String()
+		msg.OrchestratorAddress = k.GetEthereumOrchestratorAddress(ctx, common.HexToAddress(msg.EthereumAddress)).String()
 	}
 
 	// we iterated over a map, so now we have to sort to ensure the
@@ -403,7 +407,7 @@ func (k Keeper) getDelegateKeys(ctx sdk.Context) (out []*types.MsgDelegateKeys) 
 // Adding here in gravity keeper as cdc is available inside endblocker.
 func (k Keeper) GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses {
 	unbondingValidators := stakingtypes.ValAddresses{}
-	k.cdc.MustUnmarshalBinaryBare(unbondingVals, &unbondingValidators)
+	k.cdc.MustUnmarshal(unbondingVals, &unbondingValidators)
 	return unbondingValidators
 }
 
@@ -411,8 +415,7 @@ func (k Keeper) GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAdd
 // OUTGOING TX //
 /////////////////
 
-// todo: outgoingTx prefix byte
-// GetOutgoingTx
+// GetOutgoingTx todo: outgoingTx prefix byte
 func (k Keeper) GetOutgoingTx(ctx sdk.Context, storeIndex []byte) (out types.OutgoingTx) {
 	if err := k.cdc.UnmarshalInterface(ctx.KVStore(k.storeKey).Get(types.MakeOutgoingTxKey(storeIndex)), &out); err != nil {
 		panic(err)
@@ -420,7 +423,6 @@ func (k Keeper) GetOutgoingTx(ctx sdk.Context, storeIndex []byte) (out types.Out
 	return out
 }
 
-// SetOutgoingTx
 func (k Keeper) SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx) {
 	any, err := types.PackOutgoingTx(outgoing)
 	if err != nil {
@@ -428,7 +430,7 @@ func (k Keeper) SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx) {
 	}
 	ctx.KVStore(k.storeKey).Set(
 		types.MakeOutgoingTxKey(outgoing.GetStoreIndex()),
-		k.cdc.MustMarshalBinaryBare(any),
+		k.cdc.MustMarshal(any),
 	)
 }
 
@@ -446,7 +448,7 @@ func (k Keeper) PaginateOutgoingTxsByType(ctx sdk.Context, pageReq *query.PageRe
 		}
 
 		var any cdctypes.Any
-		k.cdc.MustUnmarshalBinaryBare(value, &any)
+		k.cdc.MustUnmarshal(value, &any)
 		var otx types.OutgoingTx
 		if err := k.cdc.UnpackAny(&any, &otx); err != nil {
 			panic(err)
@@ -466,7 +468,7 @@ func (k Keeper) IterateOutgoingTxsByType(ctx sdk.Context, prefixByte byte, cb fu
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var any cdctypes.Any
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &any)
+		k.cdc.MustUnmarshal(iter.Value(), &any)
 		var otx types.OutgoingTx
 		if err := k.cdc.UnpackAny(&any, &otx); err != nil {
 			panic(err)
@@ -484,7 +486,7 @@ func (k Keeper) iterateOutgoingTxs(ctx sdk.Context, cb func(key []byte, outgoing
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var any cdctypes.Any
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &any)
+		k.cdc.MustUnmarshal(iter.Value(), &any)
 		var otx types.OutgoingTx
 		if err := k.cdc.UnpackAny(&any, &otx); err != nil {
 			panic(err)
@@ -500,7 +502,7 @@ func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	key := []byte{types.LastObservedSignerSetKey}
 	if val := ctx.KVStore(k.storeKey).Get(key); val != nil {
 		var out types.SignerSetTx
-		k.cdc.MustUnmarshalBinaryBare(val, &out)
+		k.cdc.MustUnmarshal(val, &out)
 		return &out
 	}
 	return nil
@@ -509,5 +511,55 @@ func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 // setLastObservedSignerSetTx updates the last observed validator set in the stor e
 func (k Keeper) setLastObservedSignerSetTx(ctx sdk.Context, signerSet types.SignerSetTx) {
 	key := []byte{types.LastObservedSignerSetKey}
-	ctx.KVStore(k.storeKey).Set(key, k.cdc.MustMarshalBinaryBare(&signerSet))
+	ctx.KVStore(k.storeKey).Set(key, k.cdc.MustMarshal(&signerSet))
+}
+
+// CreateContractCallTx xxx
+func (k Keeper) CreateContractCallTx(ctx sdk.Context, invalidationNonce uint64, invalidationScope tmbytes.HexBytes,
+	payload []byte, tokens []types.ERC20Token, fees []types.ERC20Token) *types.ContractCallTx {
+	params := k.GetParams(ctx)
+
+	newContractCallTx := &types.ContractCallTx{
+		InvalidationNonce: invalidationNonce,
+		InvalidationScope: invalidationScope,
+		Address:           k.getBridgeContractAddress(ctx),
+		Payload:           payload,
+		Timeout:           params.TargetEthTxTimeout,
+		Tokens:            tokens,
+		Fees:              fees,
+		Height:            uint64(ctx.BlockHeight()),
+	}
+
+	var tokenString []string
+	for _, token := range tokens {
+		tokenString = append(tokenString, token.String())
+	}
+
+	var feeString []string
+	for _, fee := range fees {
+		feeString = append(feeString, fee.String())
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMultisigUpdateRequest,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyContract, k.getBridgeContractAddress(ctx)),
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
+			sdk.NewAttribute(types.AttributeKeyContractCallInvalidationNonce, fmt.Sprint(invalidationNonce)),
+			sdk.NewAttribute(types.AttributeKeyContractCallInvalidationScope, fmt.Sprint(invalidationScope)),
+			sdk.NewAttribute(types.AttributeKeyContractCallPayload, string(payload)),
+			sdk.NewAttribute(types.AttributeKeyContractCallTokens, strings.Join(tokenString, "|")),
+			sdk.NewAttribute(types.AttributeKeyContractCallFees, strings.Join(feeString, "|")),
+			sdk.NewAttribute(types.AttributeKeyEthTxTimeout, strconv.FormatUint(params.TargetEthTxTimeout, 10)),
+		),
+	)
+	k.SetOutgoingTx(ctx, newContractCallTx)
+	k.Logger(ctx).Info(
+		"ContractCallTx created",
+		"invalidation_nonce", newContractCallTx.InvalidationNonce,
+		"invalidation_scope", newContractCallTx.InvalidationScope,
+		// todo: fill out all fields
+	)
+	return newContractCallTx
 }

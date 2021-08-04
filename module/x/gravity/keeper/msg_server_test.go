@@ -328,7 +328,7 @@ func TestMsgServer_SetDelegateKeys(t *testing.T) {
 		ValidatorAddress: valAddr1.String(),
 		Nonce:            0,
 	}
-	signMsgBz := env.Marshaler.MustMarshalBinaryBare(&ethMsg)
+	signMsgBz := env.Marshaler.MustMarshal(&ethMsg)
 	hash := crypto.Keccak256Hash(signMsgBz).Bytes()
 
 	sig, err := types.NewEthereumSignature(hash, ethPrivKey)
@@ -377,7 +377,7 @@ func TestEthVerify(t *testing.T) {
 	cdc := MakeTestMarshaler()
 
 	valAddr := "cosmosvaloper16k7rf90uvt4tgslqh280wvdzxp5q9ah6nxxupc"
-	signMsgBz, err := cdc.MarshalBinaryBare(&types.DelegateKeysSignMsg{
+	signMsgBz, err := cdc.Marshal(&types.DelegateKeysSignMsg{
 		ValidatorAddress: valAddr,
 		Nonce:            0,
 	})

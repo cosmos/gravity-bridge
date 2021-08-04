@@ -17,7 +17,7 @@ gravity_utils = { path = "../gravity_utils" }
 orchestrator = { path = "../orchestrator" }
 relayer = { path = "../relayer" }
 
-deep_space = "2.4.3"
+deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="zaki/tendermint_0_21"}
 clarity = "0.4.12"
 actix-rt = "2.2"
 rpassword = "5"
@@ -31,6 +31,7 @@ abscissa_tokio = { version = "0.6.0-pre.2", features = ["actix"] }
 web30 = "0.14"
 tokio = "1"
 tonic = "0.4"
+toml = "0.5"
 
 prost = "0.7"
 bytes = "1"

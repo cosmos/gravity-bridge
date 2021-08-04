@@ -770,6 +770,22 @@ pub struct Erc20ToDenomResponse {
     pub cosmos_originated: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DenomToErc20ParamsRequest {
+    #[prost(string, tag = "1")]
+    pub denom: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DenomToErc20ParamsResponse {
+    #[prost(string, tag = "1")]
+    pub base_denom: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub erc20_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub erc20_symbol: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "4")]
+    pub erc20_decimals: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DenomToErc20Request {
     #[prost(string, tag = "1")]
     pub denom: ::prost::alloc::string::String,
@@ -1145,6 +1161,21 @@ pub mod query_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/ERC20ToDenom");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Query for how gravity expects an erc-20 to be created"]
+        pub async fn denom_to_erc20_params(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DenomToErc20ParamsRequest>,
+        ) -> Result<tonic::Response<super::DenomToErc20ParamsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/DenomToERC20Params");
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Query for info about denoms tracked by gravity"]
