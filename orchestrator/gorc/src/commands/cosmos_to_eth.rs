@@ -52,6 +52,7 @@ impl Runnable for CosmosToEthCmd {
     fn run(&self) {
         let config = APP.config();
         let gravity_denom = self.args.get(0).expect("name is required");
+        let gravity_denom = gravity_denom.to_string();
         let is_cosmos_originated = !gravity_denom.starts_with("gravity");
         let flag_amount = self.args.get(1).expect("amount is required");
         let flag_amount = flag_amount.parse().expect("cannot parse amount");
@@ -66,11 +67,12 @@ impl Runnable for CosmosToEthCmd {
                 .expect("Failed to parse cosmos key phrase, does it have a password?");
         let cosmos_prefix = config.cosmos.prefix.trim();
         let cosmos_address = cosmos_key.to_address(&cosmos_prefix).unwrap();
+        let cosmos_grpc = config.cosmos.prefix.trim();
         println!("Sending from Cosmos address {}", cosmos_address);
         abscissa_tokio::run_with_actix(&APP, async {
         let connections = create_rpc_connections(
             cosmos_prefix.to_string(),
-            Some(config.cosmos.grpc),
+            Some(cosmos_grpc.to_string()),
             None,
             TIMEOUT,
         )
