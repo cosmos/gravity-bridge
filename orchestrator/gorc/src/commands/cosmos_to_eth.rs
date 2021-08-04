@@ -1,6 +1,7 @@
 use crate::application::APP;
-use absicssa_core::{Application, Command, Options, Runnable};
+use abscissa_core::{Application, Command, Options, Runnable};
 use clarity::Address as EthAddress;
+use clarity::Uint256;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use gravity_proto::gravity::DenomToErc20Request;
 
@@ -23,17 +24,22 @@ pub fn fraction_to_exponent(num: f64, exponent: u8) -> Uint256 {
 
 impl Runnable for CosmosToEthCmd {
     fn run(&self) {
+        let config = APP.config();
         let gravity_denom = self.args.get(0).expect("name is required");
         let is_cosmos_originated = !gravity_denom.starts_with("gravity");
+        let flag_amount = self.args.get(1).expect("name is required");
+        let flag_amount = flag_amount.parse().expect("cannot parse flag amount");
         let amount = if is_cosmos_originated {
-            fraction_to_exponent(self.args.get(1).expect("name is required"), 6)
+            fraction_to_exponent(flag_amount, 6)
         } else {
-            fraction_to_exponent(self.args.get(1).expect("name is required"), 18)
+            fraction_to_exponent(flag_amount, 18)
         };
+        let cosmos_phrase = self.args.get(2).expect("name is required");
         let cosmos_key =
-            CosmosPrivateKey::from_phrase(&self.args.get(2).expect("name is required"), "")
+            CosmosPrivateKey::from_phrase(&cosmos_phrase, "")
                 .expect("Failed to parse cosmos key phrase, does it have a password?");
-        let cosmos_address = cosmos_key.to_address(&self.args.get(3).expect("name is required"));
+        let cosmos_prefix = config.cosmos.prefix.trim();
+        let cosmos_address = cosmos_key.to_address(&cosmos_prefix).unwrap();
 
         println!("Sending from Cosmos address {}", cosmos_address);
         let connections = create_rpc_connections(
