@@ -12,7 +12,7 @@ const TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Command, Debug, Default, Options)]
 pub struct CosmosToEthCmd {
-    #[options(free, help = "cosmos-to-eth (name)")]
+    #[options(free, help = "cosmos-to-eth [gravity_denom] [flag_amount] [cosmos_phrase] [eth_dest] [times]")]
     pub args: Vec<String>,
     pub flag_no_batch: bool,
 }
@@ -51,7 +51,7 @@ pub fn fraction_to_exponent(num: f64, exponent: u8) -> Uint256 {
 impl Runnable for CosmosToEthCmd {
     fn run(&self) {
         let config = APP.config();
-        let gravity_denom = self.args.get(0).expect("name is required");
+        let gravity_denom = self.args.get(0).expect("denom is required");
         let gravity_denom = gravity_denom.to_string();
         let is_cosmos_originated = !gravity_denom.starts_with("gravity");
         let flag_amount = self.args.get(1).expect("amount is required");
