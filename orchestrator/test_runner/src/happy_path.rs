@@ -1,5 +1,6 @@
 // use crate::get_chain_id;
 use crate::get_fee;
+use crate::get_gas_price;
 use crate::utils::*;
 use crate::MINER_ADDRESS;
 use crate::MINER_PRIVATE_KEY;
@@ -437,8 +438,9 @@ async fn submit_duplicate_erc20_send(
             vec![],
             vec![],
         );
-        let fee = get_fee();
-        let res = send::send_messages(contact, cosmos_key, fee, messages).await;
+
+        let gas_price = get_gas_price();
+        let res = send::send_messages(contact, cosmos_key, gas_price, messages).await;
         let res = res.unwrap();
         trace!("Submitted duplicate sendToCosmos event: {:?}", res);
     }

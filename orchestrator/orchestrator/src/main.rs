@@ -146,7 +146,7 @@ async fn main() {
         connections.contact.unwrap(),
         connections.grpc.unwrap(),
         contract_address,
-        fee_denom,
+        (1f64, fee_denom.to_owned()),
     )
     .await;
 }

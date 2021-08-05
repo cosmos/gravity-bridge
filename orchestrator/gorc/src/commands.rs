@@ -50,7 +50,7 @@ pub enum GorcCmd {
     Version(VersionCmd),
 
     #[options(help = "print config file template")]
-    PrintConfigCmd(PrintConfigCmd),
+    PrintConfig(PrintConfigCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
