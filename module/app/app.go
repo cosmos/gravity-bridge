@@ -220,9 +220,6 @@ func init() {
 	}
 
 	DefaultNodeHome = filepath.Join(userHomeDir, ".gravity")
-
-	sdk.GetConfig().SetAddressVerifier(VerifyAddressFormat)
-	sdk.GetConfig().Seal()
 }
 
 func NewGravityApp(
