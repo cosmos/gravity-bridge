@@ -3,6 +3,7 @@
 
 use crate::get_with_retry::get_block_number_with_retry;
 use crate::get_with_retry::get_net_version_with_retry;
+use crate::metrics;
 use clarity::{utils::bytes_to_hex_str, Address as EthAddress, Uint256};
 use cosmos_gravity::build;
 use cosmos_gravity::query::get_last_event_nonce;
@@ -34,6 +35,9 @@ pub async fn check_for_events(
     let our_cosmos_address = cosmos_key.to_address(&prefix).unwrap();
     let latest_block = get_block_number_with_retry(web3).await;
     let latest_block = latest_block - get_block_delay(web3).await;
+
+    metrics::set_ethereum_check_for_events_starting_block(starting_block.clone());
+    metrics::set_ethereum_check_for_events_end_block(latest_block.clone());
 
     let deposits = web3
         .check_for_events(
@@ -109,6 +113,7 @@ pub async fn check_for_events(
         // multi event block again. In theory we only send all events for every block and that will pass of fail
         // atomicly but lets not take that risk.
         let last_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
+        metrics::set_cosmos_last_event_nonce(last_event_nonce);
 
         let deposits = SendToCosmosEvent::filter_by_event_nonce(last_event_nonce, &deposits);
         let batches =
@@ -165,12 +170,38 @@ pub async fn check_for_events(
             let messages = build::ethereum_event_messages(
                 contact,
                 cosmos_key,
-                deposits,
-                batches,
-                erc20_deploys,
-                logic_calls,
-                valsets,
+                deposits.to_owned(),
+                batches.to_owned(),
+                erc20_deploys.to_owned(),
+                logic_calls.to_owned(),
+                valsets.to_owned(),
             );
+
+            if let Some(deposit) = deposits.last() {
+                metrics::set_ethereum_last_deposit_event(deposit.event_nonce.clone());
+                metrics::set_ethereum_last_deposit_block(deposit.block_height.clone());
+            }
+
+            if let Some(batch) = batches.last() {
+                metrics::set_ethereum_last_batch_event(batch.event_nonce.clone());
+                metrics::set_ethereum_last_batch_nonce(batch.batch_nonce.clone());
+            }
+
+            if let Some(valset) = valsets.last() {
+                metrics::set_ethereum_last_valset_event(valset.event_nonce.clone());
+                metrics::set_ethereum_last_valset_nonce(valset.valset_nonce.clone());
+            }
+
+            if let Some(erc20_deploy) = erc20_deploys.last() {
+                metrics::set_ethereum_last_erc20_event(erc20_deploy.event_nonce.clone());
+                metrics::set_ethereum_last_erc20_block(erc20_deploy.block_height.clone());
+            }
+
+            if let Some(logic_call) = logic_calls.last() {
+                metrics::set_ethereum_last_logic_call_event(logic_call.event_nonce.clone());
+                metrics::set_ethereum_last_logic_call_nonce(logic_call.invalidation_nonce.clone());
+            }
+
             msg_sender
                 .send(messages)
                 .await

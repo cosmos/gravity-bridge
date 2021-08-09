@@ -19,7 +19,7 @@ cosmos_gravity = { path = "../cosmos_gravity" }
 gravity_utils = { path = "../gravity_utils" }
 gravity_proto = { path = "../gravity_proto" }
 
-deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="zaki/tendermint_0_21"}
+deep_space = { git = "https://github.com/iqlusioninc/deep_space/", branch = "zaki/tendermint_0_21" }
 serde_derive = "1.0"
 clarity = "0.4.11"
 docopt = "1"
@@ -36,6 +36,10 @@ rand = "0.8"
 tonic = "0.4"
 futures = "0.3"
 openssl-probe = "0.1"
+
+axum = "0.1.2"
+hyper = "0.14.11"
+prometheus = "0.12.0"
 
 # this is a dirty trick, we depent transitively on OpenSSL it's never
 # called directly in this crate, but if we specify this dep we can enable

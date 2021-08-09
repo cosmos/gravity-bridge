@@ -9,6 +9,7 @@ pub struct GorcConfig {
     pub gravity: GravitySection,
     pub ethereum: EthereumSection,
     pub cosmos: CosmosSection,
+    pub metrics: MetricsSection,
 }
 
 impl GorcConfig {
@@ -39,6 +40,7 @@ impl Default for GorcConfig {
             gravity: GravitySection::default(),
             ethereum: EthereumSection::default(),
             cosmos: CosmosSection::default(),
+            metrics: MetricsSection::default(),
         }
     }
 }
@@ -114,5 +116,21 @@ impl Default for GasPrice {
 impl GasPrice {
     pub fn as_tuple(&self) -> (f64, String) {
         (self.amount, self.denom.to_owned())
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct MetricsSection {
+    pub listen_addr: String,
+    pub listen_port: u16,
+}
+
+impl Default for MetricsSection {
+    fn default() -> Self {
+        Self {
+            listen_addr: "127.0.0.1".to_owned(),
+            listen_port: 3000u16,
+        }
     }
 }
