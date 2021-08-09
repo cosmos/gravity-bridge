@@ -2,22 +2,13 @@
 
 use crate::{application::APP, prelude::*, utils::*};
 use abscissa_core::{Command, Options, Runnable};
-use clarity::Address as EthAddress;
-// use clarity::Uint256;
+use clarity::{Address as EthAddress, Uint256};
 use cosmos_gravity::send::{send_to_eth};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use gravity_proto::gravity::DenomToErc20Request;
 use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
 use regex::Regex;
 use std::process::exit;
-
-// pub fn one_eth() -> f64 {
-//     1000000000000000000f64
-// }
-
-// pub fn one_atom() -> f64 {
-//     1000000f64
-// }
 
 #[derive(Command, Debug, Options)]
 pub enum Cosmos {
@@ -61,18 +52,6 @@ fn get_cosmos_key(_key_name: &str) -> CosmosPrivateKey {
     unimplemented!()
 }
 
-// pub fn print_eth(input: Uint256) -> String {
-//     let float: f64 = input.to_string().parse().unwrap();
-//     let res = float / one_eth();
-//     format!("{}", res)
-// }
-
-// pub fn print_atom(input: Uint256) -> String {
-//     let float: f64 = input.to_string().parse().unwrap();
-//     let res = float / one_atom();
-//     format!("{}", res)
-// }
-
 impl Runnable for SendToEth {
     fn run(&self) {
         assert!(self.free.len() == 3);
@@ -81,13 +60,7 @@ impl Runnable for SendToEth {
         let erc_20_coin = self.free[2].clone(); // 1231234uatom
         let (amount, denom) = parse_denom(&erc_20_coin);
 
-        let is_cosmos_originated = !denom.starts_with("gravity");
-
-        let amount = if is_cosmos_originated {
-            fraction_to_exponent(amount.parse().unwrap(), 6)
-        } else {
-            fraction_to_exponent(amount.parse().unwrap(), 18)
-        };
+        let amount: Uint256 = amount.parse().expect("Could not parse amount");
 
         let cosmos_key = get_cosmos_key(&from_cosmos_key);
 
