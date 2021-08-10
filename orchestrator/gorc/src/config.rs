@@ -3,7 +3,7 @@ use signatory::FsKeyStore;
 use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+#[serde(default, deny_unknown_fields)]
 pub struct GorcConfig {
     pub keystore: String,
     pub gravity: GravitySection,
@@ -46,7 +46,7 @@ impl Default for GorcConfig {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+#[serde(default, deny_unknown_fields)]
 pub struct GravitySection {
     pub contract: String,
     pub fees_denom: String,
@@ -55,14 +55,14 @@ pub struct GravitySection {
 impl Default for GravitySection {
     fn default() -> Self {
         Self {
-            contract: "0x6b175474e89094c44da98b954eedeac495271d0f".to_owned(),
+            contract: "0x0000000000000000000000000000000000000000".to_owned(),
             fees_denom: "stake".to_owned(),
         }
     }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+#[serde(default, deny_unknown_fields)]
 pub struct EthereumSection {
     pub key_derivation_path: String,
     pub rpc: String,
@@ -78,7 +78,7 @@ impl Default for EthereumSection {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+#[serde(default, deny_unknown_fields)]
 pub struct CosmosSection {
     pub key_derivation_path: String,
     pub grpc: String,
@@ -98,7 +98,7 @@ impl Default for CosmosSection {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+#[serde(default, deny_unknown_fields)]
 pub struct GasPrice {
     pub amount: f64,
     pub denom: String,
@@ -120,7 +120,7 @@ impl GasPrice {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+#[serde(default, deny_unknown_fields)]
 pub struct MetricsSection {
     pub listen_addr: String,
     pub listen_port: u16,
