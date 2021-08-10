@@ -7,7 +7,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/containerd/continuity v0.1.0 // indirect
-	github.com/cosmos/cosmos-sdk v0.43.0-rc3
+	github.com/cosmos/cosmos-sdk v0.43.0
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
