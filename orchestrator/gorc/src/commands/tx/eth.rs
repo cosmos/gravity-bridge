@@ -3,7 +3,7 @@
 use crate::{application::APP, prelude::*, utils::*};
 use abscissa_core::{Command, Options, Runnable};
 use clarity::Address as EthAddress;
-use clarity::PrivateKey as EthPrivateKey;
+use clarity::{PrivateKey as EthPrivateKey, Uint256};
 use deep_space::address::Address as CosmosAddress;
 use ethereum_gravity::send_to_cosmos::send_to_cosmos;
 use gravity_utils::connection_prep::{check_for_eth, create_rpc_connections};
@@ -72,16 +72,10 @@ impl Runnable for SendToCosmos {
             let web3 = connections.web3.unwrap();
             let ethereum_public_key = eth_key.to_public_key().unwrap();
             check_for_eth(ethereum_public_key, &web3).await;
-            let res = get_erc20_decimals(&web3, erc20_contract, ethereum_public_key)
-                .await
-                .expect("Failed to query ERC20 contract");
-            let decimals: u8 = res.to_string().parse().unwrap();
-            let amount = fraction_to_exponent(
-                erc20_amount
-                    .parse()
-                    .expect("Expected amount in xx.yy format"),
-                decimals,
-            );
+
+            let amount: Uint256 = erc20_amount
+                .parse()
+                .expect("Expected amount in xx.yy format");
 
             let erc20_balance = web3
                 .get_erc20_balance(erc20_contract, ethereum_public_key)

@@ -3,8 +3,8 @@ module github.com/peggyjv/gravity-bridge/module
 go 1.15
 
 require (
-	github.com/cosmos/cosmos-sdk v0.43.0-rc2
-	github.com/cosmos/ibc-go v1.0.0-rc3
+	github.com/cosmos/cosmos-sdk v0.43.0
+	github.com/cosmos/ibc-go v1.0.0
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/gogo/protobuf v1.3.3
 	github.com/gorilla/mux v1.8.0

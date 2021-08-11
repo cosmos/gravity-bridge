@@ -19,6 +19,7 @@ extern crate log;
 mod ethereum_event_watcher;
 mod get_with_retry;
 mod main_loop;
+mod metrics;
 mod oracle_resync;
 
 use crate::main_loop::orchestrator_main_loop;
@@ -33,7 +34,10 @@ use gravity_utils::connection_prep::{
 use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
 use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
-use std::cmp::min;
+use std::{
+    cmp::min,
+    net::{IpAddr, Ipv4Addr},
+};
 
 #[derive(Debug, Deserialize)]
 struct Args {
@@ -146,7 +150,9 @@ async fn main() {
         connections.contact.unwrap(),
         connections.grpc.unwrap(),
         contract_address,
-        fee_denom,
+        (1f64, fee_denom.to_owned()),
+        IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+        3000u16,
     )
     .await;
 }

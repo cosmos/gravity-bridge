@@ -4,6 +4,7 @@
 mod deploy;
 mod keys;
 mod orchestrator;
+mod print_config;
 mod query;
 mod sign_delegate_keys;
 mod tests;
@@ -12,10 +13,9 @@ mod version;
 mod cosmos_to_eth;
 mod print_config;
 
-
 use self::{
-    keys::KeysCmd, orchestrator::OrchestratorCmd, query::QueryCmd, tests::TestsCmd, tx::TxCmd,
-    version::VersionCmd,print_config::PrintConfigCmd,
+    keys::KeysCmd, orchestrator::OrchestratorCmd, print_config::PrintConfigCmd, query::QueryCmd,
+    tests::TestsCmd, tx::TxCmd, version::VersionCmd,
 };
 use crate::config::GorcConfig;
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
@@ -35,6 +35,9 @@ pub enum GorcCmd {
 
     #[options(help = "orchestrator")]
     Orchestrator(OrchestratorCmd),
+
+    #[options(help = "print config file template")]
+    PrintConfig(PrintConfigCmd),
 
     #[options(help = "query state on either ethereum or cosmos chains")]
     Query(QueryCmd),

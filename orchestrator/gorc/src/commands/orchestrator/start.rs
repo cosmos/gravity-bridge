@@ -79,6 +79,8 @@ impl Runnable for StartCommand {
             check_for_fee_denom(&fees_denom, cosmos_address, &contact).await;
             check_for_eth(ethereum_address, &web3).await;
 
+            let gas_price = config.cosmos.gas_price.as_tuple();
+
             orchestrator_main_loop(
                 cosmos_key,
                 ethereum_key,
@@ -86,7 +88,13 @@ impl Runnable for StartCommand {
                 contact,
                 grpc,
                 contract_address,
-                fees_denom,
+                gas_price,
+                config
+                    .metrics
+                    .listen_addr
+                    .parse()
+                    .expect("Could not parse metrics.listen_addr"),
+                config.metrics.listen_port,
             )
             .await;
         })

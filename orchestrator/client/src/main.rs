@@ -25,11 +25,10 @@ use ethereum_gravity::send_to_cosmos::send_to_cosmos;
 use gravity_proto::gravity::DenomToErc20ParamsRequest;
 use gravity_proto::gravity::DenomToErc20Request;
 use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
-use std::time::Instant;
 use std::convert::TryFrom;
-use std::{process::exit, time::Duration, u128};
+use std::time::Instant;
+use std::{process::exit, time::Duration};
 use tokio::time::sleep as delay_for;
-use web30::{client::Web3, jsonrpc::error::Web3Error};
 
 const TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -39,21 +38,6 @@ pub fn one_eth() -> f64 {
 
 pub fn one_atom() -> f64 {
     1000000f64
-}
-
-/// TODO revisit this for higher precision while
-/// still representing the number to the user as a float
-/// this takes a number like 0.37 eth and turns it into wei
-/// or any erc20 with arbitrary decimals
-pub fn fraction_to_exponent(num: f64, exponent: u8) -> Uint256 {
-    let mut res = num;
-    // in order to avoid floating point rounding issues we
-    // multiply only by 10 each time. this reduces the rounding
-    // errors enough to be ignored
-    for _ in 0..exponent {
-        res *= 10f64
-    }
-    (res as u128).into()
 }
 
 pub fn print_eth(input: Uint256) -> String {
@@ -76,7 +60,7 @@ struct Args {
     flag_ethereum_rpc: String,
     flag_contract_address: String,
     flag_cosmos_denom: String,
-    flag_amount: Option<f64>,
+    flag_amount: Option<String>,
     flag_cosmos_destination: String,
     flag_erc20_address: String,
     flag_eth_destination: String,
@@ -146,11 +130,7 @@ async fn main() {
         let gravity_denom = args.flag_cosmos_denom;
         // todo actually query metadata for this
         let is_cosmos_originated = !gravity_denom.starts_with("gravity");
-        let amount = if is_cosmos_originated {
-            fraction_to_exponent(args.flag_amount.unwrap(), 6)
-        } else {
-            fraction_to_exponent(args.flag_amount.unwrap(), 18)
-        };
+        let amount = args.flag_amount.unwrap().parse().unwrap();
         let cosmos_key = CosmosPrivateKey::from_phrase(&args.flag_cosmos_phrase, "")
             .expect("Failed to parse cosmos key phrase, does it have a password?");
         let cosmos_address = cosmos_key.to_address(&args.flag_cosmos_prefix).unwrap();
@@ -231,7 +211,7 @@ async fn main() {
         for _ in 0..times {
             println!(
                 "Locking {} / {} into the batch pool",
-                args.flag_amount.unwrap(),
+                amount.clone(),
                 gravity_denom
             );
             let res = send_to_eth(
@@ -281,11 +261,7 @@ async fn main() {
         let ethereum_public_key = ethereum_key.to_public_key().unwrap();
         check_for_eth(ethereum_public_key, &web3).await;
 
-        let res = get_erc20_decimals(&web3, erc20_address, ethereum_public_key)
-            .await
-            .expect("Failed to query ERC20 contract");
-        let decimals: u8 = res.to_string().parse().unwrap();
-        let amount = fraction_to_exponent(args.flag_amount.unwrap(), decimals);
+        let amount: Uint256 = args.flag_amount.unwrap().parse().unwrap();
 
         let erc20_balance = web3
             .get_erc20_balance(erc20_address, ethereum_public_key)
@@ -308,7 +284,7 @@ async fn main() {
         for _ in 0..times {
             println!(
                 "Sending {} / {} to Cosmos from {} to {}",
-                args.flag_amount.unwrap(),
+                amount.clone(),
                 erc20_address,
                 ethereum_public_key,
                 cosmos_dest
@@ -418,39 +394,4 @@ async fn main() {
             delay_for(Duration::from_secs(1)).await;
         }
     }
-}
-
-#[test]
-fn even_f32_rounding() {
-    let one_eth: Uint256 = 1000000000000000000u128.into();
-    let one_point_five_eth: Uint256 = 1500000000000000000u128.into();
-    let one_point_one_five_eth: Uint256 = 1150000000000000000u128.into();
-    let a_high_precision_number: Uint256 = 1150100000000000000u128.into();
-    let res = fraction_to_exponent(1f64, 18);
-    assert_eq!(one_eth, res);
-    let res = fraction_to_exponent(1.5f64, 18);
-    assert_eq!(one_point_five_eth, res);
-    let res = fraction_to_exponent(1.15f64, 18);
-    assert_eq!(one_point_one_five_eth, res);
-    let res = fraction_to_exponent(1.1501f64, 18);
-    assert_eq!(a_high_precision_number, res);
-}
-
-pub async fn get_erc20_decimals(
-    web3: &Web3,
-    erc20: EthAddress,
-    caller_address: EthAddress,
-) -> Result<Uint256, Web3Error> {
-    let decimals = web3
-        .contract_call(erc20, "decimals()", &[], caller_address, None)
-        .await?;
-
-    Ok(Uint256::from_bytes_be(match decimals.get(0..32) {
-        Some(val) => val,
-        None => {
-            return Err(Web3Error::ContractCallError(
-                "Bad response from ERC20 decimals".to_string(),
-            ))
-        }
-    }))
 }

@@ -62,11 +62,6 @@ func (cctx *ContractCallTx) GetCosmosHeight() uint64 {
 
 // GetCheckpoint returns the checkpoint
 func (u SignerSetTx) GetCheckpoint(gravityID []byte) []byte {
-	// error case here should not occur outside of testing since the above is a constant
-	contractAbi, err := abi.JSON(strings.NewReader(SignerSetTxCheckpointABIJSON))
-	if err != nil {
-		panic(err)
-	}
 
 	// the contract argument is not a arbitrary length array but a fixed length 32 byte
 	// array, therefore we have to utf8 encode the string (the default in this case) and
@@ -90,35 +85,19 @@ func (u SignerSetTx) GetCheckpoint(gravityID []byte) []byte {
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, packErr := contractAbi.Pack(
-		"checkpoint",
+	args := []interface{}{
 		gravityIDFixed,
 		checkpoint,
 		big.NewInt(int64(u.Nonce)),
 		memberAddresses,
 		convertedPowers,
-	)
-
-	// this should never happen outside of test since any case that could crash on encoding
-	// should be filtered above.
-	if packErr != nil {
-		panic(packErr)
 	}
 
-	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
-	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
-	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
-	hash := crypto.Keccak256Hash(bytes[4:])
-	return hash.Bytes()
+	return packCall(SignerSetTxCheckpointABIJSON, "checkpoint", args)
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 func (b BatchTx) GetCheckpoint(gravityID []byte) []byte {
-
-	encodedBatch, err := abi.JSON(strings.NewReader(BatchTxCheckpointABIJSON))
-	if err != nil {
-		panic(sdkerrors.Wrap(err, "bad ABI definition in code"))
-	}
 
 	// the contract argument is not a arbitrary length array but a fixed length 32 byte
 	// array, therefore we have to utf8 encode the string (the default in this case) and
@@ -147,8 +126,7 @@ func (b BatchTx) GetCheckpoint(gravityID []byte) []byte {
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedBatch, err := encodedBatch.Pack(
-		"submitBatch",
+	args := []interface{}{
 		gravityIDFixed,
 		batchMethodName,
 		txAmounts,
@@ -157,27 +135,13 @@ func (b BatchTx) GetCheckpoint(gravityID []byte) []byte {
 		big.NewInt(int64(b.BatchNonce)),
 		gethcommon.HexToAddress(b.TokenContract),
 		big.NewInt(int64(b.Timeout)),
-	)
-
-	// this should never happen outside of test since any case that could crash on encoding
-	// should be filtered above.
-	if err != nil {
-		panic(sdkerrors.Wrap(err, "packing checkpoint"))
 	}
 
-	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
-	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
-	// then need to adjust how many bytes you truncate off the front to get the output of encodedBatch.encode()
-	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes()
+	return packCall(BatchTxCheckpointABIJSON, "submitBatch", args)
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 func (c ContractCallTx) GetCheckpoint(gravityID []byte) []byte {
-
-	encodedCall, err := abi.JSON(strings.NewReader(ContractCallTxABIJSON))
-	if err != nil {
-		panic(sdkerrors.Wrap(err, "bad ABI definition in code"))
-	}
 
 	// Create the methodName argument which salts the signature
 	methodNameBytes := []uint8("logicCall")
@@ -214,8 +178,7 @@ func (c ContractCallTx) GetCheckpoint(gravityID []byte) []byte {
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedCall, err := encodedCall.Pack(
-		"checkpoint",
+	args := []interface{}{
 		gravityIDFixed,
 		logicCallMethodName,
 		transferAmounts,
@@ -227,13 +190,19 @@ func (c ContractCallTx) GetCheckpoint(gravityID []byte) []byte {
 		big.NewInt(int64(c.Timeout)),
 		invalidationId,
 		big.NewInt(int64(c.InvalidationNonce)),
-	)
+	}
 
-	// this should never happen outside of test since any case that could crash on encoding
-	// should be filtered above.
+	return packCall(ContractCallTxABIJSON, "checkpoint", args)
+}
+
+func packCall(abiString, method string, args []interface{}) []byte {
+	encodedCall, err := abi.JSON(strings.NewReader(abiString))
+	if err != nil {
+		panic(sdkerrors.Wrap(err, "bad ABI definition in code"))
+	}
+	abiEncodedCall, err := encodedCall.Pack(method, args...)
 	if err != nil {
 		panic(sdkerrors.Wrap(err, "packing checkpoint"))
 	}
-
 	return crypto.Keccak256Hash(abiEncodedCall[4:]).Bytes()
 }

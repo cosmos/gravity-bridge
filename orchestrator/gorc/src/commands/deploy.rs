@@ -56,7 +56,7 @@ impl Runnable for CosmosErc20 {
             .contract
             .clone()
             .parse()
-            .expect("Expected config.gravity.contract to be an Eth ddress");
+            .expect("Expected config.gravity.contract to be an Ethereum address");
 
         abscissa_tokio::run(&APP, async {
             let connections =

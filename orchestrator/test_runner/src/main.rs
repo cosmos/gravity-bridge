@@ -77,6 +77,10 @@ pub fn get_fee() -> Coin {
     }
 }
 
+pub fn get_gas_price() -> (f64, String) {
+    (1f64, get_test_token_name())
+}
+
 pub fn get_test_token_name() -> String {
     "footoken".to_string()
 }
