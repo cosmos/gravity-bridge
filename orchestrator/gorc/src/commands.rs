@@ -4,7 +4,6 @@
 mod deploy;
 mod keys;
 mod orchestrator;
-mod print_config;
 mod query;
 mod sign_delegate_keys;
 mod tests;
