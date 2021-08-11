@@ -1,18 +1,21 @@
 use crate::application::APP;
-use abscissa_core::{Application, Command, Options, Runnable, status_err};
+use abscissa_core::{status_err, Application, Command, Options, Runnable};
 use clarity::Address as EthAddress;
 use clarity::Uint256;
-use cosmos_gravity::send::{send_request_batch, send_to_eth};
-use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
-use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
+use cosmos_gravity::send::{send_request_batch_tx, send_to_eth};
+use deep_space::coin::Coin;
 use gravity_proto::gravity::DenomToErc20Request;
-use std::{process::exit, time::Duration, u128};
+use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
+use std::{process::exit, time::Duration};
 
 const TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Command, Debug, Default, Options)]
 pub struct CosmosToEthCmd {
-    #[options(free, help = "cosmos-to-eth [gravity_denom] [flag_amount] [cosmos_phrase] [eth_dest] [times]")]
+    #[options(
+        free,
+        help = "cosmos-to-eth [gravity_denom] [amount] [cosmos_key] [eth_dest] [times]"
+    )]
     pub args: Vec<String>,
     pub flag_no_batch: bool,
 }
@@ -37,34 +40,19 @@ pub fn print_eth(input: Uint256) -> String {
     format!("{}", res)
 }
 
-pub fn fraction_to_exponent(num: f64, exponent: u8) -> Uint256 {
-    let mut res = num;
-    // in order to avoid floating point rounding issues we
-    // multiply only by 10 each time. this reduces the rounding
-    // errors enough to be ignored
-    for _ in 0..exponent {
-        res *= 10f64
-    }
-    (res as u128).into()
-}
-
 impl Runnable for CosmosToEthCmd {
     fn run(&self) {
         let config = APP.config();
         let gravity_denom = self.args.get(0).expect("denom is required");
         let gravity_denom = gravity_denom.to_string();
         let is_cosmos_originated = !gravity_denom.starts_with("gravity");
-        let flag_amount = self.args.get(1).expect("amount is required");
-        let flag_amount = flag_amount.parse().expect("cannot parse amount");
-        let amount = if is_cosmos_originated {
-            fraction_to_exponent(flag_amount, 6)
-        } else {
-            fraction_to_exponent(flag_amount, 18)
-        };
-        let cosmos_phrase = self.args.get(2).expect("name is required");
-        let cosmos_key =
-            CosmosPrivateKey::from_phrase(&cosmos_phrase, "")
-                .expect("Failed to parse cosmos key phrase, does it have a password?");
+
+        let amount = self.args.get(1).expect("amount is required");
+        let amount: Uint256 = amount.parse().expect("cannot parse amount");
+
+        let cosmos_key = self.args.get(2).expect("name is required");
+        let cosmos_key = config.load_deep_space_key(cosmos_key.to_string());
+
         let cosmos_prefix = config.cosmos.prefix.trim();
         let cosmos_address = cosmos_key.to_address(&cosmos_prefix).unwrap();
         let cosmos_grpc = config.cosmos.prefix.trim();
@@ -99,7 +87,7 @@ impl Runnable for CosmosToEthCmd {
             }
         }
         let amount = Coin {
-            amount,
+            amount: amount.clone(),
             denom: gravity_denom.clone(),
         };
         let bridge_fee = Coin {
@@ -148,7 +136,7 @@ impl Runnable for CosmosToEthCmd {
         for _ in 0..times {
             println!(
                 "Locking {} / {} into the batch pool",
-                flag_amount,
+                amount.clone(),
                 gravity_denom
             );
             let res = send_to_eth(
@@ -167,7 +155,7 @@ impl Runnable for CosmosToEthCmd {
 
         if !self.flag_no_batch {
             println!("Requesting a batch to push transaction along immediately");
-            send_request_batch(cosmos_key, gravity_denom, bridge_fee, &contact)
+            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact)
                 .await
                 .expect("Failed to request batch");
         } else {
