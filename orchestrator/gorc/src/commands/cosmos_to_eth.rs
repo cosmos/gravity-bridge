@@ -17,6 +17,8 @@ pub struct CosmosToEthCmd {
         help = "cosmos-to-eth [gravity_denom] [amount] [cosmos_key] [eth_dest] [times]"
     )]
     pub args: Vec<String>,
+
+    #[options(help = "don't batch, send request to be sent immediately")]
     pub flag_no_batch: bool,
 }
 
