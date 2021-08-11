@@ -12,10 +12,6 @@ mod version;
 mod cosmos_to_eth;
 mod print_config;
 
-use self::{
-    keys::KeysCmd, orchestrator::OrchestratorCmd, print_config::PrintConfigCmd, query::QueryCmd,
-    tests::TestsCmd, tx::TxCmd, version::VersionCmd,
-};
 use crate::config::GorcConfig;
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use std::path::PathBuf;
@@ -26,37 +22,39 @@ pub const CONFIG_FILE: &str = "gorc.toml";
 /// Gorc Subcommands
 #[derive(Command, Debug, Options, Runnable)]
 pub enum GorcCmd {
+  
+    #[options(help = "Send Cosmos to Ethereum")]
+    CosmosToEth(cosmos_to_eth::CosmosToEthCmd),
+  
+    #[options(help = "tools for contract deployment")]
+    Deploy(deploy::DeployCmd),
+
     #[options(help = "get usage information")]
     Help(Help<Self>),
 
     #[options(help = "key management commands")]
-    Keys(KeysCmd),
+    Keys(keys::KeysCmd),
 
-    #[options(help = "orchestrator")]
-    Orchestrator(OrchestratorCmd),
+    #[options(help = "orchestrator management commands")]
+    Orchestrator(orchestrator::OrchestratorCmd),
 
     #[options(help = "print config file template")]
-    PrintConfig(PrintConfigCmd),
+    PrintConfig(print_config::PrintConfigCmd),
 
     #[options(help = "query state on either ethereum or cosmos chains")]
-    Query(QueryCmd),
+    Query(query::QueryCmd),
 
     #[options(help = "sign delegate keys")]
     SignDelegateKeys(sign_delegate_keys::SignDelegateKeysCmd),
 
     #[options(help = "run tests against configured chains")]
-    Tests(TestsCmd),
+    Tests(tests::TestsCmd),
 
     #[options(help = "create transactions on either ethereum or cosmos chains")]
-    Tx(TxCmd),
+    Tx(tx::TxCmd),
 
     #[options(help = "display version information")]
-    Version(VersionCmd),
-
-    #[options(help = "Send Cosmos to Ethereum")]
-    CosmosToEth(cosmos_to_eth::CosmosToEthCmd),
-    #[options(help = "print config file template")]
-    PrintConfigCmd(PrintConfigCmd),
+    Version(version::VersionCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
