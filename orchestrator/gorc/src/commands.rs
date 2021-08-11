@@ -4,12 +4,13 @@
 mod deploy;
 mod keys;
 mod orchestrator;
-mod print_config;
 mod query;
 mod sign_delegate_keys;
 mod tests;
 mod tx;
 mod version;
+mod cosmos_to_eth;
+mod print_config;
 
 use self::{
     keys::KeysCmd, orchestrator::OrchestratorCmd, print_config::PrintConfigCmd, query::QueryCmd,
@@ -51,6 +52,11 @@ pub enum GorcCmd {
 
     #[options(help = "display version information")]
     Version(VersionCmd),
+
+    #[options(help = "Send Cosmos to Ethereum")]
+    CosmosToEth(cosmos_to_eth::CosmosToEthCmd),
+    #[options(help = "print config file template")]
+    PrintConfigCmd(PrintConfigCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
