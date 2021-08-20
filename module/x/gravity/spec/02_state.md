@@ -11,7 +11,84 @@ and defines overall functioning of the staking module.
 
 - Params: `Paramsspace("gravity") -> legacy_amino(params)`
 
-+++ <https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/genesis.proto#L72-L104>
+```proto
+message Params {
+  option (gogoproto.stringer) = false;
+
+  // a random 32 byte value to prevent signature reuse, for example if the
+  // cosmos validators decided to use the same Ethereum keys for another chain
+  // also running Gravity we would not want it to be possible to play a deposit
+  // from chain A back on chain B's Gravity. This value IS USED ON ETHEREUM so
+  // it must be set in your genesis.json before launch and not changed after
+  // deploying Gravity
+  string gravity_id                  = 1;
+  
+  // the code hash of a known good version of the Gravity contract
+  // solidity code. This can be used to verify the correct version
+  // of the contract has been deployed. This is a reference value for
+  // goernance action only it is never read by any Gravity code
+  string contract_source_hash        = 2;
+
+  // These reference values may be used by future Gravity client implemetnations
+  // to allow for saftey features or convenience features like the Gravity address
+  // in your relayer. A relayer would require a configured Gravity address if
+  // governance had not set the address on the chain it was relaying for.
+  //
+  // the address of the bridge contract on the Ethereum side, this is a
+  // reference value for governance only and is not actually used by any
+  // Gravity code
+  string bridge_ethereum_address     = 4;
+  
+  // the unique identifier of the Ethereum chain, this is a reference value
+  // only and is not actually used by any Gravity code
+  uint64 bridge_chain_id             = 5;
+
+  // These values represent the time in blocks that a validator has to submit
+  // a signature for a batch or valset, or to submit a claim for a particular
+  // attestation nonce. In the case of attestations this clock starts when the
+  // attestation is created, but only allows for slashing once the event has passed
+  uint64 signed_valsets_window       = 6;
+  uint64 signed_batches_window       = 7;
+  uint64 signed_claims_window        = 8;
+
+  // This is the 'target' value for when batches time out, this is a target becuase
+  // Ethereum is a probabalistic chain and you can't say for sure what the block
+  // frequency is ahead of time.
+  uint64 target_batch_timeout        = 10;
+  
+  // These values are the average Cosmos block time and Ethereum block time repsectively
+  // and they are used to copute what the target batch timeout is. It is important that
+  // governance updates these in case of any major, prolonged change in the time it takes
+  // to produce a block
+  uint64 average_block_time          = 11;
+  uint64 average_ethereum_block_time = 12;
+
+  // The slashing fractions for the various gravity related slashing conditions. The first three
+  // refer to not submitting a particular message, the fourth for submitting a different claim
+  // for the same Ethereum event
+  bytes  slash_fraction_valset       = 13 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  bytes slash_fraction_batch = 14 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  bytes slash_fraction_claim = 15 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  bytes slash_fraction_conflicting_claim = 16 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  uint64 unbond_slashing_valsets_window = 17;
+  bytes slash_fraction_bad_eth_signature = 18 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+}
+```
 
 ### OutgoingTxBatch
 
@@ -21,7 +98,7 @@ Stored in two possible ways, first with a height and second without (unsafe). Un
 | ------------------------------------------------------------------ | -------------------------------- | ----------------------- | ---------------- |
 | `[]byte{0xa} + []byte(tokenContract) + nonce (big endian encoded)` | A batch of outgoing transactions | `types.OutgoingTxBatch` | Protobuf encoded |
 
-```
+```proto
 message OutgoingTxBatch {
   // The batch_nonce is an incrementing nonce which is assigned to a batch on creation.
   // The Gravity.sol Ethereum contract stores the last executed batch nonce for each token type
@@ -43,7 +120,7 @@ message OutgoingTxBatch {
 }
 ```
 
-### ValidatorSet
+### Valset
 
 This is the validator set of the bridge.
 
@@ -52,6 +129,17 @@ Stored in two possible ways, first with a height and second without (unsafe). Un
 | key                                        | Value         | Type           | Encoding         |
 | ------------------------------------------ | ------------- | -------------- | ---------------- |
 | `[]byte{0x2} + nonce (big endian encoded)` | Validator set | `types.Valset` | Protobuf encoded |
+
+```proto
+// Valset is the Ethereum Bridge Multsig Set, each gravity validator also
+// maintains an ETH key to sign messages, these are used to check signatures on
+// ETH because of the significant gas savings
+message Valset {
+  uint64                   nonce   = 1;
+  repeated BridgeValidator members = 2;
+  uint64                   height  = 3;
+}
+```
 
 ### ValsetNonce
 
@@ -77,6 +165,30 @@ When a validator signs over a validator set this is considered a `valSetConfirma
 | ------------------------------------------- | ---------------------- | ------------------------ | ---------------- |
 | `[]byte{0x3} + (nonce + []byte(AccAddress)` | Validator Confirmation | `types.MsgValsetConfirm` | Protobuf encoded |
 
+```proto
+// MsgValsetConfirm
+// this is the message sent by the validators when they wish to submit their
+// signatures over the validator set at a given block height. A validator must
+// first call MsgSetEthAddress to set their Ethereum address to be used for
+// signing. Then someone (anyone) must make a ValsetRequest, the request is
+// essentially a messaging mechanism to determine which block all validators
+// should submit signatures over. Finally validators sign the validator set,
+// powers, and Ethereum addresses of the entire validator set at the height of a
+// ValsetRequest and submit that signature with this message.
+//
+// If a sufficient number of validators (66% of voting power) (A) have set
+// Ethereum addresses and (B) submit ValsetConfirm messages with their
+// signatures it is then possible for anyone to view these signatures in the
+// chain store and submit them to Ethereum to update the validator set
+// -------------
+message MsgValsetConfirm {
+  uint64 nonce        = 1;
+  string orchestrator = 2;
+  string eth_address  = 3;
+  string signature    = 4;
+}
+```
+
 ### ConfirmBatch
 
 When a validator confirms a batch it is added to the confirm batch store. It is stored using the orchestrator, token contract and nonce as the key.
@@ -84,6 +196,24 @@ When a validator confirms a batch it is added to the confirm batch store. It is 
 | Key                                                                 | Value                        | Type                    | Encoding         |
 | ------------------------------------------------------------------- | ---------------------------- | ----------------------- | ---------------- |
 | `[]byte{0xe1} + []byte(tokenContract) + nonce + []byte(AccAddress)` | Validator Batch Confirmation | `types.MsgConfirmBatch` | Protobuf encoded |
+
+```proto
+// MsgConfirmBatch
+// When validators observe a MsgRequestBatch they form a batch by ordering
+// transactions currently in the txqueue in order of highest to lowest fee,
+// cutting off when the batch either reaches a hardcoded maximum size (to be
+// decided, probably around 100) or when transactions stop being profitable
+// (TODO determine this without nondeterminism) This message includes the batch
+// as well as an Ethereum signature over this batch by the validator
+// -------------
+message MsgConfirmBatch {
+  uint64 nonce          = 1;
+  string token_contract = 2;
+  string eth_signer     = 3;
+  string orchestrator   = 4;
+  string signature      = 5;
+}
+```
 
 ### OrchestratorValidator
 
@@ -103,7 +233,13 @@ A validator has an associated Ethereum address.
 
 ### OutgoingLogicCall
 
-```
+When another module requests a logic call to be executed on Ethereum it is stored in a store within the gravity module.
+
+| Key                                                                  | Value                                                | Type                      | Encoding         |
+| -------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------- | ---------------- |
+| `[]byte{0xde} + []byte(invalidationId) + nonce (big endian encoded)` | A user created logic call to be sent to the Ethereum | `types.OutgoingLogicCall` | Protobuf encoded |
+
+```proto
 message OutgoingLogicCall {
   // This is the address of the logic contract that Gravity.sol will call
   string              logic_contract_address = 3;
@@ -133,12 +269,6 @@ message OutgoingLogicCall {
 }
 ```
 
-When another module requests a logic call to be executed on Ethereum it is stored in a store within the gravity module.
-
-| Key                                                                  | Value                                                | Type                      | Encoding         |
-| -------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------- | ---------------- |
-| `[]byte{0xde} + []byte(invalidationId) + nonce (big endian encoded)` | A user created logic call to be sent to the Ethereum | `types.OutgoingLogicCall` | Protobuf encoded |
-
 ### ConfirmLogicCall
 
 When a logic call is executed validators confirm the execution.
@@ -147,13 +277,42 @@ When a logic call is executed validators confirm the execution.
 | ----------------------------------------------------------------------------------------- | ------------------------------------------- | --------------------------- | ---------------- |
 | `[]byte{0xae} + []byte(invalidationId) + nonce (big endian encoded) + []byte(AccAddress)` | Confirmation of execution of the logic call | `types.MsgConfirmLogicCall` | Protobuf encoded |
 
+```proto
+// MsgConfirmLogicCall
+// When validators observe a MsgRequestBatch they form a batch by ordering
+// transactions currently in the txqueue in order of highest to lowest fee,
+// cutting off when the batch either reaches a hardcoded maximum size (to be
+// decided, probably around 100) or when transactions stop being profitable
+// (TODO determine this without nondeterminism) This message includes the batch
+// as well as an Ethereum signature over this batch by the validator
+// -------------
+message MsgConfirmLogicCall {
+  string invalidation_id    = 1;
+  uint64 invalidation_nonce = 2;
+  string eth_signer         = 3;
+  string orchestrator       = 4;
+  string signature          = 5;
+}
+```
+
 ### OutgoingTx
 
 Sets an outgoing transactions into the applications transaction pool to be included into a batch.
 
 | Key                                     | Value                                              | Type               | Encoding         |
 | --------------------------------------- | -------------------------------------------------- | ------------------ | ---------------- |
-| `[]byte{0x6} + id (big endian encoded)` | User created transaction to be included in a batch | `types.OutgoingTx` | Protobuf encoded |
+| `[]byte{0x6} + id (big endian encoded)` | User created transaction to be included in a batch | `types.OutgoingTransferTx` | Protobuf encoded |
+
+```proto
+// OutgoingTransferTx represents an individual send from gravity to ETH
+message OutgoingTransferTx {
+  uint64     id           = 1;
+  string     sender       = 2;
+  string     dest_address = 3;
+  ERC20Token erc20_token  = 4;
+  ERC20Token erc20_fee    = 5;
+}
+```
 
 ### IDS
 
@@ -191,7 +350,7 @@ This is the last observed height on ethereum. There will always only be a single
 
 | Key            | Value                         | Type     | Encoding         |
 | -------------- | ----------------------------- | -------- | ---------------- |
-| `[]byte{0xf9}` | Last observed Ethereum Height | `uint64` | Protobuf encoded |
+| `[]byte{0xf9}` | Last observed Ethereum Height | `uint64` | Big endian encoded |
 
 ### Attestation
 
@@ -201,7 +360,9 @@ This is a record of all the votes for a given claim (Ethereum event).
 | ------------------------------------------------------------------- | ------------------------------------- | ------------------- | ---------------- |
 | `[]byte{0x5} + eventNonce (big endian encoded) + []byte(claimHash)` | Attestation of occurred events/claims | `types.Attestation` | Protobuf encoded |
 
-```
+```proto
+// Attestation is an aggregate of `claims` that eventually becomes `observed` by
+// all orchestrators
 message Attestation {
   // This field stores whether the Attestation has had its event applied to the Cosmos state. This happens when
   // enough (usually >2/3s) of the validator power votes that they saw the event on Ethereum.
@@ -217,8 +378,6 @@ message Attestation {
 }
 ```
 
-+++ <https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/attestation.proto#L38-L43>
-
 ### Valset
 
 This is a record of the Cosmos validator set at a given moment. Can be sent to the Gravity.sol contract to update the signer set.
@@ -227,7 +386,7 @@ This is a record of the Cosmos validator set at a given moment. Can be sent to t
 | ----------------------------------- | -------------------------- | -------------- | ---------------- |
 | `[]byte{0x5} + uint64 valset nonce` | Validator set for Ethereum | `types.Valset` | Protobuf encoded |
 
-```
+```proto
 message Valset {
   // This nonce is incremented for each subsequent valset produced by the Gravity module.
   // The Gravity.sol contract will only accept a valset with a higher nonce than the last
