@@ -61,7 +61,7 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 /////////////////////////////
 
 // SetValsetRequest returns a new instance of the Gravity BridgeValidatorSet
-// i.e. {"nonce": 1, "memebers": [{"eth_addr": "foo", "power": 11223}]}
+// i.e. {"nonce": 1, "members": [{"eth_addr": "foo", "power": 11223}]}
 func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	valset := k.GetCurrentValset(ctx)
 	k.StoreValset(ctx, valset)

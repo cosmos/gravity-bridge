@@ -7,6 +7,8 @@ order: 5
 Each abci end block call, the operations to update queues and validator set
 changes are specified to execute.
 
+This is implemented in `abci.go`.
+
 ## Valset Creation
 
 Every endblock, we run the following procedure to determine whether to make a new `Valset` which will then need to be signed by all validators.

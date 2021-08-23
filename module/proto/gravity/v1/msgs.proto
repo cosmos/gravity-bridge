@@ -52,22 +52,18 @@ service Msg {
   }
 }
 
-// MsgSetOrchestratorAddress
 // this message allows validators to delegate their voting responsibilities
 // to a given key. This key is then used as an optional authentication method
 // for sigining oracle claims
-// VALIDATOR
-// The validator field is a cosmosvaloper1... string (i.e. sdk.ValAddress)
-// that references a validator in the active set
-// ORCHESTRATOR
-// The orchestrator field is a cosmos1... string  (i.e. sdk.AccAddress) that
-// references the key that is being delegated to
-// ETH_ADDRESS
-// This is a hex encoded 0x Ethereum public key that will be used by this validator
-// on Ethereum
 message MsgSetOrchestratorAddress {
+  // The validator field is a cosmosvaloper1... string (i.e. sdk.ValAddress)
+  // that references a validator in the active set
   string validator    = 1;
+  // The orchestrator field is a cosmos1... string  (i.e. sdk.AccAddress) that
+  // references the key that is being delegated to
   string orchestrator = 2;
+  // This is a hex encoded 0x Ethereum public key that will be used by this validator
+  // on Ethereum
   string eth_address  = 3;
 }
 
@@ -97,24 +93,20 @@ message MsgValsetConfirm {
 
 message MsgValsetConfirmResponse {}
 
-// MsgSendToEth
 // This is the message that a user calls when they want to bridge an asset
 // it will later be removed when it is included in a batch and successfully
 // submitted tokens are removed from the users balance immediately
-// -------------
-// AMOUNT:
-// the coin to send across the bridge, note the restriction that this is a
-// single coin not a set of coins that is normal in other Cosmos messages
-// FEE:
-// the fee paid for the bridge, distinct from the fee paid to the chain to
-// actually send this message in the first place. So a successful send has
-// two layers of fees for the user
 message MsgSendToEth {
   string                   sender   = 1;
   string                   eth_dest = 2;
+  // the coin to send across the bridge, note the restriction that this is a
+  // single coin not a set of coins that is normal in other Cosmos messages
   cosmos.base.v1beta1.Coin amount   = 3 [
     (gogoproto.nullable) = false
   ];
+  // the fee paid for the bridge, distinct from the fee paid to the chain to
+  // actually send this message in the first place. So a successful send has
+  // two layers of fees for the user
   cosmos.base.v1beta1.Coin bridge_fee = 4 [
     (gogoproto.nullable) = false
   ];

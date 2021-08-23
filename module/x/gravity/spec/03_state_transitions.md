@@ -10,7 +10,7 @@ This document describes the state transition operations pertaining to:
 
 ### First vote
 
-The first time any validator sees a given Ethereum event on the Ethereum blockchain, and calls `DepositClaim`, or one of the other endpoints for other types of ethereum events (claims):
+The first time any validator sees a given Ethereum event on the Ethereum blockchain, and calls `DepositClaim`, or one of the other endpoints for other types of ethereum events (claims), we follow this algorithm, implemented in `Keeper.Attest`:
 
 - We check that the event nonce of the submitted event is exactly one higher than that validator's last submitted event. This keeps validators from voting on different events at the same event nonce, which makes tallying votes easier later.
 - An Attestation is created for that event at that event nonce. Event nonces are created by the Gravity.sol Ethereum contract, and increment every time it fires an event. It is possible for validators to disagree about what event happened at a given event nonce, but only in the case of an attempted attack by Cosmos validators, or in the case of serious issues with Ethereum (like a hard fork).
@@ -18,7 +18,7 @@ The first time any validator sees a given Ethereum event on the Ethereum blockch
 - The observed field is initialized to false.
 - The height field is filled with the current Cosmos block height.
 
-### Subsequent votes
+#### Subsequent votes
 
 When other validators see the same event at the same event nonce, and call `DepositClaim`, or one of the other endpoints for other types of ethereum events:
 
@@ -30,7 +30,7 @@ When other validators see the same event at the same event nonce, and call `Depo
 
 Every endblock, the module attempts to tally up the votes for un-Observed attestations. Which attestations it chooses to tally is covered in the [end blocker spec](05_end_block.md).
 
-When tallying the votes a given attestation, we follow this algorithm:
+When tallying the votes a given attestation, we follow this algorithm, which is implemented in `Keeper.TryAttestation`:
 
 - First get `LastTotalPower` from the StakingKeeper
 - `requiredPower` = `AttestationVotesPowerThreshold` \* `LastTotalPower` / 100
@@ -50,6 +50,8 @@ Now we are ready to apply the attestation's event to the Cosmos state. This is d
 
 ### On event observed:
 
+Implemented in `AttestationHandler.Handle`.
+
 - Check if deposited token is Ethereum or Cosmos originated, and get it's Cosmos denom, using the `MsgDepositClaim`'s `token_contract` field.
 - If it is Cosmos originated:
   - Send the number of coins in the `amount` field to the Cosmos address in the `cosmos_receiver` field, from the Gravity module's wallet. This works because any Cosmos originated tokens that are circulating on Ethereum must have been created by depositing into the Gravity module at some point in the past.
@@ -62,6 +64,8 @@ This event is fired when a `OutgoingTxBatch` is executed on Ethereum, sending th
 
 ### On event observed:
 
+Implemented in `AttestationHandler.Handle`.
+
 - Delete all the transactions in the batch from the `OutgoingTxPool`, since they have been spent on Ethereum.
 - For all batches with a `BatchNonce` lower than this one, put their transactions back into the `UnbatchedTXIndex`, which allows them to either be put into a new batch, or canceled by their sender using `MsgCancelSendToEth`. This is because the Gravity.sol Ethereum contract does not allow batches to be executed with a lower nonce than the last executed batch, meaning that the transactions in these batches can never be spent, making it safe to cancel them or put them in a new batch.
 
@@ -71,6 +75,8 @@ Cosmos originated assets are represented by ERC20 contracts deployed on Ethereum
 
 ### On event observed:
 
+Implemented in `AttestationHandler.Handle`.
+
 - Check if a contract has already been deployed for this asset. If so, error out.
 - Check if the Cosmos denom that the contract was deployed even exists. If not, error out.
 - Check if the ERC20 parameters, Name, Symbol, and Decimals match the equivalent attributes in the `DenomMetaData`. If not, error out.
@@ -79,6 +85,8 @@ Cosmos originated assets are represented by ERC20 contracts deployed on Ethereum
 ## OutgoingTxBatch
 
 ### Batch creation
+
+Implemented in `Keeper.BuildOutgoingTXBatch`
 
 To create a new batch for a given token type:
 
@@ -121,7 +129,7 @@ Relayers are then able to get all the signatures for a batch, assemble them into
 
 ### Logic call creation
 
-Another module on the same Cosmos chain can call `SetOutgoingLogicCall` to create a logic call. All setting of parameters is left up to the external module.
+Another module on the same Cosmos chain can call `Keeper.SetOutgoingLogicCall` to create a logic call. All setting of parameters is left up to the external module.
 
 ### Logic call signing
 
@@ -132,6 +140,8 @@ Relayers are then able to get all the signatures for a logic call, assemble them
 ## Valset
 
 ### Valset creation
+
+This algorithm is implemented in `Keeper.GetCurrentValset`
 
 To create valsets:
 
