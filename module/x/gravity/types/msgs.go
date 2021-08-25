@@ -58,7 +58,7 @@ func (msg *MsgDelegateKeys) ValidateBasic() (err error) {
 
 // GetSignBytes encodes the message for signing
 func (msg *MsgDelegateKeys) GetSignBytes() []byte {
-	panic(fmt.Errorf("deprecated"))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
