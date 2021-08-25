@@ -65,7 +65,7 @@ impl Runnable for SendToCosmos {
             .parse()
             .expect("Expected config.gravity.contract to be an Eth ddress");
 
-        abscissa_tokio::run(&APP, async {
+        abscissa_tokio::run_with_actix(&APP, async {
             let connections =
                 create_rpc_connections(cosmos_prefix, Some(cosmso_grpc), Some(eth_rpc), TIMEOUT)
                     .await;

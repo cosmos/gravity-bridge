@@ -19,7 +19,7 @@ pub struct Erc20 {
 
 impl Runnable for Erc20 {
     fn run(&self) {
-        abscissa_tokio::run(&APP, async {
+        abscissa_tokio::run_with_actix(&APP, async {
             self.deploy().await;
         })
         .unwrap_or_else(|e| {

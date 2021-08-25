@@ -71,7 +71,7 @@ impl Runnable for SendToEth {
         let cosmos_prefix = config.cosmos.prefix.clone();
         let cosmso_grpc = config.cosmos.grpc.clone();
 
-        abscissa_tokio::run(&APP, async {
+        abscissa_tokio::run_with_actix(&APP, async {
             let connections =
                 create_rpc_connections(cosmos_prefix, Some(cosmso_grpc), None, TIMEOUT).await;
             let contact = connections.contact.unwrap();
@@ -162,7 +162,7 @@ impl Runnable for Send {
         let _to_addr = self.free[1].clone();
         let _coin_amount = self.free[2].clone();
 
-        abscissa_tokio::run(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
+        abscissa_tokio::run_with_actix(&APP, async { unimplemented!() }).unwrap_or_else(|e| {
             status_err!("executor exited with error: {}", e);
             exit(1);
         });
