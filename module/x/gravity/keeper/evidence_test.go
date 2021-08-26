@@ -86,8 +86,12 @@ func TestSubmitBadSignatureEvidenceContractCallExists(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
+	params := input.GravityKeeper.GetParams((ctx))
+
 	logicCall := types.ContractCallTx{
-		Timeout: 420,
+		Address: input.GravityKeeper.getBridgeContractAddress(ctx),
+		Height:  uint64(ctx.BlockHeight()),
+		Timeout: params.TargetEthTxTimeout,
 	}
 
 	input.GravityKeeper.CreateContractCallTx(ctx, logicCall.InvalidationNonce, logicCall.InvalidationScope, logicCall.Payload, logicCall.Tokens, logicCall.Fees)
