@@ -88,7 +88,7 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 	}
 
 	k.SetOrchestratorValidatorAddress(ctx, valAddr, orchAddr)
-	k.setValidatorEthereumAddress(ctx, valAddr, ethAddr)
+	k.SetValidatorEthereumAddress(ctx, valAddr, ethAddr)
 	k.setEthereumOrchestratorAddress(ctx, ethAddr, orchAddr)
 
 	ctx.EventManager().EmitEvent(
@@ -124,7 +124,7 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find outgoing tx")
 	}
 
-	gravityID := k.getGravityID(ctx)
+	gravityID := k.GetGravityID(ctx)
 	checkpoint := otx.GetCheckpoint([]byte(gravityID))
 
 	ethAddress := k.GetValidatorEthereumAddress(ctx, val)

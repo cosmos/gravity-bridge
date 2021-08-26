@@ -45,8 +45,8 @@ func (k Keeper) BuildBatchTx(ctx sdk.Context, contractAddress common.Address, ma
 	}
 	k.SetOutgoingTx(ctx, batch)
 
-	checkpoint := batch.GetCheckpoint([]byte(k.getGravityID(ctx)))
-	k.setPastEthTxCheckpoint(ctx, checkpoint)
+	checkpoint := batch.GetCheckpoint([]byte(k.GetGravityID(ctx)))
+	k.setPastEthSignatureCheckpoint(ctx, checkpoint)
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeOutgoingBatch,

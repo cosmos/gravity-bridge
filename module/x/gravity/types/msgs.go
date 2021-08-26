@@ -301,7 +301,7 @@ func (e *MsgSubmitBadSignatureEvidence) ValidateBasic() (err error) {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgSubmitBadSignatureEvidence) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic(fmt.Errorf("deprecated"))
 }
 
 // GetSigners defines whose signature is required

@@ -19,11 +19,11 @@ func (k Keeper) CheckBadSignatureEvidence(
 	k.cdc.UnpackAny(msg.Subject, &subject)
 
 	switch subject := subject.(type) {
-	case *types.OutgoingTxBatch:
+	case *types.BatchTx:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
-	case *types.Valset:
+	case *types.SignerSetTx:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
-	case *types.OutgoingLogicCall:
+	case *types.ContractCallTx:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
 
 	default:
@@ -33,7 +33,7 @@ func (k Keeper) CheckBadSignatureEvidence(
 
 func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, subject types.OutgoingTx, signature string) error {
 	// Get checkpoint of the supposed bad signature (fake valset, batch, or logic call submitted to eth)
-	gravityID := k.getGravityID(ctx)
+	gravityID := k.GetGravityID(ctx)
 	checkpoint := subject.GetCheckpoint([]byte(gravityID))
 
 	// Try to find the checkpoint in the archives. If it exists, we don't slash because
