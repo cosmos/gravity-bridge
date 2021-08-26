@@ -16,6 +16,7 @@ var (
 	_ sdk.Msg = &MsgRequestBatchTx{}
 	_ sdk.Msg = &MsgSubmitEthereumEvent{}
 	_ sdk.Msg = &MsgSubmitEthereumTxConfirmation{}
+	_ sdk.Msg = &MsgSubmitBadSignatureEvidence{}
 
 	_ cdctypes.UnpackInterfacesMessage = &MsgSubmitEthereumEvent{}
 	_ cdctypes.UnpackInterfacesMessage = &MsgSubmitEthereumTxConfirmation{}
@@ -287,3 +288,33 @@ func (msg MsgCancelSendToEthereum) GetSigners() []sdk.AccAddress {
 
 	return []sdk.AccAddress{acc}
 }
+
+// Route should return the name of the module
+// ValidateBasic performs stateless checks
+func (e *MsgSubmitBadSignatureEvidence) ValidateBasic() (err error) {
+	_, err = sdk.AccAddressFromBech32(e.Sender)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgSubmitBadSignatureEvidence) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgSubmitBadSignatureEvidence) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic("Invalid signer for MsgSubmitBadSignatureEvidence")
+	}
+	return []sdk.AccAddress{acc}
+}
+
+// Type should return the action
+func (msg MsgSubmitBadSignatureEvidence) Type() string { return "Submit_Bad_Signature_Evidence" }
+
+// Route should return the name of the module
+func (msg MsgSubmitBadSignatureEvidence) Route() string { return RouterKey }

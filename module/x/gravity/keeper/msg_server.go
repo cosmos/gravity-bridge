@@ -303,3 +303,21 @@ func (k Keeper) getSignerValidator(ctx sdk.Context, signerString string) (sdk.Va
 
 	return validatorI.GetOperator(), nil
 }
+
+func (k msgServer) SubmitBadSignatureEvidence(c context.Context, msg *types.MsgSubmitBadSignatureEvidence) (*types.MsgSubmitBadSignatureEvidenceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	err := k.CheckBadSignatureEvidence(ctx, msg)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyBadEthSignature, fmt.Sprint(msg.Signature)),
+			sdk.NewAttribute(types.AttributeKeyBadEthSignatureSubject, fmt.Sprint(msg.Subject)),
+		),
+	)
+
+	return &types.MsgSubmitBadSignatureEvidenceResponse{}, err
+}
