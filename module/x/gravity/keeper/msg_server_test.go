@@ -50,7 +50,7 @@ func TestMsgServer_SubmitEthereumSignature(t *testing.T) {
 
 	// setup for ValidateEthereumSignature
 	gravityId := gk.GetGravityID(ctx)
-	checkpoint := signerSetTx.GetCheckpoint([]byte(gravityId))
+	checkpoint := signerSetTx.GetCheckpoint(gravityId)
 	signature, err := types.NewEthereumSignature(checkpoint, ethPrivKey)
 	require.NoError(t, err)
 

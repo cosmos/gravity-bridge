@@ -80,7 +80,7 @@ func TestSubmitBadSignatureEvidenceValsetExists(t *testing.T) {
 }
 
 //nolint: exhaustivestruct
-func TestSubmitBadSignatureEvidenceLogicCallExists(t *testing.T) {
+func TestSubmitBadSignatureEvidenceContractCallExists(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
@@ -90,14 +90,15 @@ func TestSubmitBadSignatureEvidenceLogicCallExists(t *testing.T) {
 
 	input.GravityKeeper.CreateContractCallTx(ctx, logicCall.InvalidationNonce, logicCall.InvalidationScope, logicCall.Payload, logicCall.Tokens, logicCall.Fees)
 
-	any, _ := codectypes.NewAnyWithValue(&logicCall)
+	any, err := codectypes.NewAnyWithValue(&logicCall)
+	require.NoError(t, err)
 
 	msg := types.MsgSubmitBadSignatureEvidence{
 		Subject:   any,
 		Signature: "foo",
 	}
 
-	err := input.GravityKeeper.CheckBadSignatureEvidence(ctx, &msg)
+	err = input.GravityKeeper.CheckBadSignatureEvidence(ctx, &msg)
 	require.EqualError(t, err, "Checkpoint exists, cannot slash: invalid")
 }
 
@@ -109,7 +110,7 @@ func TestSubmitBadSignatureEvidenceSlash(t *testing.T) {
 		Timeout: 420,
 	}
 
-	checkpoint := batch.GetCheckpoint([]byte(input.GravityKeeper.GetGravityID(ctx)))
+	checkpoint := batch.GetCheckpoint(input.GravityKeeper.GetGravityID(ctx))
 
 	any, err := codectypes.NewAnyWithValue(&batch)
 	require.NoError(t, err)

@@ -125,7 +125,7 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 	}
 
 	gravityID := k.GetGravityID(ctx)
-	checkpoint := otx.GetCheckpoint([]byte(gravityID))
+	checkpoint := otx.GetCheckpoint(gravityID)
 
 	ethAddress := k.GetValidatorEthereumAddress(ctx, val)
 	if ethAddress != confirmation.GetSigner() {

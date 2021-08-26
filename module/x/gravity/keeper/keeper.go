@@ -270,6 +270,11 @@ func (k Keeper) CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 		),
 	)
 	k.SetOutgoingTx(ctx, newSignerSetTx)
+
+	// Store checkpoint to prove that this logic call actually happened
+	checkpoint := newSignerSetTx.GetCheckpoint(k.GetGravityID(ctx))
+	k.setPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	k.Logger(ctx).Info(
 		"SignerSetTx created",
 		"nonce", newSignerSetTx.Nonce,
@@ -555,6 +560,12 @@ func (k Keeper) CreateContractCallTx(ctx sdk.Context, invalidationNonce uint64, 
 		),
 	)
 	k.SetOutgoingTx(ctx, newContractCallTx)
+
+	// Store checkpoint to prove that this logic call actually happened
+	checkpoint := newContractCallTx.GetCheckpoint(k.GetGravityID(ctx))
+	fmt.Println(checkpoint)
+	k.setPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	k.Logger(ctx).Info(
 		"ContractCallTx created",
 		"invalidation_nonce", newContractCallTx.InvalidationNonce,
