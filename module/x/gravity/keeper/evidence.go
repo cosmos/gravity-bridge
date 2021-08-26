@@ -35,6 +35,8 @@ func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, subject types
 	// Get checkpoint of the supposed bad signature (fake valset, batch, or logic call submitted to eth)
 	gravityID := k.GetGravityID(ctx)
 	checkpoint := subject.GetCheckpoint(gravityID)
+
+	ctx.Logger().Info("checkpoint check", "checkpoint", checkpoint)
 	// Try to find the checkpoint in the archives. If it exists, we don't slash because
 	// this is not a bad signature
 	if k.getPastEthSignatureCheckpoint(ctx, checkpoint) {
@@ -92,13 +94,11 @@ func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, subject types
 func (k Keeper) setPastEthSignatureCheckpoint(ctx sdk.Context, checkpoint []byte) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetPastEthSignatureCheckpointKey(checkpoint), []byte{0x1})
-
-	fmt.Println(types.GetPastEthSignatureCheckpointKey(checkpoint), 1)
 }
 
 // GetPastEthSignatureCheckpoint tells you whether a given checkpoint has ever existed
 func (k Keeper) getPastEthSignatureCheckpoint(ctx sdk.Context, checkpoint []byte) (found bool) {
 	store := ctx.KVStore(k.storeKey)
-	fmt.Println(types.GetPastEthSignatureCheckpointKey(checkpoint), 2)
+
 	return bytes.Equal(store.Get(types.GetPastEthSignatureCheckpointKey(checkpoint)), []byte{0x1})
 }

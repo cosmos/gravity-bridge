@@ -563,13 +563,13 @@ func (k Keeper) CreateContractCallTx(ctx sdk.Context, invalidationNonce uint64, 
 
 	// Store checkpoint to prove that this logic call actually happened
 	checkpoint := newContractCallTx.GetCheckpoint(k.GetGravityID(ctx))
-	fmt.Println(checkpoint)
 	k.setPastEthSignatureCheckpoint(ctx, checkpoint)
 
 	k.Logger(ctx).Info(
 		"ContractCallTx created",
 		"invalidation_nonce", newContractCallTx.InvalidationNonce,
 		"invalidation_scope", newContractCallTx.InvalidationScope,
+		"checkpoint", checkpoint,
 		// todo: fill out all fields
 	)
 	return newContractCallTx

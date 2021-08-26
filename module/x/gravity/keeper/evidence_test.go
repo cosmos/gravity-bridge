@@ -50,14 +50,15 @@ func TestSubmitBadSignatureEvidenceBatchExists(t *testing.T) {
 	contractAddr := common.HexToAddress(myTokenContractAddr)
 	goodBatch := input.GravityKeeper.BuildBatchTx(ctx, contractAddr, 2)
 
-	any, _ := codectypes.NewAnyWithValue(goodBatch)
+	any, err := codectypes.NewAnyWithValue(goodBatch)
+	require.NoError(t, err)
 
 	msg := types.MsgSubmitBadSignatureEvidence{
 		Subject:   any,
 		Signature: "foo",
 	}
 
-	err := input.GravityKeeper.CheckBadSignatureEvidence(ctx, &msg)
+	err = input.GravityKeeper.CheckBadSignatureEvidence(ctx, &msg)
 	require.EqualError(t, err, "Checkpoint exists, cannot slash: invalid")
 }
 
@@ -68,14 +69,15 @@ func TestSubmitBadSignatureEvidenceValsetExists(t *testing.T) {
 
 	valset := input.GravityKeeper.CreateSignerSetTx(ctx)
 
-	any, _ := codectypes.NewAnyWithValue(valset)
+	any, err := codectypes.NewAnyWithValue(valset)
+	require.NoError(t, err)
 
 	msg := types.MsgSubmitBadSignatureEvidence{
 		Subject:   any,
 		Signature: "foo",
 	}
 
-	err := input.GravityKeeper.CheckBadSignatureEvidence(ctx, &msg)
+	err = input.GravityKeeper.CheckBadSignatureEvidence(ctx, &msg)
 	require.EqualError(t, err, "Checkpoint exists, cannot slash: invalid")
 }
 

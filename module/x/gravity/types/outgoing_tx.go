@@ -61,7 +61,7 @@ func (cctx *ContractCallTx) GetCosmosHeight() uint64 {
 ///////////////////
 
 // GetCheckpoint returns the checkpoint
-func (u SignerSetTx) GetCheckpoint(gravityID string) []byte {
+func (sstx SignerSetTx) GetCheckpoint(gravityID string) []byte {
 
 	// the contract argument is not a arbitrary length array but a fixed length 32 byte
 	// array, therefore we have to utf8 encode the string (the default in this case) and
@@ -76,9 +76,9 @@ func (u SignerSetTx) GetCheckpoint(gravityID string) []byte {
 	var checkpoint [32]uint8
 	copy(checkpoint[:], checkpointBytes[:])
 
-	memberAddresses := make([]gethcommon.Address, len(u.Signers))
-	convertedPowers := make([]*big.Int, len(u.Signers))
-	for i, m := range u.Signers {
+	memberAddresses := make([]gethcommon.Address, len(sstx.Signers))
+	convertedPowers := make([]*big.Int, len(sstx.Signers))
+	for i, m := range sstx.Signers {
 		memberAddresses[i] = gethcommon.HexToAddress(m.EthereumAddress)
 		convertedPowers[i] = big.NewInt(int64(m.Power))
 	}
@@ -88,7 +88,7 @@ func (u SignerSetTx) GetCheckpoint(gravityID string) []byte {
 	args := []interface{}{
 		gravityIDFixed,
 		checkpoint,
-		big.NewInt(int64(u.Nonce)),
+		big.NewInt(int64(sstx.Nonce)),
 		memberAddresses,
 		convertedPowers,
 	}
@@ -97,7 +97,7 @@ func (u SignerSetTx) GetCheckpoint(gravityID string) []byte {
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (b BatchTx) GetCheckpoint(gravityID string) []byte {
+func (btx BatchTx) GetCheckpoint(gravityID string) []byte {
 
 	// the contract argument is not a arbitrary length array but a fixed length 32 byte
 	// array, therefore we have to utf8 encode the string (the default in this case) and
@@ -114,10 +114,10 @@ func (b BatchTx) GetCheckpoint(gravityID string) []byte {
 	copy(batchMethodName[:], methodNameBytes[:])
 
 	// Run through the elements of the batch and serialize them
-	txAmounts := make([]*big.Int, len(b.Transactions))
-	txDestinations := make([]gethcommon.Address, len(b.Transactions))
-	txFees := make([]*big.Int, len(b.Transactions))
-	for i, tx := range b.Transactions {
+	txAmounts := make([]*big.Int, len(btx.Transactions))
+	txDestinations := make([]gethcommon.Address, len(btx.Transactions))
+	txFees := make([]*big.Int, len(btx.Transactions))
+	for i, tx := range btx.Transactions {
 		txAmounts[i] = tx.Erc20Token.Amount.BigInt()
 		txDestinations[i] = gethcommon.HexToAddress(tx.EthereumRecipient)
 		txFees[i] = tx.Erc20Fee.Amount.BigInt()
@@ -132,16 +132,16 @@ func (b BatchTx) GetCheckpoint(gravityID string) []byte {
 		txAmounts,
 		txDestinations,
 		txFees,
-		big.NewInt(int64(b.BatchNonce)),
-		gethcommon.HexToAddress(b.TokenContract),
-		big.NewInt(int64(b.Timeout)),
+		big.NewInt(int64(btx.BatchNonce)),
+		gethcommon.HexToAddress(btx.TokenContract),
+		big.NewInt(int64(btx.Timeout)),
 	}
 
 	return packCall(BatchTxCheckpointABIJSON, "submitBatch", args)
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (c ContractCallTx) GetCheckpoint(gravityID string) []byte {
+func (cctx ContractCallTx) GetCheckpoint(gravityID string) []byte {
 
 	// Create the methodName argument which salts the signature
 	methodNameBytes := []uint8("logicCall")
@@ -158,22 +158,22 @@ func (c ContractCallTx) GetCheckpoint(gravityID string) []byte {
 	}
 
 	// Run through the elements of the logic call and serialize them
-	transferAmounts := make([]*big.Int, len(c.Tokens))
-	transferTokenContracts := make([]gethcommon.Address, len(c.Tokens))
-	feeAmounts := make([]*big.Int, len(c.Fees))
-	feeTokenContracts := make([]gethcommon.Address, len(c.Fees))
-	for i, coin := range c.Tokens {
+	transferAmounts := make([]*big.Int, len(cctx.Tokens))
+	transferTokenContracts := make([]gethcommon.Address, len(cctx.Tokens))
+	feeAmounts := make([]*big.Int, len(cctx.Fees))
+	feeTokenContracts := make([]gethcommon.Address, len(cctx.Fees))
+	for i, coin := range cctx.Tokens {
 		transferAmounts[i] = coin.Amount.BigInt()
 		transferTokenContracts[i] = gethcommon.HexToAddress(coin.Contract)
 	}
-	for i, coin := range c.Fees {
+	for i, coin := range cctx.Fees {
 		feeAmounts[i] = coin.Amount.BigInt()
 		feeTokenContracts[i] = gethcommon.HexToAddress(coin.Contract)
 	}
-	payload := make([]byte, len(c.Payload))
-	copy(payload, c.Payload)
+	payload := make([]byte, len(cctx.Payload))
+	copy(payload, cctx.Payload)
 	var invalidationId [32]byte
-	copy(invalidationId[:], c.InvalidationScope[:])
+	copy(invalidationId[:], cctx.InvalidationScope[:])
 
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
@@ -185,11 +185,11 @@ func (c ContractCallTx) GetCheckpoint(gravityID string) []byte {
 		transferTokenContracts,
 		feeAmounts,
 		feeTokenContracts,
-		gethcommon.HexToAddress(c.Address),
+		gethcommon.HexToAddress(cctx.Address),
 		payload,
-		big.NewInt(int64(c.Timeout)),
+		big.NewInt(int64(cctx.Timeout)),
 		invalidationId,
-		big.NewInt(int64(c.InvalidationNonce)),
+		big.NewInt(int64(cctx.InvalidationNonce)),
 	}
 
 	return packCall(ContractCallTxABIJSON, "checkpoint", args)
