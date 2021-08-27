@@ -88,7 +88,7 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 	}
 
 	k.SetOrchestratorValidatorAddress(ctx, valAddr, orchAddr)
-	k.setValidatorEthereumAddress(ctx, valAddr, ethAddr)
+	k.SetValidatorEthereumAddress(ctx, valAddr, ethAddr)
 	k.setEthereumOrchestratorAddress(ctx, ethAddr, orchAddr)
 
 	ctx.EventManager().EmitEvent(
@@ -124,8 +124,8 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find outgoing tx")
 	}
 
-	gravityID := k.getGravityID(ctx)
-	checkpoint := otx.GetCheckpoint([]byte(gravityID))
+	gravityID := k.GetGravityID(ctx)
+	checkpoint := otx.GetCheckpoint(gravityID)
 
 	ethAddress := k.GetValidatorEthereumAddress(ctx, val)
 	if ethAddress != confirmation.GetSigner() {
@@ -302,4 +302,22 @@ func (k Keeper) getSignerValidator(ctx sdk.Context, signerString string) (sdk.Va
 	}
 
 	return validatorI.GetOperator(), nil
+}
+
+func (k msgServer) SubmitBadSignatureEvidence(c context.Context, msg *types.MsgSubmitBadSignatureEvidence) (*types.MsgSubmitBadSignatureEvidenceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	err := k.CheckBadSignatureEvidence(ctx, msg)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyBadEthSignature, fmt.Sprint(msg.Signature)),
+			sdk.NewAttribute(types.AttributeKeyBadEthSignatureSubject, fmt.Sprint(msg.Subject)),
+		),
+	)
+
+	return &types.MsgSubmitBadSignatureEvidenceResponse{}, err
 }

@@ -60,7 +60,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// set the orchestrator address
 		k.SetOrchestratorValidatorAddress(ctx, val, orch)
 		// set the ethereum address
-		k.setValidatorEthereumAddress(ctx, val, common.HexToAddress(keys.EthereumAddress))
+		k.SetValidatorEthereumAddress(ctx, val, common.HexToAddress(keys.EthereumAddress))
 		k.setEthereumOrchestratorAddress(ctx, eth, orch)
 	}
 

@@ -19,23 +19,24 @@ func (k Keeper) CheckBadSignatureEvidence(
 	k.cdc.UnpackAny(msg.Subject, &subject)
 
 	switch subject := subject.(type) {
-	case *types.OutgoingTxBatch:
+	case *types.BatchTx:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
-	case *types.Valset:
+	case *types.SignerSetTx:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
-	case *types.OutgoingLogicCall:
+	case *types.ContractCallTx:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
 
 	default:
-		return sdkerrors.Wrap(types.ErrInvalid, "Bad signature must be over a batch, valset, or logic call")
+		return sdkerrors.Wrap(types.ErrInvalid, "Bad signature must be over a BatchTX, SignerSetTx, or ContractCallTx")
 	}
 }
 
 func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, subject types.OutgoingTx, signature string) error {
 	// Get checkpoint of the supposed bad signature (fake valset, batch, or logic call submitted to eth)
-	gravityID := k.getGravityID(ctx)
-	checkpoint := subject.GetCheckpoint([]byte(gravityID))
+	gravityID := k.GetGravityID(ctx)
+	checkpoint := subject.GetCheckpoint(gravityID)
 
+	ctx.Logger().Info("checkpoint check", "checkpoint", checkpoint)
 	// Try to find the checkpoint in the archives. If it exists, we don't slash because
 	// this is not a bad signature
 	if k.getPastEthSignatureCheckpoint(ctx, checkpoint) {
@@ -51,7 +52,10 @@ func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, subject types
 	// Get eth address of the offending validator using the checkpoint and the signature
 	ethAddress, err := types.EthAddressFromSignature(checkpoint, sigBytes)
 	if err != nil {
-		return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature to eth address failed with checkpoint %s and signature %s", hex.EncodeToString(checkpoint), signature))
+		return sdkerrors.Wrap(
+			types.ErrInvalid,
+			fmt.Sprintf("signature to eth address failed with checkpoint %s and signature %s",
+				hex.EncodeToString(checkpoint), signature))
 	}
 
 	// Find the offending validator by eth address
@@ -71,7 +75,12 @@ func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, subject types
 		}
 
 		params := k.GetParams(ctx)
-		k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionConflictingEthereumSignature)
+		k.StakingKeeper.Slash(
+			ctx,
+			cons,
+			ctx.BlockHeight(),
+			val.ConsensusPower(sdk.DefaultPowerReduction),
+			params.SlashFractionConflictingEthereumSignature)
 		if !val.IsJailed() {
 			k.StakingKeeper.Jail(ctx, cons)
 		}
@@ -90,9 +99,6 @@ func (k Keeper) setPastEthSignatureCheckpoint(ctx sdk.Context, checkpoint []byte
 // GetPastEthSignatureCheckpoint tells you whether a given checkpoint has ever existed
 func (k Keeper) getPastEthSignatureCheckpoint(ctx sdk.Context, checkpoint []byte) (found bool) {
 	store := ctx.KVStore(k.storeKey)
-	if bytes.Equal(store.Get(types.GetPastEthSignatureCheckpointKey(checkpoint)), []byte{0x1}) {
-		return true
-	} else {
-		return false
-	}
+
+	return bytes.Equal(store.Get(types.GetPastEthSignatureCheckpointKey(checkpoint)), []byte{0x1})
 }

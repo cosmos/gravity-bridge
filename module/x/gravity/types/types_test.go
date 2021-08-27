@@ -31,7 +31,7 @@ func TestValsetConfirmHash(t *testing.T) {
 	}
 	v := SignerSetTx{Signers: mem}
 	// TODO: this is hardcoded to foo, replace?
-	hash := v.GetCheckpoint([]byte("foo"))
+	hash := v.GetCheckpoint("foo")
 	hexHash := hex.EncodeToString(hash)
 	correctHash := "88165860d955aee7dc3e83d9d1156a5864b708841965585d206dbef6e9e1a499"
 	assert.Equal(t, correctHash, hexHash)
