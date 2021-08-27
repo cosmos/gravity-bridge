@@ -1,4 +1,4 @@
-module github.com/peggyjv/gravity-bridge/module
+module github.com/cosmos/gravity-bridge/module
 
 go 1.15
 
