@@ -1,4 +1,4 @@
-module github.com/peggyjv/gravity-bridge/testnet
+module github.com/cosmos/gravity-bridge/testnet
 
 go 1.16
 
@@ -14,7 +14,7 @@ require (
 	github.com/moby/term v0.0.0-20210610120745-9d4ed1856297 // indirect
 	github.com/opencontainers/runc v1.0.0-rc95 // indirect
 	github.com/ory/dockertest/v3 v3.6.5
-	github.com/peggyjv/gravity-bridge/module v0.0.0-00010101000000-000000000000
+	github.com/cosmos/gravity-bridge/module v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tendermint/tendermint v0.34.11
@@ -25,4 +25,4 @@ require (
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-replace github.com/peggyjv/gravity-bridge/module => ../module
+replace github.com/cosmos/gravity-bridge/module => ../module

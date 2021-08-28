@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/spf13/cobra"
 
-	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 func GetTxCmd(storeKey string) *cobra.Command {

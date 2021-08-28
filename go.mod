@@ -1,5 +1,5 @@
-module github.com/peggyjv/gravity-bridge
+module github.com/cosmos/gravity-bridge
 
 go 1.15
 
-require github.com/peggyjv/gravity-bridge/module v0.1.11 // indirect
+require github.com/cosmos/gravity-bridge/module v0.1.11 // indirect

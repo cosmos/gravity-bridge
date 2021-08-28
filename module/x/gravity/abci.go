@@ -6,9 +6,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/peggyjv/gravity-bridge/module/x/gravity/keeper"
-	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 // BeginBlocker is called at the beginning of every block
