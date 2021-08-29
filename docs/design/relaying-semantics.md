@@ -35,7 +35,7 @@ Note that `eth_call()` often has funny gotchas. All calls fail on Geth based imp
 
 ## Semantics for transaction batch relaying
 
-In order to submit a transaction batch you also need to submit the last set of validators and their powers as outlined in [the validator set section](### Sorting and Ordering of the Validator set and signatures). This is to facilitate the same storage optimization mentioned there.
+In order to submit a transaction batch you also need to submit the last set of validators and their powers as outlined in [the validator set section](#sorting-and-ordering-of-the-validator-set-and-signatures). This is to facilitate the same storage optimization mentioned there.
 
 ### Deciding what batch to relay
 

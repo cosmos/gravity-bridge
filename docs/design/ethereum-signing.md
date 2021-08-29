@@ -6,7 +6,7 @@ As outlined in the [overview](/docs/design/overview.md) the [Gravity.sol](/solid
 
 This document outlines the Ethereum signatures, all contract calls on [Gravity.sol](/solidity/contracts/Gravity.sol) accept an array of signatures provided by a validator set stored in the contract.
 
-Validators make these signatures with their `Delegate Ethereum address` this is an Ethereum address set by the validator using the [SetOrchestratorAddress](/docs/design/messages.md/###SetOrchestratorAddress) message. The validator signs over this Ethereum address, as well as a Cosmos address for [oracle](/docs/design/oracle.md) operations and submits it to the chain to register these addresses for use in the Ethereum signer and oracle subsystems.
+Validators make these signatures with their `Delegate Ethereum address` this is an Ethereum address set by the validator using the [MsgDelegateKeys](/docs/design/messages.md/###SetOrchestratorAddress) message. The validator signs over this Ethereum address, as well as a Cosmos address for [oracle](/docs/design/oracle.md) operations and submits it to the chain to register these addresses for use in the Ethereum signer and oracle subsystems.
 
 The `Delegate Ethereum address` then represents that validator on the Ethereum blockchain and will be added as a signing member of the multisig with a weighted voting power as close as possible to the Cosmos voting power.
 
