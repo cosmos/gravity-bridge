@@ -17,7 +17,11 @@ This slashing condition is triggered when a validator does not sign a validator 
 
 To deal with scenario 2, GRAVSLASH-02 will also need to slash validators who are no longer validating, but are still in the unbonding period. This means that when a validator leaves the validator set, they will need to keep running their equipment for 2 weeks. This is unusual for a Cosmos chain, and may not be accepted by the validators. Research is ongoing for ways to allow validators to stop signing before the unbonding period is fully over.
 
-## GRAVSLASH-03: Submitting incorrect Eth oracle claim - INTENTIONALLY NOT IMPLEMENTED
+The current value of `UnbondSlashingValsetsWindow` is 10,000 blocks, or about 12-14 hours. We have determined this to be a safe value based on the following logic. So long as every validator leaving hte validator set signs at least one validator set update that they are not contained in then it is guaranteed to be possible for a relayer to produce a chain of validator set updates to transform the current state on the chain into the present state.
+
+It should be noted that both GRAVSLASH-02 and GRAVSLASH-03 could be eliminated with no loss of security if it where possible to perform the Ethereum signatures inside the consensus code. This is a pretty limited feature addition to Tendermint that would make Gravity far less prone to slashing.
+
+## GRAVSLASH-04: Submitting incorrect Eth oracle claim - INTENTIONALLY NOT IMPLEMENTED
 
 The Ethereum oracle code (currently mostly contained in attestation.go), is a key part of Gravity. It allows the Gravity module to have knowledge of events that have occurred on Ethereum, such as deposits and executed batches. GRAVSLASH-03 is intended to punish validators who submit a claim for an event that never happened on Ethereum.
 
