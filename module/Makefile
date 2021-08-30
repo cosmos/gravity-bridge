@@ -3,7 +3,7 @@ VERSION := $(shell git describe --abbrev=6 --dirty --always --tags)
 COMMIT := $(shell git log -1 --format='%H')
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
-HTTPS_GIT := https://github.com/peggyjv/gravity-bridge.git
+HTTPS_GIT := https://github.com/cosmos/gravity-bridge.git
 
 build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)

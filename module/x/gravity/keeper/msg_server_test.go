@@ -12,7 +12,7 @@ import (
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 func TestMsgServer_SubmitEthereumSignature(t *testing.T) {

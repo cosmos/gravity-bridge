@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 	"github.com/spf13/cobra"
 )
 

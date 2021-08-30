@@ -10,11 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
+	"github.com/cosmos/gravity-bridge/module/app"
+	"github.com/cosmos/gravity-bridge/module/x/gravity"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/peggyjv/gravity-bridge/module/app"
-	"github.com/peggyjv/gravity-bridge/module/x/gravity"
-	"github.com/peggyjv/gravity-bridge/module/x/gravity/keeper"
-	"github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 )
 
 func TestHandleMsgSendToEthereum(t *testing.T) {
