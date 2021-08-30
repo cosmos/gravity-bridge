@@ -18,7 +18,7 @@ Once the event has been interpreted it must be submitted to the Oracle. Near the
 
 As a requirement of the oracle events must be submitted in order, so if a validator has submitted event 5, they must submit event 6 next. They can not resubmit event 5 or submit event 7. Since we're getting the events statelessly there is logic to [get_last_event_nonce_for_validator](/orchestrator/cosmos_gravity/src/query.rs) and use this to filter.
 
-Finally we perform the last step of this process in the Orchestrator [send_ethereum_claims](/orchestrator/cosmos_gravity/src/send.rs). This submits the ordered events to Cosmos, many events in a single message to increase efficiency.
+Finally, we perform the last step of this process in the Orchestrator [send_ethereum_claims](/orchestrator/cosmos_gravity/src/send.rs). This submits the ordered events to Cosmos, many events in a single message to increase efficiency.
 
 From here we step into the Go codebase where you'll find claim message types in [msgs.go](/module/x/gravity/types/msgs.go) and [msg_server.go](/module/x/gravity/keeper/msg_server.go) But these only add the claim to the store after checking validity.
 
@@ -32,7 +32,7 @@ Here we determine if the deposited coin is Cosmos Originated, at which point we 
 
 ## Withdraw from Cosmos to Ethereum
 
-This covers the complete flow, including code links, for a withdraw. This is covered conceptually in [minting and locking](/docs/design/mint-lock.md), [Ethereum signing](/docs/design/ethereum-signing.md), and [batch creation spec](/spec/batch-creation-spec.md) which you should read first.
+This covers the complete flow, including code links, for a withdrawal. This is covered conceptually in [minting and locking](/docs/design/mint-lock.md), [Ethereum signing](/docs/design/ethereum-signing.md), and [batch creation spec](/spec/batch-creation-spec.md) which you should read first.
 
 First a user on the Cosmos chain calls [MsgSendToEthereum](/module/proto/gravity/v1/msgs.proto). This message will contain two fees. One fee for the Cosmos transaction, and another fee for the bridge. The `DenomToERC20Lookup` function ensures that asset has a registered Erc20 contract either from previously going through the deploy to Erc20 contract flow or because the asset originated on the Ethereum chain.
 
@@ -65,7 +65,7 @@ See [relaying semantics doc](/docs/design/relaying-semantics.md).
 
 All power in [gravity.sol](/solidity/contracts/Gravity.sol) is normalized such that total voting power is `2^32`, this allows `order_sigs` to determine if enough voting power has voted for a given batch to be valid. This local simulation approach helps debug problems and is much faster than simply trying to simulate the transaction using the Ethereum RPC.
 
-Finally [should_relay_batch](/orchestrator/relayer/src/batch_relaying.rs) is called. This takes the batch + signatures confirmed in the previous step and simulates it's ETH cost to execute and compares that value to the value of the reward on UniswapV3. If the relayer would lose money relaying the batch it does not do so.
+Finally [should_relay_batch](/orchestrator/relayer/src/batch_relaying.rs) is called. This takes the batch + signatures confirmed in the previous step and simulates its ETH cost to execute and compares that value to the value of the reward on UniswapV3. If the relayer would lose money relaying the batch it does not do so.
 
 Once all these steps and checks have been passed [send_eth_transaction_batch](/orchestrator/ethereum_gravity/src/submit_batch.rs) is called.
 
@@ -101,10 +101,10 @@ Picking back up at the [AttestationHandler](/module/x/gravity/keeper/attestation
 
 ## ERC20 representation deployment
 
-Assets that orginate on the Cosmos chain can be transfered to the Ethereum by instatiating an ERC-20 respresentation of the asset where the ERC20 contract is controlled by the bridge.
+Assets that originate on the Cosmos chain can be transferred to the Ethereum by instantiating an ERC-20 representation of the asset where the ERC20 contract is controlled by the bridge.
 
-The [gravity.sol](/solidity/contracts/Gravity.sol)  function must invoked by some user ahead of sending a Cosmos originated token. 
+The [gravity.sol](/solidity/contracts/Gravity.sol)  function must be invoked by some user ahead of sending a Cosmos originated token. 
 
-Calling this function will emit a `ERC20DeployedEvent` which will be picked up by each validator's orchestrator. Each of these orachestors will send a `MsgSubmitEthereumEvent` with `ERC20DeployedEvent` payload to the Cosmos chain. Once 2/3+1 of the voting power has recognized submitted the event. The [EthereumEventProcessor](/module/x/gravity/keeper/ethereum_event_handler) calls `verifyERC20DeployedEvent` and verifes that the deployed erc20 contract matches the onchain metadata of an existing asset on chain and then registers the deployed contract from future SendToEthereum calls for that asset.
+Calling this function will emit a `ERC20DeployedEvent` which will be picked up by each validator's orchestrator. Each of these orchestrators will send a `MsgSubmitEthereumEvent` with `ERC20DeployedEvent` payload to the Cosmos chain. Once 2/3+1 of the voting power has recognized submitted the event. The [EthereumEventProcessor](/module/x/gravity/keeper/ethereum_event_handler) calls `verifyERC20DeployedEvent` and verifies that the deployed erc20 contract matches the on-chain metadata of an existing asset on chain and then registers the deployed contract from future SendToEthereum calls for that asset.
 
 
