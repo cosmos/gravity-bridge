@@ -6,7 +6,7 @@ assets on the other chain. Unlocking the assets at some point in the future when
 sent back across the bridge.
 
 Since Gravity is a bi-directional bridge that handles two asset sources, Cosmos and Ethereum
-tokens may be held on Ethereum or held on Cosmos based on where they originated. Likewise tokens
+tokens may be held on Ethereum or held on Cosmos based on where they originated. Likewise, tokens
 are minted on both sides as well, to represent the assets from the other chain.
 
 ## Ethereum based assets
@@ -15,7 +15,7 @@ are minted on both sides as well, to represent the assets from the other chain.
 
 An Ethereum asset implementing the ERC20 standard is deposited into the [Gravity.sol](/solidity/contracts/Gravity.sol) contract using the Solidity function call `sendToCosmos`. This locks the ERC20 asset in the Gravity.sol contract where it will remain until it is withdrawn at some undetermined point in the future.
 
-At the send of the `sendToCosmos` function call an Ethereum event `SendToCosmosEvent` executes. This event contains the amount and type of tokes, as well as a destination address on Cosmos for the funds.
+At the send of the `sendToCosmos` function call an Ethereum event `SendToCosmosEvent` executes. This event contains the amount and type of tokens, as well as a destination address on Cosmos for the funds.
 
 The validators all run their oracle processes which submit `MsgDepositClaim` messages describing the deposit they have observed. Once more than 66% of all voting power has submitted a claim for this specific deposit representative tokens are minted and issued to the Cosmos address that the sender requested.
 
@@ -27,7 +27,7 @@ The Cosmos representation of the Ethereum ERC20 token, hereafter called a `vouch
 
 To do this they send a `MsgSendToEth` on the Cosmos chain. This removes the `voucher` from the users account and places a transaction into a transaction pool of `MsgSendToEth` messages for that same ERC20 token type.
 
-As part of `MsgSendToEth` the user specifies a fee, there is no mandatory minimum fee. But this fee must be paid in the same ERC20 asset they are returning to Ethereum (for the reasoning view the [transaction batch rewards](/docs/design/mint-and-lock.md/###transaction-batch-rewards)).
+As part of `MsgSendToEth` the user specifies a fee, there is no mandatory minimum fee. But this fee must be paid in the same ERC20 asset they are returning to Ethereum (for the reasoning view the [transaction batch rewards](/docs/design/mint-lock.md###Transaction-Batch-rewards)).
 
 At some point in the future a relayer will determine that the pool contains enough transactions to bother executing a batch of that type and relay it to Ethereum. For a discussion of edge cases here see the [batch creation spec](/spec/batch-creation-spec.md)
 
@@ -52,7 +52,7 @@ For further details on oracle operation see [oracle](/docs/design/oracle.md)
 From this point on the process is nearly identical to the Cosmos -> Ethereum process for Ethereum originated assets.
 
 The user sends a `MsgSendToEth` that specifies a fee denominated in the token they are sending across the bridge. (for the
-reasoning view the [transaction batch rewards](/docs/design/mint-and-lock.md/###transaction-batch-rewards))
+reasoning view the [transaction batch rewards](/docs/design/mint-lock.md###Transaction-Batch-rewards))
 
 At some point in the future a relayer will determine that the pool contains enough transactions to bother executing a batch of that type and relay it to Ethereum. For a discussion of edge cases here see the [batch creation spec](/spec/batch-creation-spec.md)
 
@@ -70,11 +70,11 @@ This is identical to Ethereum -> Cosmos for Ethereum based assets. Please see th
 
 ### Validator set update rewards
 
-Validator set rewards are an optional chain [parameter](/docs/design/parameters.md). By default no reward is issued, it's important to maintain this behavior as the [Gravity.sol](/solidity/contracts/Gravity.sol) is not deployed containing any assets.
+Validator set rewards are an optional chain [parameter](/docs/design/parameters.md). By default, no reward is issued, it's important to maintain this behavior as the [Gravity.sol](/solidity/contracts/Gravity.sol) is not deployed containing any assets.
 
-At some point in the future a governance vote may select some Cosmos originated asset to use as a reward for submitting `valsetUpdate` transactions. From that point onward the specified amount of ERC20 tokens representing a Cosmos asset will be sent to `msg.sender` when submitting the `valsetUpdate` transaction to [Gravity.sol](/solidity/contracts/Gravity.sol) (see [incentives](/design/incentives.md##relaying-rewards) documentation for reasoning).
+At some point in the future a governance vote may select some Cosmos originated asset to use as a reward for submitting `valsetUpdate` transactions. From that point onward the specified amount of ERC20 tokens representing a Cosmos asset will be sent to `msg.sender` when submitting the `valsetUpdate` transaction to [Gravity.sol](/solidity/contracts/Gravity.sol) (see [incentives](/docs/design/incentives.md##relaying-rewards) documentation for reasoning).
 
-Only Cosmos originated assets are allowed. So the ERC20 deployment process described in [Cosmos -> Ethereum](<(/docs/design/mint-lock.md##cosmos-based-assets)>) must occur first.
+Only Cosmos originated assets are allowed. So the ERC20 deployment process described in [Cosmos -> Ethereum](/docs/design/mint-lock.md##cosmos-based-assets) must occur first.
 
 By using a Cosmos originated asset we can effectively mint it on Ethereum indefinitely. After each `valsetUpdate` an Ethereum event `ValsetUpdateEvent` is fired, observed by the validators oracle process, and used to increment the total supply of that asset appropriately, locking the newly issued tokens in the Gravity module for later unlock.
 
@@ -94,8 +94,8 @@ Currently [Gravity.sol](/solidity/contracts/Gravity.sol) is hardcoded to only ac
 
 Arbitrary logic calls do exactly what their name implies. Allow for the execution of arbitrary ethereum code passed in as a bytes payload and target contract.
 
-Rewards for arbitrary logic calls are set on creation, like batches. But unlike batches arbitrary logic calls accept a list of ERC20 tokens and amounts to pay out as fees. Allowing for the relayer to potentially be paid many different types of tokens at the same time as a reward.
+Rewards for arbitrary logic calls are set on creation, like batches. But unlike batches arbitrary logic calls accept a list of ERC20 tokens and amounts to pay out as fees. Allowing for the relayer to potentially be paid different types of tokens at the same time as a reward.
 
 Note that just because you can pay out an arbitrary number of tokens as a reward for a single TX does not mean you should. Each different type of reward token is an additional ERC20 transfer fee and if each reward is low enough it's possible that relayers will decide against relaying as no reward is worth more than the gas it costs to sell.
 
-Currently arbitrary logic is only used by Cosmos modules outside of Gravity that want to interact with Ethereum. Although user callable arbitrary logic is being considered from a security perspective.
+Currently, arbitrary logic is only used by Cosmos modules outside of Gravity that want to interact with Ethereum. Although user callable arbitrary logic is being considered from a security perspective.

@@ -10,11 +10,9 @@ Gravity offers a method which can be called by other modules to create an outgoi
 
 `ContractCall`
 
-`CreateContractCallTx` takes an `invalidationNonce`  `invalidationScope`,`payload`, `tokens` , `fees` 
+`CreateContractCallTx` takes an `invalidationNonce`, `invalidationScope`, `payload`, `tokens`, `fees` 
 
 Here is an explanation of its parameters:
-
-
 
 - Tokens: These are tokens that are sent to the logic contract before it is executed. The contract can then take actions using the tokens. For example, Gravity could send the logic contract some Uniswap LP tokens that it would then use to redeem liquidity from Uniswap.
 - Fees: These are tokens that will be paid by the core Gravity.sol contract to the Gravity relayer for executing the logic call. Fees are paid after the logic contract executes, so it is possible to pay the relayer with tokens that logic contract receives after executing, and then sends back to the core Gravity contract.
@@ -29,7 +27,7 @@ Here is an explanation of its parameters:
 
 When a submitLogicCall transaction is submitted to the Ethereum contract, the contract checks uses `invalidation_scope` to access a key in the invalidation mapping. The value at this key is checked against the supplied `invalidation_nonce`. The logic call is only allowed to go through if the supplied `invalidation_nonce` is higher.
 
-This can be used to implement many different invalidation schemes:
+This can be used to implement different invalidation schemes:
 
 ### Easiest: timeout-only invalidation
 If you don't know what this all means, when you send a logic call to the Gravity module from the Cosmos side, just set the `invalidation_id` to an incrementing integer that you keep track of in your module. Set the `invalidation_nonce` to zero each time. This will create a new entry in the invalidation mapping on Ethereum for each logic batch, providing replay protection, while allowing batches to be completely independent.

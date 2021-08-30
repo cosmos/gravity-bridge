@@ -4,13 +4,13 @@ This document contains a list of code Hotspots, these are places where I expect 
 
 ## Ethereum Event Parser
 
-The Orchestrator parses and relays events from Ethereum to the [oracle](/docs/design/oracle.md). Parsing those events is handled by a parser in [ethereum_events.rs](/orchestrator/gravity_utils/strc/types/ethereum_events.rs). While this parser has some unit tests it is not fuzz tested. Any possibility of incorrect parsing here may result in an attack where deposits are faked, or less severely, the bridge is halted due to Oracle disagreements.
+The Orchestrator parses and relays events from Ethereum to the [oracle](/docs/design/oracle.md). Parsing those events is handled by a parser in [ethereum_events.rs](/orchestrator/gravity_utils/src/types/ethereum_events.rs). While this parser has some unit tests it is not fuzz tested. Any possibility of incorrect parsing here may result in an attack where deposits are faked, or less severely, the bridge is halted due to Oracle disagreements.
 
 ## Ethereum Event Processor 
 
-The Ethereum event processor  in [ethereum_event_processor.go](/module/x/gravity/keeper/ethereum_event_processor.go)  manages [oracle](/docs/design/oracle.md) events, by aggregating a number of claims made by validators into a single 'EthereumEvent' covering a given event. This, as well as the `EventProcessor` logic that covers all possible Oracle events are good places to look for logic flaws.
+The Ethereum event processor  in [ethereum_event_processor.go](/module/x/gravity/keeper/ethereum_event_handler.go)  manages [oracle](/docs/design/oracle.md) events, by aggregating a number of claims made by validators into a single 'EthereumEvent' covering a given event. This, as well as the `EventProcessor` logic that covers all possible Oracle events are good places to look for logic flaws.
 
-## Endblocker Logic
+## EndBlocker Logic
 
 Gravity bridge performs many tasks at the end of each block. The [EndBlocker](/module/x/gravity/abci.go) contains the code for each of those tasks. Including slashing, pruning, and generating new validator set snapshots for Ethereum.
 
@@ -36,4 +36,4 @@ The [batch creation spec](/spec/batch-creation-spec.md) is a good place to start
 
 The [batch creation spec](/spec/batch-creation-spec.md) is a good place to start for background here.
 
-[ContractCallExecuted](/module/x/gravity/keeper/batch.go) returns user transactions to the pool once the [EthereumEventProcessor](/module/x/gravity/keeper/ethereum_event_processor.go) has processed an [oracle](/docs/design/oracle.md) event that would make it impossible for that batch to be executed.
+[ContractCallExecuted](/module/x/gravity/keeper/batch.go) returns user transactions to the pool once the [EthereumEventProcessor](/module/x/gravity/keeper/ethereum_event_handler.go) has processed an [oracle](/docs/design/oracle.md) event that would make it impossible for that batch to be executed.

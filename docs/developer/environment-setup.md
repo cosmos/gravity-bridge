@@ -18,7 +18,7 @@ Gravity bridge has three major components
 
 Follow the official guide [here](https://golang.org/doc/install)
 
-Make sure that the go/bin directory is in your path by adding this to your shell profile (~/.bashrc or ~/.zprofile)
+Make sure that the go/bin directory is in your path by adding this to your shell profile (~/.bashrc or ~/.zshrc)
 
 ```
 export PATH=$PATH:$(go env GOPATH)/bin
@@ -119,20 +119,20 @@ cd proto-build && cargo run
 
 ### Tips for IDEs
 
-- We strongly recomend installing [Rust Analyzer](https://rust-analyzer.github.io/) in your IDE.
+- We strongly recommend installing [Rust Analyzer](https://rust-analyzer.github.io/) in your IDE.
 - Launch VS Code in /solidity with the solidity extension enabled to get inline typechecking of the solidity contract
 - Launch VS Code in /module/app with the go extension enabled to get inline typechecking of the dummy cosmos chain
 
 ## Running the integration tests
 
 We provide a one button integration test that deploys a full arbitrary validator Cosmos chain and testnet Geth chain for both development + validation.
-We believe having a in depth test environment reflecting the full deployment and production-like use of the code is essential to productive development.
+We believe having an in-depth test environment reflecting the full deployment and production-like use of the code is essential to productive development.
 
-Currently on every commit we send hundreds of transactions, dozens of validator set updates, and several transaction batches in our test environment.
+Currently, on every commit we send hundreds of transactions, dozens of validator set updates, and several transaction batches in our test environment.
 This provides a high level of quality assurance for the Gravity bridge.
 
 Because the tests build absolutely everything in this repository they do take a significant amount of time to run.
-You may wish to simply push to a branch and have Github CI take care of the actual running of the tests.
+You may wish to simply push to a branch and have GitHub CI take care of the actual running of the tests.
 
 ### Running the integration test environment locally
 
@@ -176,14 +176,14 @@ To run an individual test run
 bash tests/all-up-test.sh TEST_NAME
 ```
 
-To run all the integraton tests and check your code completely run
+To run all the integration tests and check your code completely run
 
 ```
 bash tests/run-all-up-tests.sh
 ```
 
 This will run every available all up test. This will take quite some time, go get coffee and if your development machine is
-particularly slow I recomend just pushing to Github. Average runtime per all up test on a modern linux machine is ~5 minutes each.
+particularly slow I recommend just pushing to GitHub. Average runtime per all up test on a modern linux machine is ~5 minutes each.
 
 You can also use
 
@@ -191,7 +191,7 @@ You can also use
 bash tests/run-all-tests.sh
 ```
 
-This is essentially a local emulation of the Github tests. Including linting and formatting plus the above all up test script.
+This is essentially a local emulation of the GitHub tests. Including linting and formatting plus the above all up test script.
 
 ## Next steps
 

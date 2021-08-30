@@ -10,14 +10,14 @@ detailed summary of the entire deposit and withdraw process.
 
 ### SendToEthereum
 
-SendToEthereum allows the user to specify a Ethereum destination, a token to send to Ethereum and a fee denominated in that same token
+SendToEthereum allows the user to specify an Ethereum destination, a token to send to Ethereum and a fee denominated in that same token
 to pay the relayer. Note that this transaction will contain two fees. One fee amount to submit to the Cosmos chain, that can be paid
 in any token and one fee amount for the Ethereum relayer that must be paid in the same token that is being bridged.
 
 ### CancelSendToEthereum
 
 CancelSendToEthereum allows a user to retrieve a transaction that is in the batch pool but has not yet been packaged into a transaction batch
-by a relayer running [RequestBatch](/docs/design/messages.md/###RequestBatch). For more details on this process see the [batch creation spec](/spec/batch-creation-spec.md)
+by a relayer running [RequestBatchTx](/docs/design/messages.md###RequestBatchTx). For more details on this process see the [batch creation spec](/spec/batch-creation-spec.md)
 
 ## Relayer Messages
 
@@ -32,7 +32,7 @@ This then triggers the Ethereum Signers to send in ConfirmBatch messages, which 
 
 At this point any relayer can package these signatures up into a transaction and send them to Ethereum.
 
-As noted above this message is unpermissioned and it is safe to allow anyone to call this message at any time thanks to the rules described in the [batch creation spec](/spec/batch-creation-spec.md)
+As noted above this message is unpermissioned, and it is safe to allow anyone to call this message at any time thanks to the rules described in the [batch creation spec](/spec/batch-creation-spec.md)
 
 ## Oracle Messages
 
@@ -72,7 +72,7 @@ The Ethereum signer watches several [query endpoints](/module/proto/gravity/v1/q
 
 #### ContractCallTxConfirmation
 
-Submits an Ethereum signature over a batche appearing in the `LastPendingBatchRequestByAddr` query
+Submits an Ethereum signature over a batch appearing in the `LastPendingBatchRequestByAddr` query
 
 #### BatchTxConfirmation
 
@@ -84,7 +84,7 @@ Submits an Ethereum signature over a batch appearing in the `LastPendingLogicCal
 
 ### ValsetConfirm
 
-Submits an Ethereum signature over a batche appearing in the `LastPendingValsetRequestByAddr` query
+Submits an Ethereum signature over a batch appearing in the `LastPendingValsetRequestByAddr` query
 
 ## Validator Messages
 

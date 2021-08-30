@@ -8,7 +8,7 @@ the default parameters can be found in [genesis.go](/module/x/gravity/keeper/gen
 a random 32 byte value to prevent signature reuse, for example if the
 cosmos validators decided to use the same Ethereum keys for another chain
 also running Gravity we would not want it to be possible to play a deposit
-from chain A back on chain B's Gravity. This value IS USED ON ETHEREUM so
+from chain A back on chain B's Gravity. This value **IS USED ON ETHEREUM**, so
 it must be set in your genesis.json before launch and not changed after
 deploying Gravity. Changing this value after deploying Gravity will result
 in the bridge being non-functional. To recover just set it back to the original
@@ -55,7 +55,7 @@ Note that that claims slashing is not currently enabled see [slashing spec](/spe
 ## target_batch_timeout
 
 This is the 'target' value for when batches time out, this is a target because
-Ethereum is a probabilistic chain and you can't say for sure what the block
+Ethereum is a probabilistic chain, and you can't say for sure what the block
 frequency is ahead of time.
 
 ## Ethereum timing
@@ -63,8 +63,8 @@ frequency is ahead of time.
 average_block_time
 average_ethereum_block_time
 
-These values are the average Cosmos block time and Ethereum block time respectively
-and they are used to compute what the target batch timeout is. It is important that
+These values are the average Cosmos block time and Ethereum block time respectively. 
+They are used to compute the target batch timeout. It is important that
 governance updates these in case of any major, prolonged change in the time it takes
 to produce a block
 
