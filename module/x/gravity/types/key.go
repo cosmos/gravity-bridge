@@ -59,6 +59,8 @@ const (
 	LastUnBondingBlockHeightKey
 
 	LastObservedSignerSetKey
+
+	PastEthSignatureCheckpointKey
 )
 
 ////////////////////
@@ -155,4 +157,8 @@ func MakeBatchTxKey(addr common.Address, nonce uint64) []byte {
 
 func MakeContractCallTxKey(invalscope []byte, invalnonce uint64) []byte {
 	return bytes.Join([][]byte{{ContractCallTxPrefixByte}, invalscope, sdk.Uint64ToBigEndian(invalnonce)}, []byte{})
+}
+
+func GetPastEthSignatureCheckpointKey(checkpoint []byte) []byte {
+	return append([]byte{PastEthSignatureCheckpointKey}, checkpoint...)
 }

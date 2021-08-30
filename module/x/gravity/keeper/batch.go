@@ -45,6 +45,10 @@ func (k Keeper) BuildBatchTx(ctx sdk.Context, contractAddress common.Address, ma
 	}
 	k.SetOutgoingTx(ctx, batch)
 
+	// Store checkpoint to prove that this logic call actually happened
+	checkpoint := batch.GetCheckpoint(k.GetGravityID(ctx))
+	k.setPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeOutgoingBatch,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),

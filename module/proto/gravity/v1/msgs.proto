@@ -33,6 +33,9 @@ service Msg {
   rpc SetDelegateKeys(MsgDelegateKeys) returns (MsgDelegateKeysResponse) {
     // option (google.api.http).post = "/gravity/v1/delegate_keys";
   }
+    rpc SubmitBadSignatureEvidence(MsgSubmitBadSignatureEvidence) returns (MsgSubmitBadSignatureEvidenceResponse) {
+    // option (google.api.http).post = "/gravity/v1/submit_bad_signature_evidence";
+  }
 }
 
 // MsgSendToEthereum submits a SendToEthereum attempt to bridge an asset over to
@@ -204,3 +207,13 @@ message SignerSetTxExecutedEvent {
   repeated EthereumSigner members = 4;
 }
 
+// This call allows anyone to submit evidence that a
+// validator has signed a valset, batch, or logic call that never
+// existed. Subject contains the batch, valset, or logic call.
+message MsgSubmitBadSignatureEvidence {
+  google.protobuf.Any subject   = 1;
+  string              signature = 2;
+  string              sender    = 3;
+}
+
+message MsgSubmitBadSignatureEvidenceResponse {}

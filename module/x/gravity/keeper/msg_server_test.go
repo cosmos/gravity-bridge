@@ -43,14 +43,14 @@ func TestMsgServer_SubmitEthereumSignature(t *testing.T) {
 	}
 
 	// setup for GetValidatorEthereumAddress
-	gk.setValidatorEthereumAddress(ctx, valAddr1, ethAddr1)
+	gk.SetValidatorEthereumAddress(ctx, valAddr1, ethAddr1)
 
 	// setup for GetOutgoingTx
 	signerSetTx := gk.CreateSignerSetTx(ctx)
 
 	// setup for ValidateEthereumSignature
-	gravityId := gk.getGravityID(ctx)
-	checkpoint := signerSetTx.GetCheckpoint([]byte(gravityId))
+	gravityId := gk.GetGravityID(ctx)
+	checkpoint := signerSetTx.GetCheckpoint(gravityId)
 	signature, err := types.NewEthereumSignature(checkpoint, ethPrivKey)
 	require.NoError(t, err)
 
@@ -123,7 +123,7 @@ func TestMsgServer_SendToEthereum(t *testing.T) {
 	gk.setCosmosOriginatedDenomToERC20(ctx, testDenom, "testcontractstring")
 
 	// setup for GetValidatorEthereumAddress
-	gk.setValidatorEthereumAddress(ctx, valAddr1, ethAddr1)
+	gk.SetValidatorEthereumAddress(ctx, valAddr1, ethAddr1)
 
 	msgServer := NewMsgServerImpl(gk)
 
@@ -187,7 +187,7 @@ func TestMsgServer_CancelSendToEthereum(t *testing.T) {
 	gk.setCosmosOriginatedDenomToERC20(ctx, testDenom, "testcontractstring")
 
 	// setup for GetValidatorEthereumAddress
-	gk.setValidatorEthereumAddress(ctx, valAddr1, ethAddr1)
+	gk.SetValidatorEthereumAddress(ctx, valAddr1, ethAddr1)
 
 	msgServer := NewMsgServerImpl(gk)
 
@@ -275,7 +275,7 @@ func TestMsgServer_SubmitEthereumEvent(t *testing.T) {
 	}
 
 	// setup for GetValidatorEthereumAddress
-	gk.setValidatorEthereumAddress(ctx, valAddr1, ethAddr1)
+	gk.SetValidatorEthereumAddress(ctx, valAddr1, ethAddr1)
 
 	sendToCosmosEvent := &types.SendToCosmosEvent{
 		EventNonce:     1,

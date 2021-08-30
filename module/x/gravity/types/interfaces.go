@@ -34,7 +34,7 @@ type OutgoingTx interface {
 
 	// The only one that will be problematic is BatchTx which needs to pull all the constituent
 	// transactions before calculating the checkpoint
-	GetCheckpoint([]byte) []byte
+	GetCheckpoint(string) []byte
 	GetStoreIndex() []byte
 	GetCosmosHeight() uint64
 }

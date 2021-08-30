@@ -39,7 +39,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 					Operator: cAddr,
 					Power:    int64(v),
 				}
-				input.GravityKeeper.setValidatorEthereumAddress(ctx, cAddr, common.HexToAddress("0xf71402f886b45c134743F4c00750823Bbf5Fd045"))
+				input.GravityKeeper.SetValidatorEthereumAddress(ctx, cAddr, common.HexToAddress("0xf71402f886b45c134743F4c00750823Bbf5Fd045"))
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
 			r := input.GravityKeeper.CreateSignerSetTx(ctx)
@@ -119,7 +119,7 @@ func TestDelegateKeys(t *testing.T) {
 		require.NoError(t, err2)
 
 		k.SetOrchestratorValidatorAddress(ctx, val, orch)
-		k.setValidatorEthereumAddress(ctx, val, ethAddrs[i])
+		k.SetValidatorEthereumAddress(ctx, val, ethAddrs[i])
 		k.setEthereumOrchestratorAddress(ctx, ethAddrs[i], orch)
 	}
 	addresses := k.getDelegateKeys(ctx)

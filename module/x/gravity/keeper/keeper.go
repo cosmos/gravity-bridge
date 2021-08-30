@@ -190,7 +190,7 @@ func (k Keeper) GetOrchestratorValidatorAddress(ctx sdk.Context, orchAddr sdk.Ac
 ////////////////////////
 
 // setValidatorEthereumAddress sets the ethereum address for a given validator
-func (k Keeper) setValidatorEthereumAddress(ctx sdk.Context, valAddr sdk.ValAddress, ethAddr common.Address) {
+func (k Keeper) SetValidatorEthereumAddress(ctx sdk.Context, valAddr sdk.ValAddress, ethAddr common.Address) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.MakeValidatorEthereumAddressKey(valAddr)
 
@@ -270,6 +270,11 @@ func (k Keeper) CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 		),
 	)
 	k.SetOutgoingTx(ctx, newSignerSetTx)
+
+	// Store checkpoint to prove that this logic call actually happened
+	checkpoint := newSignerSetTx.GetCheckpoint(k.GetGravityID(ctx))
+	k.setPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	k.Logger(ctx).Info(
 		"SignerSetTx created",
 		"nonce", newSignerSetTx.Nonce,
@@ -362,7 +367,7 @@ func (k Keeper) getBridgeChainID(ctx sdk.Context) uint64 {
 // is deployed the GravityID CAN NOT BE CHANGED. Meaning that it can't just be the
 // same as the chain id since the chain id may be changed many times with each
 // successive chain in charge of the same bridge
-func (k Keeper) getGravityID(ctx sdk.Context) string {
+func (k Keeper) GetGravityID(ctx sdk.Context) string {
 	var a string
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyGravityID, &a)
 	return a
@@ -555,10 +560,16 @@ func (k Keeper) CreateContractCallTx(ctx sdk.Context, invalidationNonce uint64, 
 		),
 	)
 	k.SetOutgoingTx(ctx, newContractCallTx)
+
+	// Store checkpoint to prove that this logic call actually happened
+	checkpoint := newContractCallTx.GetCheckpoint(k.GetGravityID(ctx))
+	k.setPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	k.Logger(ctx).Info(
 		"ContractCallTx created",
 		"invalidation_nonce", newContractCallTx.InvalidationNonce,
 		"invalidation_scope", newContractCallTx.InvalidationScope,
+		"checkpoint", checkpoint,
 		// todo: fill out all fields
 	)
 	return newContractCallTx
