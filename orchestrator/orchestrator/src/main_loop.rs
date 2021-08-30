@@ -51,8 +51,7 @@ pub async fn orchestrator_main_loop(
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
     gas_price: (f64, String),
-    ip: net::IpAddr,
-    port: u16,
+    metrics_listen: &net::SocketAddr,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
@@ -84,7 +83,7 @@ pub async fn orchestrator_main_loop(
         gravity_contract_address,
     );
 
-    let e = metrics_main_loop(ip, port);
+    let e = metrics_main_loop(metrics_listen);
 
     futures::future::join5(a, b, c, d, e).await;
 }

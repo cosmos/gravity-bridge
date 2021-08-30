@@ -9,7 +9,7 @@ import "gravity/v1/genesis.proto";
 import "gravity/v1/gravity.proto";
 import "gravity/v1/msgs.proto";
 
-option go_package = "github.com/peggyjv/gravity-bridge/module/x/gravity/types";
+option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
 // Query defines the gRPC querier service
 service Query {

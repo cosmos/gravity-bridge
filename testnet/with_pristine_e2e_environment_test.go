@@ -21,9 +21,9 @@ import (
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	gravitytypes "github.com/cosmos/gravity-bridge/module/x/gravity/types"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	gravitytypes "github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 	"github.com/stretchr/testify/require"
 	tendermintjson "github.com/tendermint/tendermint/libs/json"
 )

@@ -89,12 +89,7 @@ impl Runnable for StartCommand {
                 grpc,
                 contract_address,
                 gas_price,
-                config
-                    .metrics
-                    .listen_addr
-                    .parse()
-                    .expect("Could not parse metrics.listen_addr"),
-                config.metrics.listen_port,
+                &config.metrics.listen_addr,
             )
             .await;
         })

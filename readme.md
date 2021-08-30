@@ -2,7 +2,7 @@
 
 Gravity bridge is Cosmos <-> Ethereum bridge designed to run on the [Cosmos Hub](https://github.com/cosmos/gaia) focused on maximum design simplicity and efficiency.
 
-Gravity is currently can transfer ERC20 assets originating on Ethereum to a Cosmos based chain and back to Ethereum.
+Gravity can transfer ERC20 assets originating on Ethereum to a Cosmos based chain and back to Ethereum.
 
 The ability to transfer assets originating on Cosmos to an ERC20 representation on Ethereum is coming within a few months.
 
