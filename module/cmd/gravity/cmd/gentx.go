@@ -41,7 +41,7 @@ import (
 )
 
 // GenTxCmd builds the application's gentx command.
-func GenTxCmd(mbm module.BasicManager, txEncCfg client.TxEncodingConfig, genBalIterator types.GenesisBalancesIterator, genAccountIterator authtypes.GenesisAccountIterator, defaultNodeHome string) *cobra.Command {
+func GenTxCmd(mbm module.BasicManager, txEncCfg client.TxEncodingConfig, genBalIterator types.GenesisBalancesIterator, defaultNodeHome string) *cobra.Command {
 	ipDefault, _ := server.ExternalIP()
 	fsCreateValidator, defaultsDesc := cli.CreateValidatorMsgFlagSet(ipDefault)
 
@@ -147,11 +147,6 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 			// validate validator account in genesis
 			if err = genutil.ValidateAccountInGenesis(genesisState, genBalIterator, key.GetAddress(), coins, cdc); err != nil {
 				return errors.Wrap(err, "failed to validate validator account in genesis")
-			}
-
-			// validate orchestrator account in genesis and warn if not found
-			if err = validateAccountPresentInGenesis(genesisState, genAccountIterator, orchAddress, coins, cdc); err != nil {
-				cmd.PrintErrf("orchestrator address not found in genesis file: %s\n", orchAddress)
 			}
 
 			txFactory := tx.NewFactoryCLI(clientCtx, cmd.Flags())
