@@ -17,7 +17,7 @@ require (
 	github.com/peggyjv/gravity-bridge/module v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/tendermint/tendermint v0.34.11
+	github.com/tendermint/tendermint v0.34.12
 	golang.org/x/net v0.0.0-20210610132358-84b48f89b13b // indirect
 	golang.org/x/sys v0.0.0-20210611083646-a4fc73990273 // indirect
 	gotest.tools/v3 v3.0.3 // indirect

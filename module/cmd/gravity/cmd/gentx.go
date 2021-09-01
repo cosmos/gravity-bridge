@@ -31,6 +31,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankexported "github.com/cosmos/cosmos-sdk/x/bank/exported"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -40,7 +41,7 @@ import (
 )
 
 // GenTxCmd builds the application's gentx command.
-func GenTxCmd(mbm module.BasicManager, txEncCfg client.TxEncodingConfig, genBalIterator types.GenesisBalancesIterator, defaultNodeHome string) *cobra.Command {
+func GenTxCmd(mbm module.BasicManager, txEncCfg client.TxEncodingConfig, genBalIterator types.GenesisBalancesIterator, genAccountIterator authtypes.GenesisAccountIterator, defaultNodeHome string) *cobra.Command {
 	ipDefault, _ := server.ExternalIP()
 	fsCreateValidator, defaultsDesc := cli.CreateValidatorMsgFlagSet(ipDefault)
 
@@ -149,9 +150,8 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 			}
 
 			// validate orchestrator account in genesis and warn if not found
-			if err = genutil.ValidateAccountInGenesis(genesisState, genBalIterator, orchAddress, coins, cdc); err != nil {
+			if err = validateAccountPresentInGenesis(genesisState, genAccountIterator, orchAddress, coins, cdc); err != nil {
 				cmd.PrintErrf("orchestrator address not found in genesis file: %s\n", orchAddress)
-				return nil
 			}
 
 			txFactory := tx.NewFactoryCLI(clientCtx, cmd.Flags())
@@ -532,4 +532,33 @@ func CollectTxs(cdc codec.JSONCodec, txJSONDecoder sdk.TxDecoder, moniker, genTx
 	persistentPeers = strings.Join(addressesIPs, ",")
 
 	return appGenTxs, persistentPeers, nil
+}
+
+func validateAccountPresentInGenesis(
+	appGenesisState map[string]json.RawMessage, genBalIterator authtypes.GenesisAccountIterator,
+	addr sdk.Address, coins sdk.Coins, cdc codec.Codec,
+) error {
+
+	accountIsInGenesis := false
+
+	genBalIterator.IterateGenesisAccounts(cdc, appGenesisState,
+		func(acc authtypes.AccountI) (stop bool) {
+			accAddress := acc.GetAddress()
+
+			// ensure that account is in genesis
+			if accAddress.Equals(addr) {
+				// ensure account contains enough funds of default bond denom
+				accountIsInGenesis = true
+				return true
+			}
+
+			return false
+		},
+	)
+
+	if !accountIsInGenesis {
+		return fmt.Errorf("account %s does not have a balance in the genesis state", addr)
+	}
+
+	return nil
 }
