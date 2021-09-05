@@ -1566,8 +1566,16 @@ dependencies = [
 name = "gravity_bridge"
 version = "0.1.0"
 dependencies = [
+ "client",
+ "cosmos_gravity",
+ "ethereum_gravity",
+ "gorc",
+ "gravity_proto",
+ "gravity_utils",
  "orchestrator",
- "relayer",
+ "proto_build",
+ "register_delegate_keys",
+ "test_runner",
 ]
 
 [[package]]
