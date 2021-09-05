@@ -1,3 +1,5 @@
+# This is no longer a virtual manifest as it used to be.
+# Also, the name was changed from orchestrator to gravity_bridge.
 [package]
 name = "gravity_bridge"
 version = "0.1.0"
@@ -27,4 +29,12 @@ members = [
 
 [dependencies]
 orchestrator = { path = "./orchestrator" }
-relayer = { path = "./relayer" }
+cosmos_gravity = { path = "./cosmos_gravity" }
+ethereum_gravity = { path = "./ethereum_gravity" }
+gravity_utils = { path = "./gravity_utils" }
+proto_build = { path = "./proto_build" }
+test_runner = { path = "./test_runner" }
+gravity_proto = { path = "./gravity_proto" }
+client = { path = "./client" }
+register_delegate_keys = { path = "./register_delegate_keys" }
+gorc = { path = "./gorc" }
