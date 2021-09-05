@@ -1,3 +1,14 @@
+[package]
+name = "orchestrator"
+version = "0.1.0"
+authors = ["PeggyJV"]
+license = "Apache-2.0"
+edition = "2018"
+readme = "README.md"
+description = """
+
+"""
+
 [workspace]
 default-members = ["gorc", "orchestrator", "test_runner"]
 members = [
@@ -13,3 +24,7 @@ members = [
 	"register_delegate_keys",
 	"gorc",
 ]
+
+[dependencies]
+orchestrator = { path = "./orchestrator" }
+relayer = { path = "./relayer" }
