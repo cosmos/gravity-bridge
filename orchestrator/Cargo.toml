@@ -1,5 +1,5 @@
 [package]
-name = "orchestrator"
+name = "gravity-bridge"
 version = "0.1.0"
 authors = ["PeggyJV"]
 license = "Apache-2.0"

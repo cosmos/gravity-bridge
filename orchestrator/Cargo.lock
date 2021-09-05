@@ -1563,6 +1563,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "gravity-bridge"
+version = "0.1.0"
+dependencies = [
+ "orchestrator",
+ "relayer",
+]
+
+[[package]]
 name = "gravity_proto"
 version = "0.1.0"
 dependencies = [
