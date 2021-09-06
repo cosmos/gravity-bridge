@@ -38,3 +38,4 @@ gravity_proto = { path = "./gravity_proto" }
 client = { path = "./client" }
 register_delegate_keys = { path = "./register_delegate_keys" }
 gorc = { path = "./gorc" }
+relayer = { path = "./relayer" }
