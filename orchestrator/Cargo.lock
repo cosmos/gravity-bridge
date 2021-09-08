@@ -962,8 +962,8 @@ checksum = "a2df960f5d869b2dd8532793fde43eb5427cceb126c929747a26823ab0eeb536"
 
 [[package]]
 name = "cosmos-sdk-proto"
-version = "0.5.0"
-source = "git+http://github.com/cosmos/cosmos-rust?branch=main#c0c0e4e04fe0a79d4d619846f9337c94f1e13ecd"
+version = "0.6.3"
+source = "git+http://github.com/cosmos/cosmos-rust?branch=main#f32e051c84b0c9f4f6e5b629e6e41f35b4a6a4d1"
 dependencies = [
  "prost",
  "prost-types",
@@ -1125,7 +1125,7 @@ dependencies = [
 [[package]]
 name = "deep_space"
 version = "2.4.3"
-source = "git+https://github.com/iqlusioninc/deep_space/?branch=zaki/tendermint_0_21#3aaf866c5c2bed69beda86d46d0f4a9465806e70"
+source = "git+https://github.com/iqlusioninc/deep_space/?branch=zaki/tendermint_0_21#ec5af497d6056fe33243a84e83e7bbccc1c9e565"
 dependencies = [
  "base64",
  "bech32 0.8.0",
@@ -1530,7 +1530,7 @@ checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
 
 [[package]]
 name = "gorc"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "abscissa_core",
  "abscissa_tokio",
