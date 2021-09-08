@@ -31,6 +31,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankexported "github.com/cosmos/cosmos-sdk/x/bank/exported"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -148,12 +149,6 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 				return errors.Wrap(err, "failed to validate validator account in genesis")
 			}
 
-			// validate orchestrator account in genesis and warn if not found
-			if err = genutil.ValidateAccountInGenesis(genesisState, genBalIterator, orchAddress, coins, cdc); err != nil {
-				cmd.PrintErrf("orchestrator address not found in genesis file: %s\n", orchAddress)
-				return nil
-			}
-
 			txFactory := tx.NewFactoryCLI(clientCtx, cmd.Flags())
 			if err != nil {
 				return errors.Wrap(err, "error creating tx builder")
@@ -196,14 +191,14 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 
 			if key.GetType() == keyring.TypeOffline || key.GetType() == keyring.TypeMulti {
 				cmd.PrintErrln("Offline key passed in. Use `tx sign` command to sign.")
-				return authclient.PrintUnsignedStdTx(txBldr, clientCtx, msgs)
+				return txBldr.PrintUnsignedTx(clientCtx, msgs...)
 			}
 
 			// write the unsigned transaction to the buffer
 			w := bytes.NewBuffer([]byte{})
 			clientCtx = clientCtx.WithOutput(w)
 
-			if err = authclient.PrintUnsignedStdTx(txBldr, clientCtx, msgs); err != nil {
+			if err = txBldr.PrintUnsignedTx(clientCtx, msgs...); err != nil {
 				return errors.Wrap(err, "failed to print unsigned std tx")
 			}
 
@@ -532,4 +527,33 @@ func CollectTxs(cdc codec.JSONCodec, txJSONDecoder sdk.TxDecoder, moniker, genTx
 	persistentPeers = strings.Join(addressesIPs, ",")
 
 	return appGenTxs, persistentPeers, nil
+}
+
+func validateAccountPresentInGenesis(
+	appGenesisState map[string]json.RawMessage, genBalIterator authtypes.GenesisAccountIterator,
+	addr sdk.Address, coins sdk.Coins, cdc codec.Codec,
+) error {
+
+	accountIsInGenesis := false
+
+	genBalIterator.IterateGenesisAccounts(cdc, appGenesisState,
+		func(acc authtypes.AccountI) (stop bool) {
+			accAddress := acc.GetAddress()
+
+			// ensure that account is in genesis
+			if accAddress.Equals(addr) {
+				// ensure account contains enough funds of default bond denom
+				accountIsInGenesis = true
+				return true
+			}
+
+			return false
+		},
+	)
+
+	if !accountIsInGenesis {
+		return fmt.Errorf("account %s does not have a balance in the genesis state", addr)
+	}
+
+	return nil
 }
