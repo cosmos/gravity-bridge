@@ -4,6 +4,8 @@
 #![forbid(unsafe_code)]
 
 use gorc::application::APP;
+extern crate openssl_probe;
+
 
 /// Boot Gorc
 fn main() {

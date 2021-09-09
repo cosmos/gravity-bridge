@@ -26,6 +26,7 @@ k256 = { version = "0.9", features = ["pem"] }
 pkcs8 = { version = "0.7", features = ["pem"] }
 signatory = "0.23.0-pre"
 rand_core = { version = "0.6", features = ["std"] }
+openssl-probe = "0.1.4"
 
 abscissa_tokio = { version = "0.6.0-pre.2", features = ["actix"] }
 web30 = "0.14"
