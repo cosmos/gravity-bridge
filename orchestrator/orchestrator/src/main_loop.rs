@@ -78,12 +78,12 @@ pub async fn orchestrator_main_loop(
 
     let d = relayer_main_loop(
         ethereum_key,
-        web3,
+        web3.clone(),
         grpc_client.clone(),
         gravity_contract_address,
     );
 
-    let e = metrics_main_loop(metrics_listen);
+    let e = metrics_main_loop(metrics_listen, gravity_contract_address, web3.clone());
 
     futures::future::join5(a, b, c, d, e).await;
 }

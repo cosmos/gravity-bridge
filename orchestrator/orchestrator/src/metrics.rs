@@ -4,11 +4,16 @@ use axum::prelude::*;
 use hyper::Server;
 use lazy_static::lazy_static;
 use prometheus::*;
+use gravity_utils::connection_prep as GravityEth;
+use clarity::Address as EthAddress;
+use web30::client::Web3;
 
-pub async fn metrics_main_loop(addr: &net::SocketAddr) {
+
+pub async fn metrics_main_loop(addr: &net::SocketAddr, address:EthAddress, web3:Web3) {
     let get_metrics = || async {
         let mut buffer = Vec::new();
         let encoder = TextEncoder::new();
+        let eth_bal = GravityEth::check_for_eth(address, &web3);
         let metric_families = prometheus::gather();
         encoder.encode(&metric_families, &mut buffer).unwrap();
         String::from_utf8(buffer.clone()).unwrap()
