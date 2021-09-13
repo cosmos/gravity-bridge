@@ -4,16 +4,12 @@ use axum::prelude::*;
 use hyper::Server;
 use lazy_static::lazy_static;
 use prometheus::*;
-use gravity_utils::connection_prep as GravityEth;
-use clarity::Address as EthAddress;
-use web30::client::Web3;
 
 
-pub async fn metrics_main_loop(addr: &net::SocketAddr, address:EthAddress, web3:Web3) {
+pub async fn metrics_main_loop(addr: &net::SocketAddr) {
     let get_metrics = || async {
         let mut buffer = Vec::new();
         let encoder = TextEncoder::new();
-        let eth_bal = GravityEth::check_for_eth(address, &web3);
         let metric_families = prometheus::gather();
         encoder.encode(&metric_families, &mut buffer).unwrap();
         String::from_utf8(buffer.clone()).unwrap()
@@ -166,6 +162,12 @@ lazy_static! {
         labels! {"chain" => "ethereum"}
     ))
     .unwrap();
+    static ref ETHEREUM_BAL: IntGauge = register_int_gauge!(opts!(
+        "ethereum_balance",
+        "orchestrator_key current ethereum_balance",
+        labels! {"chain" => "ethereum"}
+    ))
+    .unwrap();
 }
 
 pub fn set_cosmos_block_height(v: u64) {
@@ -231,6 +233,10 @@ pub fn set_ethereum_last_valset_event(v: clarity::Uint256) {
 
 pub fn set_ethereum_last_valset_nonce(v: clarity::Uint256) {
     set_uint256(&ETHEREUM_LAST_VALSET_NONCE, v);
+}
+
+pub fn set_ethereum_bal(v: clarity::Uint256) {
+    set_uint256(&ETHEREUM_BAL, v);
 }
 
 fn set_u64(guage: &IntGauge, value: u64) {
