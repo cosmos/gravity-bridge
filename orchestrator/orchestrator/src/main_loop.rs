@@ -87,7 +87,7 @@ pub async fn orchestrator_main_loop(
 
     let f = metrics_main_loop(metrics_listen);
 
-    futures::future::join5(a, b, c, d, f).await;
+    let g = futures::future::join_all(vec![a, b, c, d, e, f]);
 }
 
 const DELAY: Duration = Duration::from_secs(5);
