@@ -78,14 +78,19 @@ pub async fn orchestrator_main_loop(
 
     let d = relayer_main_loop(
         ethereum_key,
-        web3,
+        web3.clone(),
         grpc_client.clone(),
         gravity_contract_address,
     );
 
-    let e = metrics_main_loop(metrics_listen);
+    let e = check_for_eth(gravity_contract_address, web3.clone());
 
-    futures::future::join5(a, b, c, d, e).await;
+    let f = metrics_main_loop(metrics_listen);
+
+    let g = futures::future::join(a, b);
+
+    let h = futures::future::join5(c, d, e, f, g);
+    h.await;
 }
 
 const DELAY: Duration = Duration::from_secs(5);
@@ -366,4 +371,15 @@ pub async fn eth_signer_main_loop(
             delay_for(ETH_SIGNER_LOOP_SPEED - elapsed).await;
         }
     }
+}
+
+pub async fn check_for_eth(gravity_contract_address: EthAddress, web3: Web3) {
+    let balance = web3
+        .eth_get_balance(gravity_contract_address)
+        .await
+        .unwrap();
+    if balance == 0u8.into() {
+        warn!("You don't have any Ethereum! You will need to send some to {} for this program to work. Dust will do for basic operations, more info about average relaying costs will be presented as the program runs", gravity_contract_address);
+    }
+    metrics::set_ethereum_bal(balance);
 }
