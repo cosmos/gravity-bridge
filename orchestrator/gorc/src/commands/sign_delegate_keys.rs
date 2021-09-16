@@ -35,7 +35,7 @@ impl Runnable for SignDelegateKeysCmd {
 
                     let account_info = contact.get_account_info(address).await;
                     let account_info = account_info.expect("Did not receive account info");
-                    account_info.sequence
+                    account_info.get_sequence().expect("Could not get sequence")
                 }
             };
 

@@ -15,7 +15,7 @@ cosmos_gravity = {path = "../cosmos_gravity"}
 gravity_utils = {path = "../gravity_utils"}
 gravity_proto = {path = "../gravity_proto/"}
 
-deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="zaki/tendermint_0_21"}
+deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="master"}
 contact = "0.4"
 serde_derive = "1.0"
 clarity = "0.4.11"
@@ -23,7 +23,7 @@ docopt = "1"
 serde = "1.0"
 actix-rt = "2.2.0"
 lazy_static = "1"
-web30 = "0.14.4"
+web30 = "0.15"
 env_logger = "0.8"
 log = "0.4.14"
 openssl-probe = "0.1"

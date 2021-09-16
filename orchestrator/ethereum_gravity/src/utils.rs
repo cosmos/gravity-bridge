@@ -1,4 +1,4 @@
-use clarity::abi::Token;
+use clarity::abi::{Token, encode_call};
 use clarity::Uint256;
 use clarity::{abi::encode_tokens, Address as EthAddress};
 use gravity_utils::error::GravityError;
@@ -114,13 +114,11 @@ pub async fn get_valset_nonce(
     caller_address: EthAddress,
     web3: &Web3,
 ) -> Result<u64, Web3Error> {
+
+    let payload = encode_call("state_lastValsetNonce()", &[]).unwrap();
+
     let val = web3
-        .contract_call(
-            contract_address,
-            "state_lastValsetNonce()",
-            &[],
-            caller_address, None
-        )
+        .simulate_transaction(contract_address, 0u8.into(), payload, caller_address, None)
         .await?;
     // the go represents all nonces as u64, there's no
     // reason they should ever overflow without a user
@@ -138,12 +136,14 @@ pub async fn get_tx_batch_nonce(
     caller_address: EthAddress,
     web3: &Web3,
 ) -> Result<u64, Web3Error> {
+    let payload = encode_call("lastBatchNonce(address)", &[erc20_contract_address.into()]).unwrap();
     let val = web3
-        .contract_call(
+        .simulate_transaction(
             gravity_contract_address,
-            "lastBatchNonce(address)",
-            &[erc20_contract_address.into()],
-            caller_address, None
+            0u8.into(),
+            payload,
+            caller_address,
+            None,
         )
         .await?;
     // the go represents all nonces as u64, there's no
@@ -162,12 +162,18 @@ pub async fn get_logic_call_nonce(
     caller_address: EthAddress,
     web3: &Web3,
 ) -> Result<u64, Web3Error> {
+    let payload = encode_call(
+        "lastLogicCallNonce(bytes32)",
+        &[Token::Bytes(invalidation_id)],
+    )
+    .unwrap();
     let val = web3
-        .contract_call(
+        .simulate_transaction(
             gravity_contract_address,
-            "lastLogicCallNonce(bytes32)",
-            &[Token::Bytes(invalidation_id)],
-            caller_address, None
+            0u8.into(),
+            payload,
+            caller_address,
+            None,
         )
         .await?;
     // the go represents all nonces as u64, there's no
@@ -185,12 +191,14 @@ pub async fn get_event_nonce(
     caller_address: EthAddress,
     web3: &Web3,
 ) -> Result<u64, Web3Error> {
+    let payload = encode_call("state_lastEventNonce()", &[]).unwrap();
     let val = web3
-        .contract_call(
+        .simulate_transaction(
             gravity_contract_address,
-            "state_lastEventNonce()",
-            &[],
-            caller_address, None
+            0u8.into(),
+            payload,
+            caller_address,
+            None,
         )
         .await?;
     // the go represents all nonces as u64, there's no
@@ -207,11 +215,16 @@ pub async fn get_gravity_id(
     contract_address: EthAddress,
     caller_address: EthAddress,
     web3: &Web3,
-) -> Result<Vec<u8>, Web3Error> {
+) -> Result<String, Web3Error> {
+    let payload = encode_call("state_gravityId()", &[]).unwrap();
     let val = web3
-        .contract_call(contract_address, "state_gravityId()", &[], caller_address, None)
+        .simulate_transaction(contract_address, 0u8.into(), payload, caller_address, None)
         .await?;
-    Ok(val)
+    let gravity_id = String::from_utf8(val);
+    match gravity_id {
+        Ok(val) => Ok(val),
+        Err(e) => Err(Web3Error::BadResponse(e.to_string())),
+    }
 }
 
 /// Gets the ERC20 symbol, should maybe be upstreamed
@@ -220,9 +233,12 @@ pub async fn get_erc20_symbol(
     caller_address: EthAddress,
     web3: &Web3,
 ) -> Result<String, GravityError> {
+
+    let payload = encode_call("symbol()", &[]).unwrap();
+
     let val_symbol = web3
-        .contract_call(contract_address, "symbol()", &[], caller_address, None)
-        .await?;
+    .simulate_transaction(contract_address, 0u8.into(), payload, caller_address, None)
+    .await?;
     // Pardon the unwrap, but this is temporary code, intended only for the tests, to help them
     // deal with a deprecated feature (the symbol), which will be removed soon
     Ok(String::from_utf8(val_symbol).unwrap())

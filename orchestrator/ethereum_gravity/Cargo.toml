@@ -9,9 +9,9 @@ edition = "2018"
 [dependencies]
 gravity_utils = {path = "../gravity_utils"}
 
-deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="zaki/tendermint_0_21"}
+deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="master"}
 clarity = "0.4.11"
-web30 = "0.14.4"
+web30 = "0.15.4"
 num256 = "0.3"
 log = "0.4"
 sha3 = "0.9"

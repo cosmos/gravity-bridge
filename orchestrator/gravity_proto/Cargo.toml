@@ -10,5 +10,5 @@ edition = "2018"
 prost = "0.7"
 prost-types = "0.7"
 bytes = "1"
-cosmos-sdk-proto = {git="http://github.com/cosmos/cosmos-rust", branch="main"}
+cosmos-sdk-proto = "0.6.3"
 tonic = "0.4"

@@ -41,7 +41,6 @@ pub async fn relayer_main_loop(
             return;
         }
         let gravity_id = gravity_id.unwrap();
-        let gravity_id = String::from_utf8(gravity_id.clone()).expect("Invalid GravityID");
 
         relay_valsets(
             current_eth_valset.clone(),
