@@ -963,7 +963,8 @@ checksum = "a2df960f5d869b2dd8532793fde43eb5427cceb126c929747a26823ab0eeb536"
 [[package]]
 name = "cosmos-sdk-proto"
 version = "0.6.3"
-source = "git+http://github.com/cosmos/cosmos-rust?branch=main#f32e051c84b0c9f4f6e5b629e6e41f35b4a6a4d1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7115eae4b8518967b8e737a3ef76025f2d007de7906d88c18f00b8bbfc70f51e"
 dependencies = [
  "prost",
  "prost-types",
@@ -1125,7 +1126,7 @@ dependencies = [
 [[package]]
 name = "deep_space"
 version = "2.4.3"
-source = "git+https://github.com/iqlusioninc/deep_space/?branch=zaki/tendermint_0_21#ec5af497d6056fe33243a84e83e7bbccc1c9e565"
+source = "git+https://github.com/iqlusioninc/deep_space/?branch=master#1fbc179ff63238c0ffd08d0caf2f87be0927b1d8"
 dependencies = [
  "base64",
  "bech32 0.8.0",
@@ -1530,7 +1531,7 @@ checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
 
 [[package]]
 name = "gorc"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "abscissa_core",
  "abscissa_tokio",
