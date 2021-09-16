@@ -67,6 +67,7 @@ impl Default for GravitySection {
 pub struct EthereumSection {
     pub key_derivation_path: String,
     pub rpc: String,
+    pub gas_price_multiplier: f32,
 }
 
 impl Default for EthereumSection {
@@ -74,6 +75,7 @@ impl Default for EthereumSection {
         Self {
             key_derivation_path: "m/44'/60'/0'/0/0".to_owned(),
             rpc: "http://localhost:8545".to_owned(),
+            gas_price_multiplier: 1.0f32,
         }
     }
 }

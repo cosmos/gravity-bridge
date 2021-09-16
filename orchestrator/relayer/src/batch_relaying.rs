@@ -10,6 +10,7 @@ use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::message_signatures::encode_tx_batch_confirm_hashed;
 use gravity_utils::types::Valset;
 use gravity_utils::types::{BatchConfirmResponse, TransactionBatch};
+use web30::types::SendTxOption;
 use std::collections::HashMap;
 use std::time::Duration;
 use tonic::transport::Channel;
@@ -37,11 +38,13 @@ pub async fn relay_batches(
     gravity_contract_address: EthAddress,
     gravity_id: String,
     timeout: Duration,
+    gas_multiplier: f32,
 ) {
     let possible_batches =
         get_batches_and_signatures(current_valset.clone(), grpc_client, gravity_id.clone()).await;
 
     trace!("possible batches {:?}", possible_batches);
+
 
     submit_batches(
         current_valset,
@@ -50,6 +53,7 @@ pub async fn relay_batches(
         gravity_contract_address,
         gravity_id,
         timeout,
+        gas_multiplier,
         possible_batches,
     )
     .await;
@@ -133,6 +137,7 @@ async fn submit_batches(
     gravity_contract_address: EthAddress,
     gravity_id: String,
     timeout: Duration,
+    gas_multiplier: f32,
     possible_batches: HashMap<EthAddress, Vec<SubmittableBatch>>,
 ) {
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
@@ -203,6 +208,8 @@ async fn submit_batches(
                 downcast_to_u128(cost.get_total()).unwrap() as f32
                     / downcast_to_u128(one_eth()).unwrap() as f32
             );
+            let tx_options  = vec![SendTxOption::GasPriceMultiplier(gas_multiplier)];
+
 
                 let res = send_eth_transaction_batch(
                     current_valset.clone(),
@@ -213,6 +220,7 @@ async fn submit_batches(
                     gravity_contract_address,
                     gravity_id.clone(),
                     ethereum_key,
+                    tx_options,
                 )
                 .await;
                 if res.is_err() {

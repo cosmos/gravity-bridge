@@ -52,6 +52,7 @@ pub async fn orchestrator_main_loop(
     gravity_contract_address: EthAddress,
     gas_price: (f64, String),
     metrics_listen: &net::SocketAddr,
+    eth_gas_multiplier: f32,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
@@ -81,6 +82,7 @@ pub async fn orchestrator_main_loop(
         web3.clone(),
         grpc_client.clone(),
         gravity_contract_address,
+        eth_gas_multiplier,
     );
 
     let e = check_for_eth(gravity_contract_address, web3.clone());
