@@ -10,7 +10,7 @@ edition = "2018"
 gravity_proto = {path = "../gravity_proto/"}
 cosmos-sdk-proto = "0.6.3"
 deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="master"}
-web30 = "0.14.4"
+web30 = "0.15"
 clarity = "0.4.11"
 num256 = "0.3"
 serde_derive = "1.0"

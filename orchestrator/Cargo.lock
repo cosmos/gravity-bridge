@@ -181,9 +181,9 @@ dependencies = [
 
 [[package]]
 name = "actix-http"
-version = "3.0.0-beta.7"
+version = "3.0.0-beta.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a6b8dd8ffcb0277cebef2c4b496821c888e0320817c1862a83359d4e384797a"
+checksum = "dd38a862fa7fead2b47ee55e550982aba583ebc7365ccf0155b49934ad6f16f9"
 dependencies = [
  "actix-codec 0.4.0",
  "actix-rt 2.2.0",
@@ -193,7 +193,6 @@ dependencies = [
  "ahash",
  "base64",
  "bitflags",
- "brotli2",
  "bytes 1.0.1",
  "bytestring",
  "derive_more",
@@ -624,16 +623,17 @@ dependencies = [
 
 [[package]]
 name = "awc"
-version = "3.0.0-beta.6"
+version = "3.0.0-beta.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15ffe93051a6e05151f310862b6097b58c40e873352083caa820c406392732b2"
+checksum = "5b276021b5aa1df71969acc8adc03973e4fc7d00bba0cbb6338e6f8ad0d7a3c2"
 dependencies = [
  "actix-codec 0.4.0",
- "actix-http 3.0.0-beta.7",
+ "actix-http 3.0.0-beta.10",
  "actix-rt 2.2.0",
  "actix-service 2.0.0",
  "base64",
  "bytes 1.0.1",
+ "cfg-if 1.0.0",
  "derive_more",
  "futures-core",
  "itoa",
@@ -1531,7 +1531,7 @@ checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
 
 [[package]]
 name = "gorc"
-version = "0.2.5"
+version = "0.2.8"
 dependencies = [
  "abscissa_core",
  "abscissa_tokio",
@@ -1777,9 +1777,9 @@ dependencies = [
 
 [[package]]
 name = "httparse"
-version = "1.4.1"
+version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3a87b616e37e93c22fb19bcd386f02f3af5ea98a25670ad0fce773de23c5e68"
+checksum = "acd94fdbe1d4ff688b67b04eee2e17bd50995534a61539e45adfefb45e5e5503"
 
 [[package]]
 name = "httpdate"
@@ -4037,12 +4037,11 @@ checksum = "d9a543ae66aa233d14bb765ed9af4a33e81b8b58d1584cf1b47ff8cd0b9e4489"
 
 [[package]]
 name = "web30"
-version = "0.14.4"
+version = "0.15.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4268b83b39379f4f8ff24dca0a9001afa637d68f08120a92bc09da042e5a7fda"
+checksum = "e2560569747f3bdfe0011ccd2a5a52fd5e3d455de0578a4d6d50ec41ecbb5235"
 dependencies = [
- "actix",
- "awc 3.0.0-beta.6",
+ "awc 3.0.0-beta.8",
  "clarity",
  "futures",
  "lazy_static",

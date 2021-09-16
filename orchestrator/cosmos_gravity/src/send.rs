@@ -40,7 +40,7 @@ pub async fn update_gravity_delegate_addresses(
     let nonce = contact
         .get_account_info(cosmos_key.to_address(&contact.get_prefix()).unwrap())
         .await?
-        .get_sequence().unwrap_or( return Err(CosmosGrpcError::BadResponse("SequenceNumberNotReturned".to_string())) );
+        .get_sequence().unwrap_or( 0 );
     
 
     let eth_sign_msg = proto::DelegateKeysSignMsg {
