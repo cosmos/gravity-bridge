@@ -1126,7 +1126,7 @@ dependencies = [
 [[package]]
 name = "deep_space"
 version = "2.4.3"
-source = "git+https://github.com/iqlusioninc/deep_space/?branch=master#1fbc179ff63238c0ffd08d0caf2f87be0927b1d8"
+source = "git+https://github.com/iqlusioninc/deep_space/?branch=master#daeacd812130eb8834e7fc92fa1f638e60da8c5e"
 dependencies = [
  "base64",
  "bech32 0.8.0",
@@ -1531,7 +1531,7 @@ checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
 
 [[package]]
 name = "gorc"
-version = "0.2.8"
+version = "0.2.9"
 dependencies = [
  "abscissa_core",
  "abscissa_tokio",
