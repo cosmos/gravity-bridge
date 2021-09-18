@@ -156,6 +156,7 @@ async fn main() {
         (1f64, fee_denom.to_owned()),
         &metrics_listen,
         1f32,
+        5000u128,
     )
     .await;
 }

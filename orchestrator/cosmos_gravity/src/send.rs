@@ -109,7 +109,7 @@ async fn __send_messages(
 
     let fee = Fee {
         amount: vec![fee],
-        gas_limit: 500_000_000u64 * (messages.len() as u64),
+        gas_limit: 500_000u64 * (messages.len() as u64),
         granter: None,
         payer: None,
     };
@@ -133,7 +133,7 @@ pub async fn send_messages(
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
-    let gas_limit = 500_000_000 * messages.len() as u64;
+    let gas_limit = 500_000 * messages.len() as u64;
 
     let fee_amount: f64 = (gas_limit as f64) * gas_price.0;
     let fee_amount: u64 = fee_amount.abs().ceil() as u64;

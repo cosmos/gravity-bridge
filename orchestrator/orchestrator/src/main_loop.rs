@@ -53,6 +53,7 @@ pub async fn orchestrator_main_loop(
     gas_price: (f64, String),
     metrics_listen: &net::SocketAddr,
     eth_gas_multiplier: f32,
+    blocks_to_search:u128,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
@@ -64,6 +65,7 @@ pub async fn orchestrator_main_loop(
         contact.clone(),
         grpc_client.clone(),
         gravity_contract_address,
+        blocks_to_search,
         tx.clone(),
     );
 
@@ -105,6 +107,7 @@ pub async fn eth_oracle_main_loop(
     contact: Contact,
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
+    blocks_to_search:u128,
     msg_sender: tokio::sync::mpsc::Sender<Vec<Msg>>,
 ) {
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
@@ -114,6 +117,7 @@ pub async fn eth_oracle_main_loop(
         our_cosmos_address,
         gravity_contract_address,
         &long_timeout_web30,
+        blocks_to_search,
     )
     .await;
     info!("Oracle resync complete, Oracle now operational");
