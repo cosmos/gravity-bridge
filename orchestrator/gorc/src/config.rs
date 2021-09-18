@@ -68,6 +68,7 @@ pub struct EthereumSection {
     pub key_derivation_path: String,
     pub rpc: String,
     pub gas_price_multiplier: f32,
+    pub blocks_to_search:u64,
 }
 
 impl Default for EthereumSection {
@@ -76,6 +77,7 @@ impl Default for EthereumSection {
             key_derivation_path: "m/44'/60'/0'/0/0".to_owned(),
             rpc: "http://localhost:8545".to_owned(),
             gas_price_multiplier: 1.0f32,
+            blocks_to_search: 5000,
         }
     }
 }
