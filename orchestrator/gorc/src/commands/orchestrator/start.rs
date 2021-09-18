@@ -22,6 +22,8 @@ pub struct StartCommand {
 
 impl Runnable for StartCommand {
     fn run(&self) {
+        openssl_probe::init_ssl_cert_env_vars();
+
         let config = APP.config();
         let cosmos_prefix = config.cosmos.prefix.clone();
 
