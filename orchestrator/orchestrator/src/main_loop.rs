@@ -87,7 +87,7 @@ pub async fn orchestrator_main_loop(
         eth_gas_multiplier,
     );
 
-    let e = check_for_eth(gravity_contract_address, web3.clone());
+    let e = check_for_eth(ethereum_key.to_public_key().unwrap() , web3.clone());
 
     let f = metrics_main_loop(metrics_listen);
 
@@ -378,13 +378,13 @@ pub async fn eth_signer_main_loop(
     }
 }
 
-pub async fn check_for_eth(gravity_contract_address: EthAddress, web3: Web3) {
+pub async fn check_for_eth(orchestrator_address: EthAddress, web3: Web3) {
     let balance = web3
-        .eth_get_balance(gravity_contract_address)
+        .eth_get_balance(orchestrator_address)
         .await
         .unwrap();
     if balance == 0u8.into() {
-        warn!("You don't have any Ethereum! You will need to send some to {} for this program to work. Dust will do for basic operations, more info about average relaying costs will be presented as the program runs", gravity_contract_address);
+        warn!("You don't have any Ethereum! You will need to send some to {} for this program to work. Dust will do for basic operations, more info about average relaying costs will be presented as the program runs", orchestrator_address);
     }
     metrics::set_ethereum_bal(balance);
 }
