@@ -54,10 +54,11 @@ pub async fn orchestrator_main_loop(
     metrics_listen: &net::SocketAddr,
     eth_gas_multiplier: f32,
     blocks_to_search:u128,
+    gas_price_limit: u64,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
-    let a = send_main_loop(&contact, cosmos_key, gas_price, rx);
+    let a = send_main_loop(&contact, cosmos_key, gas_price, rx, gas_price_limit);
 
     let b = eth_oracle_main_loop(
         cosmos_key,

@@ -89,6 +89,7 @@ pub struct CosmosSection {
     pub grpc: String,
     pub prefix: String,
     pub gas_price: GasPrice,
+    pub gas_price_limit: u64,
 }
 
 impl Default for CosmosSection {
@@ -98,6 +99,7 @@ impl Default for CosmosSection {
             grpc: "http://localhost:9090".to_owned(),
             prefix: "cosmos".to_owned(),
             gas_price: GasPrice::default(),
+            gas_price_limit: 500_000u64,
         }
     }
 }

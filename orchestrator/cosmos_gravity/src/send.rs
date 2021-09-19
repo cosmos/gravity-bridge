@@ -176,6 +176,7 @@ pub async fn send_main_loop(
     cosmos_key: CosmosPrivateKey,
     gas_price: (f64, String),
     mut rx: tokio::sync::mpsc::Receiver<Vec<Msg>>,
+    gas_limit: u64,
 ) {
     while let Some(messages) = rx.recv().await {
         match send_messages(contact, cosmos_key, gas_price.to_owned(), messages).await {
