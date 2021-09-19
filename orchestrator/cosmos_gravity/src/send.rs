@@ -16,6 +16,7 @@ use std::time::Duration;
 
 pub const MEMO: &str = "Sent using Althea Orchestrator";
 pub const TIMEOUT: Duration = Duration::from_secs(60);
+pub const COSMOS_GAS_LIMIT: u64 = 500_000;
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
@@ -109,7 +110,7 @@ async fn __send_messages(
 
     let fee = Fee {
         amount: vec![fee],
-        gas_limit: 500_000u64 * (messages.len() as u64),
+        gas_limit: COSMOS_GAS_LIMIT * (messages.len() as u64),
         granter: None,
         payer: None,
     };
@@ -133,7 +134,7 @@ pub async fn send_messages(
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
-    let gas_limit = 500_000 * messages.len() as u64;
+    let gas_limit = COSMOS_GAS_LIMIT * messages.len() as u64;
 
     let fee_amount: f64 = (gas_limit as f64) * gas_price.0;
     let fee_amount: u64 = fee_amount.abs().ceil() as u64;
