@@ -10,6 +10,7 @@ edition = "2018"
 gravity_utils = {path = "../gravity_utils"}
 ethereum_gravity = {path = "../ethereum_gravity"}
 gravity_proto = {path = "../gravity_proto/"}
+gravity_bridge = {git = "https://github.com/PeggyJV/gravity-bridge/", branch="ukpai/cosmos_gaslimit"}
 
 deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="master"}
 clarity = "0.4.11"

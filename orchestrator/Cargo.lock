@@ -880,13 +880,36 @@ version = "0.4.1"
 dependencies = [
  "actix-rt 2.2.0",
  "clarity",
- "cosmos_gravity",
+ "cosmos_gravity 0.1.0",
  "deep_space 2.4.3",
  "docopt",
  "env_logger",
- "ethereum_gravity",
- "gravity_proto",
- "gravity_utils",
+ "ethereum_gravity 0.1.0",
+ "gravity_proto 0.1.0",
+ "gravity_utils 0.1.0",
+ "lazy_static",
+ "openssl-probe",
+ "serde",
+ "serde_derive",
+ "tokio 1.5.0",
+ "url",
+ "web30",
+]
+
+[[package]]
+name = "client"
+version = "0.4.1"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
+dependencies = [
+ "actix-rt 2.2.0",
+ "clarity",
+ "cosmos_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "deep_space 2.4.3",
+ "docopt",
+ "env_logger",
+ "ethereum_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_proto 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_utils 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
  "lazy_static",
  "openssl-probe",
  "serde",
@@ -982,14 +1005,38 @@ dependencies = [
  "cosmos-sdk-proto",
  "deep_space 2.4.3",
  "env_logger",
- "ethereum_gravity",
- "gravity_proto",
- "gravity_utils",
+ "ethereum_gravity 0.1.0",
+ "gravity_bridge 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_proto 0.1.0",
+ "gravity_utils 0.1.0",
  "log",
  "num256",
  "prost",
  "prost-types",
  "rand 0.8.3",
+ "serde",
+ "sha3",
+ "tokio 1.5.0",
+ "tonic",
+ "web30",
+]
+
+[[package]]
+name = "cosmos_gravity"
+version = "0.1.0"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
+dependencies = [
+ "bytes 1.0.1",
+ "clarity",
+ "cosmos-sdk-proto",
+ "deep_space 2.4.3",
+ "ethereum_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_proto 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_utils 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "log",
+ "num256",
+ "prost",
+ "prost-types",
  "serde",
  "sha3",
  "tokio 1.5.0",
@@ -1286,7 +1333,21 @@ version = "0.1.0"
 dependencies = [
  "clarity",
  "deep_space 2.4.3",
- "gravity_utils",
+ "gravity_utils 0.1.0",
+ "log",
+ "num256",
+ "sha3",
+ "web30",
+]
+
+[[package]]
+name = "ethereum_gravity"
+version = "0.1.0"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
+dependencies = [
+ "clarity",
+ "deep_space 2.4.3",
+ "gravity_utils 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
  "log",
  "num256",
  "sha3",
@@ -1539,21 +1600,56 @@ dependencies = [
  "bip32",
  "bytes 1.0.1",
  "clarity",
- "cosmos_gravity",
+ "cosmos_gravity 0.1.0",
  "deep_space 2.4.3",
- "ethereum_gravity",
- "gravity_proto",
- "gravity_utils",
+ "ethereum_gravity 0.1.0",
+ "gravity_proto 0.1.0",
+ "gravity_utils 0.1.0",
  "gumdrop",
  "k256",
  "once_cell",
  "openssl-probe",
- "orchestrator",
+ "orchestrator 0.4.1",
  "pkcs8",
  "prost",
  "rand_core 0.6.2",
  "regex",
- "relayer",
+ "relayer 0.4.1",
+ "rpassword",
+ "serde",
+ "signatory",
+ "thiserror",
+ "tokio 1.5.0",
+ "toml",
+ "tonic",
+ "web30",
+]
+
+[[package]]
+name = "gorc"
+version = "0.2.13"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
+dependencies = [
+ "abscissa_core",
+ "abscissa_tokio",
+ "actix-rt 2.2.0",
+ "bip32",
+ "bytes 1.0.1",
+ "clarity",
+ "cosmos_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "deep_space 2.4.3",
+ "ethereum_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_proto 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_utils 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gumdrop",
+ "k256",
+ "openssl-probe",
+ "orchestrator 0.4.1 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "pkcs8",
+ "prost",
+ "rand_core 0.6.2",
+ "regex",
+ "relayer 0.4.1 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
  "rpassword",
  "serde",
  "signatory",
@@ -1568,22 +1664,52 @@ dependencies = [
 name = "gravity_bridge"
 version = "0.1.0"
 dependencies = [
- "client",
- "cosmos_gravity",
- "ethereum_gravity",
- "gorc",
- "gravity_proto",
- "gravity_utils",
- "orchestrator",
- "proto_build",
- "register_delegate_keys",
- "relayer",
- "test_runner",
+ "client 0.4.1",
+ "cosmos_gravity 0.1.0",
+ "ethereum_gravity 0.1.0",
+ "gorc 0.2.13",
+ "gravity_proto 0.1.0",
+ "gravity_utils 0.1.0",
+ "orchestrator 0.4.1",
+ "proto_build 0.1.0",
+ "register_delegate_keys 0.4.1",
+ "relayer 0.4.1",
+ "test_runner 0.1.0",
+]
+
+[[package]]
+name = "gravity_bridge"
+version = "0.1.0"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
+dependencies = [
+ "client 0.4.1 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "cosmos_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "ethereum_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gorc 0.2.13 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_proto 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_utils 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "orchestrator 0.4.1 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "proto_build 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "register_delegate_keys 0.4.1 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "relayer 0.4.1 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "test_runner 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
 ]
 
 [[package]]
 name = "gravity_proto"
 version = "0.1.0"
+dependencies = [
+ "bytes 1.0.1",
+ "cosmos-sdk-proto",
+ "prost",
+ "prost-types",
+ "tonic",
+]
+
+[[package]]
+name = "gravity_proto"
+version = "0.1.0"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
 dependencies = [
  "bytes 1.0.1",
  "cosmos-sdk-proto",
@@ -1600,11 +1726,32 @@ dependencies = [
  "clarity",
  "cosmos-sdk-proto",
  "deep_space 2.4.3",
- "gravity_proto",
+ "gravity_proto 0.1.0",
  "log",
  "num-bigint 0.4.0",
  "num256",
  "rand 0.8.3",
+ "serde",
+ "serde_derive",
+ "sha3",
+ "tokio 1.5.0",
+ "tonic",
+ "url",
+ "web30",
+]
+
+[[package]]
+name = "gravity_utils"
+version = "0.1.0"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
+dependencies = [
+ "clarity",
+ "cosmos-sdk-proto",
+ "deep_space 2.4.3",
+ "gravity_proto 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "log",
+ "num-bigint 0.4.0",
+ "num256",
  "serde",
  "serde_derive",
  "sha3",
@@ -2379,14 +2526,14 @@ dependencies = [
  "actix-rt 2.2.0",
  "axum",
  "clarity",
- "cosmos_gravity",
+ "cosmos_gravity 0.1.0",
  "deep_space 2.4.3",
  "docopt",
  "env_logger",
- "ethereum_gravity",
+ "ethereum_gravity 0.1.0",
  "futures",
- "gravity_proto",
- "gravity_utils",
+ "gravity_proto 0.1.0",
+ "gravity_utils 0.1.0",
  "hyper",
  "lazy_static",
  "log",
@@ -2395,7 +2542,40 @@ dependencies = [
  "openssl-probe",
  "prometheus",
  "rand 0.8.3",
- "relayer",
+ "relayer 0.4.1",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "tokio 1.5.0",
+ "tonic",
+ "web30",
+]
+
+[[package]]
+name = "orchestrator"
+version = "0.4.1"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
+dependencies = [
+ "actix-rt 2.2.0",
+ "axum",
+ "clarity",
+ "cosmos_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "deep_space 2.4.3",
+ "docopt",
+ "env_logger",
+ "ethereum_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "futures",
+ "gravity_proto 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_utils 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "hyper",
+ "lazy_static",
+ "log",
+ "num256",
+ "openssl",
+ "openssl-probe",
+ "prometheus",
+ "rand 0.8.3",
+ "relayer 0.4.1 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
  "serde",
  "serde_derive",
  "serde_json",
@@ -2679,6 +2859,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "proto_build"
+version = "0.1.0"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
+dependencies = [
+ "prost",
+ "prost-build",
+ "regex",
+ "tempdir",
+ "tonic",
+ "tonic-build",
+ "walkdir",
+]
+
+[[package]]
 name = "protobuf"
 version = "2.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2860,18 +3054,43 @@ dependencies = [
  "actix-rt 2.2.0",
  "clarity",
  "contact",
- "cosmos_gravity",
+ "cosmos_gravity 0.1.0",
  "deep_space 2.4.3",
  "docopt",
  "env_logger",
- "ethereum_gravity",
- "gravity_proto",
- "gravity_utils",
+ "ethereum_gravity 0.1.0",
+ "gravity_proto 0.1.0",
+ "gravity_utils 0.1.0",
  "lazy_static",
  "log",
  "openssl-probe",
  "rand 0.8.3",
- "relayer",
+ "relayer 0.4.1",
+ "serde",
+ "serde_derive",
+ "web30",
+]
+
+[[package]]
+name = "register_delegate_keys"
+version = "0.4.1"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
+dependencies = [
+ "actix-rt 2.2.0",
+ "clarity",
+ "contact",
+ "cosmos_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "deep_space 2.4.3",
+ "docopt",
+ "env_logger",
+ "ethereum_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_proto 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_utils 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "lazy_static",
+ "log",
+ "openssl-probe",
+ "rand 0.8.3",
+ "relayer 0.4.1 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
  "serde",
  "serde_derive",
  "web30",
@@ -2884,13 +3103,38 @@ dependencies = [
  "actix",
  "actix-rt 2.2.0",
  "clarity",
- "cosmos_gravity",
+ "cosmos_gravity 0.1.0",
  "deep_space 2.4.3",
  "docopt",
  "env_logger",
- "ethereum_gravity",
- "gravity_proto",
- "gravity_utils",
+ "ethereum_gravity 0.1.0",
+ "gravity_proto 0.1.0",
+ "gravity_utils 0.1.0",
+ "lazy_static",
+ "log",
+ "num256",
+ "openssl-probe",
+ "serde",
+ "serde_derive",
+ "tokio 1.5.0",
+ "tonic",
+ "web30",
+]
+
+[[package]]
+name = "relayer"
+version = "0.4.1"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
+dependencies = [
+ "actix-rt 2.2.0",
+ "clarity",
+ "cosmos_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "deep_space 2.4.3",
+ "docopt",
+ "env_logger",
+ "ethereum_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_proto 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_utils 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
  "lazy_static",
  "log",
  "num256",
@@ -3418,18 +3662,48 @@ dependencies = [
  "actix-rt 2.2.0",
  "actix-web",
  "clarity",
- "cosmos_gravity",
+ "cosmos_gravity 0.1.0",
  "deep_space 2.4.3",
  "docopt",
  "env_logger",
- "ethereum_gravity",
+ "ethereum_gravity 0.1.0",
  "futures",
- "gravity_proto",
- "gravity_utils",
+ "gravity_proto 0.1.0",
+ "gravity_utils 0.1.0",
  "lazy_static",
  "log",
  "num256",
- "orchestrator",
+ "orchestrator 0.4.1",
+ "rand 0.8.3",
+ "serde",
+ "serde_derive",
+ "tokio 1.5.0",
+ "tonic",
+ "url",
+ "web30",
+]
+
+[[package]]
+name = "test_runner"
+version = "0.1.0"
+source = "git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit#196a1529ccc7ce63dee28d4886c2801d441e08a3"
+dependencies = [
+ "actix",
+ "actix-rt 2.2.0",
+ "actix-web",
+ "clarity",
+ "cosmos_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "deep_space 2.4.3",
+ "docopt",
+ "env_logger",
+ "ethereum_gravity 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "futures",
+ "gravity_proto 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "gravity_utils 0.1.0 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
+ "lazy_static",
+ "log",
+ "num256",
+ "orchestrator 0.4.1 (git+https://github.com/PeggyJV/gravity-bridge/?branch=ukpai/cosmos_gaslimit)",
  "rand 0.8.3",
  "serde",
  "serde_derive",
