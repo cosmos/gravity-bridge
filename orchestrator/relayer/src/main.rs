@@ -100,6 +100,7 @@ async fn main() {
         connections.web3.unwrap(),
         connections.grpc.unwrap(),
         gravity_contract_address,
+        1f32,
     )
     .await
 }

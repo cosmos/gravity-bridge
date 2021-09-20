@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -327,16 +329,44 @@ func withPristineE2EEnvironment(t *testing.T, cb func(
 	// deploy orchestrators
 	for _, orchestrator := range chain.Orchestrators {
 		validator := chain.Validators[orchestrator.Index]
+		gorcConfig := fmt.Sprintf(`keystore = "/root/gorc/keystore/"
+
+[gravity]
+contract = "%s"
+fees_denom = "%s"
+
+[ethereum]
+key_derivation_path = "m/44'/60'/0'/0/0"
+rpc = "http://%s:8545"
+
+[cosmos]
+key_derivation_path = "m/44'/118'/0'/0/0"
+grpc = "http://%s:9090"
+gas_price = { amount = %s, denom = "%s" }
+prefix = "gravity"
+`,
+			gravityContract,
+			"stake",
+			"ethereum",
+			validator.instanceName(),
+			"0.0001",
+			"stake",
+			)
+
+		gorcConfigPath := filepath.Join(wd, chain.DataDir, chain.ID, orchestrator.instanceName(), "gorc")
+		err = os.MkdirAll(gorcConfigPath, 0755)
+		require.NoError(t, err, "error creating gorc config dir")
+		filePath := path.Join(gorcConfigPath, "config.toml")
+		writeFile(t, filePath, []byte(gorcConfig))
+		_, err := copyFile(
+			filepath.Join("./", "testnet", "gorc_test_bootstrap.sh"),
+			filepath.Join(gorcConfigPath, "gorc_test_bootstrap.sh"),
+		)
+		require.NoError(t, err, "error copying bootstrap file")
+
 		env := []string{
-			fmt.Sprintf("VALIDATOR=%s", validator.instanceName()),
-			fmt.Sprintf("COSMOS_GRPC=http://%s:9090/", validator.instanceName()),
-			fmt.Sprintf("COSMOS_RPC=http://%s:1317", validator.instanceName()),
-			fmt.Sprintf("VALIDATOR=%s", validator.instanceName()),
-			fmt.Sprintf("COSMOS_PHRASE=%s", orchestrator.Mnemonic),
-			fmt.Sprintf("ETH_PRIVATE_KEY=%s", validator.EthereumKey.PrivateKey),
-			fmt.Sprintf("CONTRACT_ADDR=%s", gravityContract),
-			"DENOM=stake",
-			"ETH_RPC=http://ethereum:8545",
+			fmt.Sprintf("ORCH_MNEMONIC=%s", orchestrator.Mnemonic),
+			fmt.Sprintf("ETH_PRIV_KEY=%s", validator.EthereumKey.PrivateKey),
 			"RUST_BACKTRACE=full",
 		}
 		runOpts := &dockertest.RunOptions{
@@ -345,6 +375,14 @@ func withPristineE2EEnvironment(t *testing.T, cb func(
 			Repository: "orchestrator",
 			Tag:        "prebuilt",
 			Env:        env,
+			Mounts: []string{
+				fmt.Sprintf("%s/:/root/gorc", gorcConfigPath),
+			},
+			Entrypoint: []string{
+				"sh",
+				"-c",
+				"chmod +x /root/gorc/gorc_bootstrap.sh && /root/gorc/gorc_bootstrap.sh",
+			},
 		}
 
 		resource, err := pool.RunWithOptions(runOpts, noRestart)
@@ -377,4 +415,30 @@ func noRestart(config *docker.HostConfig) {
 	config.RestartPolicy = docker.RestartPolicy{
 		Name: "no",
 	}
+}
+
+func copyFile(src, dst string) (int64, error) {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }

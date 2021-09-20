@@ -3,6 +3,7 @@ use clarity::{abi::Token, utils::bytes_to_hex_str, PrivateKey as EthPrivateKey};
 use clarity::{Address as EthAddress, Uint256};
 use gravity_utils::types::*;
 use gravity_utils::{error::GravityError, message_signatures::encode_logic_call_confirm_hashed};
+use web30::types::SendTxOption;
 use std::{cmp::min, time::Duration};
 use web30::{client::Web3, types::TransactionRequest};
 
@@ -18,6 +19,7 @@ pub async fn send_eth_logic_call(
     gravity_contract_address: EthAddress,
     gravity_id: String,
     our_eth_key: EthPrivateKey,
+    options:  Vec<SendTxOption>,
 ) -> Result<(), GravityError> {
     let new_call_nonce = call.invalidation_nonce;
     let eth_address = our_eth_key.to_public_key().unwrap();
@@ -59,7 +61,7 @@ pub async fn send_eth_logic_call(
             0u32.into(),
             eth_address,
             our_eth_key,
-            vec![],
+            options,
         )
         .await?;
     info!("Sent batch update with txid {:#066x}", tx);

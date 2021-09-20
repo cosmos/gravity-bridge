@@ -1,6 +1,7 @@
 package gravity
 
 import (
+	"fmt"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -212,12 +213,17 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 		cons  sdk.ConsAddress
 	}
 
-	var valInfos []valInfo
+	bondedVals := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
+	valInfos := make([]valInfo, len(bondedVals))
 
-	for _, val := range k.StakingKeeper.GetBondedValidatorsByPower(ctx) {
-		consAddr, _ := val.GetConsAddr()
+	for i, val := range bondedVals {
+		consAddr, err := val.GetConsAddr()
+		if err != nil {
+			panic(fmt.Sprintf("failed to get consensus address: %s", err))
+		}
+
 		sigs, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
-		valInfos = append(valInfos, valInfo{val, exist, sigs, consAddr})
+		valInfos[i] = valInfo{val, exist, sigs, consAddr}
 	}
 
 	var unbondingValInfos []valInfo
@@ -231,9 +237,18 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 	for ; unbondingValIterator.Valid(); unbondingValIterator.Next() {
 		unbondingValidators := k.GetUnbondingvalidators(unbondingValIterator.Value())
 		for _, valAddr := range unbondingValidators.Addresses {
-			addr, _ := sdk.ValAddressFromBech32(valAddr)
-			validator, _ := k.StakingKeeper.GetValidator(ctx, sdk.ValAddress(addr))
-			valConsAddr, _ := validator.GetConsAddr()
+			addr, err := sdk.ValAddressFromBech32(valAddr)
+			if err != nil {
+				panic(fmt.Sprintf("failed to bech32 decode validator address: %s", err))
+			}
+
+			validator, _ := k.StakingKeeper.GetValidator(ctx, addr)
+
+			valConsAddr, err := validator.GetConsAddr()
+			if err != nil {
+				panic(fmt.Sprintf("failed to get validator consensus address: %s", err))
+			}
+
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, valConsAddr)
 			unbondingValInfos = append(unbondingValInfos, valInfo{validator, exist, valSigningInfo, valConsAddr})
 		}
@@ -247,14 +262,25 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 			if valInfo.exist && valInfo.sigs.StartHeight < int64(otx.GetCosmosHeight()) {
 				if _, ok := signatures[valInfo.val.GetOperator().String()]; !ok {
 					if !valInfo.val.IsJailed() {
+						power := valInfo.val.ConsensusPower(k.PowerReduction)
 						k.StakingKeeper.Slash(
 							ctx,
 							valInfo.cons,
 							ctx.BlockHeight(),
-							valInfo.val.ConsensusPower(k.PowerReduction),
+							power,
 							params.SlashFractionBatch,
 						)
 						k.StakingKeeper.Jail(ctx, valInfo.cons)
+
+						ctx.EventManager().EmitEvent(
+							sdk.NewEvent(
+								slashingtypes.EventTypeSlash,
+								sdk.NewAttribute(slashingtypes.AttributeKeyAddress, valInfo.cons.String()),
+								sdk.NewAttribute(slashingtypes.AttributeKeyJailed, valInfo.cons.String()),
+								sdk.NewAttribute(slashingtypes.AttributeKeyReason, types.AttributeMissingBridgeBatchSig),
+								sdk.NewAttribute(slashingtypes.AttributeKeyPower, fmt.Sprintf("%d", power)),
+							),
+						)
 					}
 				}
 			}
@@ -262,20 +288,34 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 
 		if sstx, ok := otx.(*types.SignerSetTx); ok {
 			for _, valInfo := range unbondingValInfos {
-				// Only slash validators who joined after valset is created and they are unbonding and UNBOND_SLASHING_WINDOW didn't pass
-				if valInfo.exist && valInfo.sigs.StartHeight < int64(sstx.Nonce) && valInfo.val.IsUnbonding() && sstx.Height < uint64(valInfo.val.UnbondingHeight)+params.UnbondSlashingSignerSetTxsWindow {
-					// Check if validator has confirmed valset or not
+				// Only slash validators who joined after valset is created and they are
+				// unbonding and UNBOND_SLASHING_WINDOW didn't pass.
+				if valInfo.exist && valInfo.sigs.StartHeight < int64(sstx.Nonce) &&
+					valInfo.val.IsUnbonding() &&
+					sstx.Height < uint64(valInfo.val.UnbondingHeight)+params.UnbondSlashingSignerSetTxsWindow {
+					// check if validator has confirmed valset or not
 					if _, found := signatures[valInfo.val.GetOperator().String()]; !found {
 						if !valInfo.val.IsJailed() {
-							// TODO: do we want to slash jailed validators
+							// TODO: Do we want to slash jailed validators?
+							power := valInfo.val.ConsensusPower(k.PowerReduction)
 							k.StakingKeeper.Slash(
 								ctx,
 								valInfo.cons,
 								ctx.BlockHeight(),
-								valInfo.val.ConsensusPower(k.PowerReduction),
+								power,
 								params.SlashFractionSignerSetTx,
 							)
 							k.StakingKeeper.Jail(ctx, valInfo.cons)
+
+							ctx.EventManager().EmitEvent(
+								sdk.NewEvent(
+									slashingtypes.EventTypeSlash,
+									sdk.NewAttribute(slashingtypes.AttributeKeyAddress, valInfo.cons.String()),
+									sdk.NewAttribute(slashingtypes.AttributeKeyJailed, valInfo.cons.String()),
+									sdk.NewAttribute(slashingtypes.AttributeKeyReason, types.AttributeMissingBridgeBatchSig),
+									sdk.NewAttribute(slashingtypes.AttributeKeyPower, fmt.Sprintf("%d", power)),
+								),
+							)
 						}
 					}
 				}

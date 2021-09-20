@@ -9,6 +9,10 @@ key_derivation_path = "m/44'/60'/0'/0/0"
 rpc = "http://localhost:8545"
 
 [cosmos]
-key_derivation_path = "m/44'/118'/0'/0/0"
+gas_price = { amount = 0.001, denom = "stake" }
 grpc = "http://localhost:9090"
+key_derivation_path = "m/44'/118'/0'/0/0"
 prefix = "cosmos"
+
+[metrics]
+listen_addr = "127.0.0.1:3000"

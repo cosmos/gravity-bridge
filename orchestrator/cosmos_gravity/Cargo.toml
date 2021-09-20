@@ -11,16 +11,16 @@ gravity_utils = {path = "../gravity_utils"}
 ethereum_gravity = {path = "../ethereum_gravity"}
 gravity_proto = {path = "../gravity_proto/"}
 
-deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="zaki/tendermint_0_21"}
+deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="master"}
 clarity = "0.4.11"
 serde = "1.0"
 num256 = "0.3"
 log = "0.4"
 sha3 = "0.9"
 tokio = "1.4"
-web30 = "0.14.4"
+web30 = "0.15.4"
 tonic = "0.4"
-cosmos-sdk-proto = {git="http://github.com/cosmos/cosmos-rust", branch="main"}
+cosmos-sdk-proto = "0.6.3"
 prost = "0.7"
 prost-types = "0.7"
 bytes = "1"

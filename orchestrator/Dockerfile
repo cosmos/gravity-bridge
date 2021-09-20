@@ -1,7 +1,6 @@
 # Reference: https://www.lpalmieri.com/posts/fast-rust-docker-builds/
 
 FROM rust:1.52 as cargo-chef-rust
-RUN apt-get install bash
 RUN cargo install cargo-chef
 
 FROM cargo-chef-rust as planner
@@ -24,10 +23,9 @@ COPY . .
 # Copy over the cached dependencies
 COPY --from=cacher /app/target target
 COPY --from=cacher /usr/local/cargo /usr/local/cargo
-RUN cargo build --release --bin orchestrator
+RUN cargo build --release --bin gorc
 
 FROM cargo-chef-rust as runtime
 WORKDIR app
-COPY startup.sh startup.sh
-COPY --from=builder /app/target/release/orchestrator /usr/local/bin
-CMD sh startup.sh
+COPY --from=builder /app/target/release/gorc /usr/local/bin
+CMD gorc

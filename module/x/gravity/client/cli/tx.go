@@ -36,10 +36,10 @@ func GetTxCmd(storeKey string) *cobra.Command {
 
 func CmdSendToEthereum() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "send-to-etheruem [ethereum-reciever] [send-coins] [fee-coins]",
+		Use:     "send-to-ethereum [ethereum-reciever] [send-coins] [fee-coins]",
 		Aliases: []string{"send", "transfer"},
 		Args:    cobra.ExactArgs(3),
-		Short:   "Send tokens from cosmos chain to connected etheruem chain",
+		Short:   "Send tokens from cosmos chain to connected ethereum chain",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -52,7 +52,7 @@ func CmdSendToEthereum() *cobra.Command {
 			}
 
 			if !common.IsHexAddress(args[0]) {
-				return fmt.Errorf("must be a valid etheruem address got %s", args[0])
+				return fmt.Errorf("must be a valid ethereum address got %s", args[0])
 			}
 
 			// Get amount of coins
@@ -81,7 +81,7 @@ func CmdSendToEthereum() *cobra.Command {
 
 func CmdCancelSendToEthereum() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "cancel-send-to-etheruem [id]",
+		Use:   "cancel-send-to-ethereum [id]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Cancel ethereum send by id",
 		RunE: func(cmd *cobra.Command, args []string) error {

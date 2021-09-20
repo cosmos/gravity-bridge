@@ -16,7 +16,7 @@ gravity_utils = {path = "../gravity_utils"}
 gravity_proto = {path = "../gravity_proto/"}
 orchestrator = {path = "../orchestrator/"}
 
-deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="zaki/tendermint_0_21"}
+deep_space ={git="https://github.com/iqlusioninc/deep_space/", branch="master"}
 serde_derive = "1.0"
 clarity = "0.4.11"
 docopt = "1"
@@ -26,7 +26,7 @@ actix-web = {version = "3", features=["openssl"]}
 actix-rt = "2.2"
 lazy_static = "1"
 url = "2"
-web30 = "0.14.4"
+web30 = "0.15.4"
 num256 = "0.3"
 log = "0.4"
 env_logger = "0.8"

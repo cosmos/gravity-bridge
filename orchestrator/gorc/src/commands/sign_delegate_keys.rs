@@ -5,8 +5,6 @@ use std::time::Duration;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct SignDelegateKeysCmd {
-    // TODO(levi) make event-nonce optional: can be queried from a running chain:
-    // #[options(free, help = "sign-delegate-key [ethereum-key-name] [validator-address] (event-nonce)")]
     #[options(
         free,
         help = "sign-delegate-key [ethereum-key-name] [validator-address] (nonce)"
@@ -37,7 +35,7 @@ impl Runnable for SignDelegateKeysCmd {
 
                     let account_info = contact.get_account_info(address).await;
                     let account_info = account_info.expect("Did not receive account info");
-                    account_info.sequence
+                    account_info.get_sequence().expect("Could not get sequence")
                 }
             };
 

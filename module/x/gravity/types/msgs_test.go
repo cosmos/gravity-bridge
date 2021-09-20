@@ -12,6 +12,8 @@ import (
 )
 
 func TestValidateMsgDelegateKeys(t *testing.T) {
+	app.SetAddressConfig()
+
 	var (
 		ethAddress                   = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
 		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, app.MaxAddrLen)

@@ -21,23 +21,24 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	gravityQueryCmd.AddCommand(
+		CmdBatchTx(),
+		CmdBatchTxConfirmations(),
+		CmdBatchTxFees(),
+		CmdBatchTxs(),
+		CmdContractCallTx(),
+		CmdContractCallTxConfirmations(),
+		CmdContractCallTxs(),
+		CmdDenomToERC20Params(),
+		CmdERC20ToDenom(),
+		CmdLastSubmittedEthereumEvent(),
+		CmdLatestSignerSetTx(),
 		CmdParams(),
 		CmdSignerSetTx(),
-		CmdBatchTx(),
-		CmdContractCallTx(),
-		CmdSignerSetTxs(),
-		CmdBatchTxs(),
-		CmdContractCallTxs(),
 		CmdSignerSetTxConfirmations(),
-		CmdBatchTxConfirmations(),
-		CmdContractCallTxConfirmations(),
-		CmdUnsignedSignerSetTxs(),
+		CmdSignerSetTxs(),
 		CmdUnsignedBatchTxs(),
 		CmdUnsignedContractCallTxs(),
-		CmdLastSubmittedEthereumEvent(),
-		CmdBatchTxFees(),
-		CmdERC20ToDenom(),
-		CmdDenomToERC20Params(),
+		CmdUnsignedSignerSetTxs(),
 		CmdDenomToERC20(),
 		CmdUnbatchedSendToEthereums(),
 		CmdDelegateKeysByValidator(),
@@ -182,7 +183,7 @@ func CmdSignerSetTxs() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "signer-set-txs",
 		Args:  cobra.NoArgs,
-		Short: "query all the signer set transactions from the chain", // TODO(levi) provide short description
+		Short: "query all the signer set transactions from the chain",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, queryClient, err := newContextAndQueryClient(cmd)
 			if err != nil {
@@ -457,6 +458,32 @@ func CmdUnsignedContractCallTxs() *cobra.Command {
 				Address: address.String(),
 			})
 
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdLatestSignerSetTx() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "latest-signer-set-tx",
+		Args:  cobra.NoArgs,
+		Short: "query for the latest signer set from the chain",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, queryClient, err := newContextAndQueryClient(cmd)
+			if err != nil {
+				return err
+			}
+
+			req := &types.LatestSignerSetTxRequest{}
+
+			res, err := queryClient.LatestSignerSetTx(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

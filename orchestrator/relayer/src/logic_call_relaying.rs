@@ -9,6 +9,7 @@ use ethereum_gravity::{
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::{LogicCallConfirmResponse, Valset};
 use gravity_utils::{message_signatures::encode_logic_call_confirm_hashed, types::LogicCall};
+use web30::types::SendTxOption;
 use std::time::Duration;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -22,6 +23,7 @@ pub async fn relay_logic_calls(
     gravity_contract_address: EthAddress,
     gravity_id: String,
     timeout: Duration,
+    gas_multiplier: f32,
 ) {
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
 
@@ -110,6 +112,7 @@ pub async fn relay_logic_calls(
                 downcast_to_u128(cost.get_total()).unwrap() as f32
                     / downcast_to_u128(one_eth()).unwrap() as f32
             );
+        let tx_options  = vec![SendTxOption::GasPriceMultiplier(gas_multiplier)];
 
         let res = send_eth_logic_call(
             current_valset,
@@ -120,6 +123,7 @@ pub async fn relay_logic_calls(
             gravity_contract_address,
             gravity_id.clone(),
             ethereum_key,
+            tx_options,
         )
         .await;
         if res.is_err() {

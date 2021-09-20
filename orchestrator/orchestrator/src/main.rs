@@ -19,6 +19,7 @@ extern crate log;
 mod ethereum_event_watcher;
 mod get_with_retry;
 mod main_loop;
+mod metrics;
 mod oracle_resync;
 
 use crate::main_loop::orchestrator_main_loop;
@@ -44,11 +45,12 @@ struct Args {
     flag_ethereum_rpc: String,
     flag_contract_address: String,
     flag_fees: String,
+    flag_metrics_listen: String,
 }
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-grpc=<url> --address-prefix=<prefix> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr>
+    "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-grpc=<url> --address-prefix=<prefix> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr> --metrics-listen=<addr>
         Options:
             -h --help                    Show this screen.
             --cosmos-phrase=<ckey>       The mnenmonic of the Cosmos account key of the validator
@@ -58,6 +60,7 @@ lazy_static! {
             --ethereum-rpc=<eurl>        The Ethereum RPC url, should be a self hosted node
             --fees=<denom>               The Cosmos Denom in which to pay Cosmos chain fees
             --contract-address=<addr>    The Ethereum contract address for Gravity, this is temporary
+            --metrics-listen=<addr>      The address metrics server listens on [default: 127.0.0.1:3000].
         About:
             The Validator companion binary for Gravity. This must be run by all Gravity chain validators
             and is a mix of a relayer + oracle + ethereum signing infrastructure
@@ -89,6 +92,10 @@ async fn main() {
         .flag_contract_address
         .parse()
         .expect("Invalid contract address!");
+    let metrics_listen = args
+        .flag_metrics_listen
+        .parse()
+        .expect("Invalid metrics listen address!");
 
     let fee_denom = args.flag_fees;
 
@@ -146,7 +153,10 @@ async fn main() {
         connections.contact.unwrap(),
         connections.grpc.unwrap(),
         contract_address,
-        fee_denom,
+        (1f64, fee_denom.to_owned()),
+        &metrics_listen,
+        1f32,
+        5000u128,
     )
     .await;
 }

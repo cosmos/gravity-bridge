@@ -220,7 +220,7 @@ contract Gravity is ReentrancyGuard {
 		uint8[] memory _v,
 		bytes32[] memory _r,
 		bytes32[] memory _s
-	) public {
+	) public nonReentrant {
 		// CHECKS
 
 		// Check that the valset nonce is greater than the old one
