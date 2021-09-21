@@ -168,11 +168,13 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 			sdk.NewAttribute(types.AttributeKeyEthereumSignatureKey, string(key)),
 		),
 	)
+	k.Logger(ctx).Info("emitted event",
+		"key", key,
+		"tx bytes", ctx.TxBytes(),
+		"msg type", msg.Type())
 
 	return &types.MsgSubmitEthereumTxConfirmationResponse{}, nil
 }
-
-// func (k Keeper) ValidateEthereumSignature
 
 // SubmitEthereumEvent handles MsgSubmitEthereumEvent
 func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEthereumEvent) (*types.MsgSubmitEthereumEventResponse, error) {
