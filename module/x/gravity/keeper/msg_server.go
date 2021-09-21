@@ -111,7 +111,7 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 
 	k.Logger(ctx).Info(
 		"MsgSubmitEthereumTxConfirmation received",
-		"msg", msg,
+		"signer", msg.Signer,
 	)
 
 	confirmation, err := types.UnpackConfirmation(msg.Confirmation)
