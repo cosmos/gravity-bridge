@@ -24,11 +24,11 @@ impl LogicCall {
         for fee in input.fees {
             fees.push(Erc20Token::from_proto(fee)?)
         }
-        if transfers.is_empty() || fees.is_empty() {
-            return Err(GravityError::InvalidBridgeStateError(
-                "Transaction batch containing no transactions!".to_string(),
-            ));
-        }
+        // if transfers.is_empty() || fees.is_empty() {
+        //     return Err(GravityError::InvalidBridgeStateError(
+        //         "Transaction batch containing no transactions!".to_string(),
+        //     ));
+        // }
 
         Ok(LogicCall {
             transfers,

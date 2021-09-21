@@ -212,14 +212,14 @@ message ContractCallTxsResponse {
 // rpc UnsignedSignerSetTxs
 message UnsignedSignerSetTxsRequest {
   // NOTE: this is an sdk.AccAddress and can represent either the
-  // orchestartor address or the cooresponding validator address
+  // orchestrator address or the corresponding validator address
   string address = 1;
 }
 message UnsignedSignerSetTxsResponse { repeated SignerSetTx signer_sets = 1; }
 
 message UnsignedBatchTxsRequest {
   // NOTE: this is an sdk.AccAddress and can represent either the
-  // orchestrator address or the cooresponding validator address
+  // orchestrator address or the corresponding validator address
   string address = 1;
 }
 message UnsignedBatchTxsResponse {

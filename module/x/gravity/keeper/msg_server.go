@@ -109,6 +109,11 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.MsgSubmitEthereumTxConfirmation) (*types.MsgSubmitEthereumTxConfirmationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
+	k.Logger(ctx).Info(
+		"MsgSubmitEthereumTxConfirmation received",
+		"msg", msg,
+	)
+
 	confirmation, err := types.UnpackConfirmation(msg.Confirmation)
 	if err != nil {
 		return nil, err
