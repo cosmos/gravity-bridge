@@ -119,6 +119,11 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 		return nil, err
 	}
 
+	k.Logger(ctx).Info(
+		"Confirmation unpacked",
+		"confirmation", confirmation,
+	)
+
 	val, err := k.getSignerValidator(ctx, msg.Signer)
 	if err != nil {
 		return nil, err
