@@ -25,7 +25,6 @@ impl Runnable for StartCommand {
         openssl_probe::init_ssl_cert_env_vars();
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-
         let config = APP.config();
         let cosmos_prefix = config.cosmos.prefix.clone();
 
@@ -95,7 +94,7 @@ impl Runnable for StartCommand {
                 gas_price,
                 &config.metrics.listen_addr,
                 config.ethereum.gas_price_multiplier,
-                config.ethereum.blocks_to_search as u128
+                config.ethereum.blocks_to_search as u128,
             )
             .await;
         })
