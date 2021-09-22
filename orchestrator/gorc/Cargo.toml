@@ -33,6 +33,8 @@ web30 = "0.15"
 tokio = "1"
 tonic = "0.4"
 toml = "0.5"
+env_logger = "0.8"
+log = "0.4"
 
 prost = "0.7"
 bytes = "1"
