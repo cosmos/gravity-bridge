@@ -28,7 +28,7 @@ pub async fn relay_logic_calls(
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
 
     let latest_calls = get_latest_logic_calls(grpc_client).await;
-    trace!("Latest Logic calls {:?}", latest_calls);
+    debug!("Latest Logic calls {:?}", latest_calls);
     if latest_calls.is_err() {
         return;
     }
@@ -42,7 +42,7 @@ pub async fn relay_logic_calls(
             call.invalidation_nonce,
         )
         .await;
-        trace!("Got sigs {:?}", sigs);
+        debug!("Got sigs {:?}", sigs);
         if let Ok(sigs) = sigs {
             let hash = encode_logic_call_confirm_hashed(gravity_id.clone(), call.clone());
             // this checks that the signatures for the batch are actually possible to submit to the chain
@@ -66,7 +66,7 @@ pub async fn relay_logic_calls(
         }
     }
     if oldest_signed_call.is_none() {
-        trace!("Could not find Call with signatures! exiting");
+        debug!("Could not find Call with signatures! exiting");
         return;
     }
     let oldest_signed_call = oldest_signed_call.unwrap();

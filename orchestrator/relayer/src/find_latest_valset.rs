@@ -21,7 +21,7 @@ pub async fn find_latest_valset(
     let mut current_block: Uint256 = latest_block.clone();
 
     while current_block.clone() > 0u8.into() {
-        trace!(
+        debug!(
             "About to submit a Valset or Batch looking back into the history to find the last Valset Update, on block {}",
             current_block
         );
@@ -41,7 +41,7 @@ pub async fn find_latest_valset(
         // by default the lowest found valset goes first, we want the highest.
         all_valset_events.reverse();
 
-        trace!("Found events {:?}", all_valset_events);
+        debug!("Found events {:?}", all_valset_events);
 
         // we take only the first event if we find any at all.
         if !all_valset_events.is_empty() {

@@ -43,7 +43,7 @@ pub async fn relay_batches(
     let possible_batches =
         get_batches_and_signatures(current_valset.clone(), grpc_client, gravity_id.clone()).await;
 
-    trace!("possible batches {:?}", possible_batches);
+    debug!("possible batches {:?}", possible_batches);
 
 
     submit_batches(
@@ -78,13 +78,13 @@ async fn get_batches_and_signatures(
     } else {
         return HashMap::new();
     };
-    trace!("Latest batches {:?}", latest_batches);
+    debug!("Latest batches {:?}", latest_batches);
 
     let mut possible_batches = HashMap::new();
     for batch in latest_batches {
         let sigs =
             get_transaction_batch_signatures(grpc_client, batch.nonce, batch.token_contract).await;
-        trace!("Got sigs {:?}", sigs);
+        debug!("Got sigs {:?}", sigs);
         if let Ok(sigs) = sigs {
             // this checks that the signatures for the batch are actually possible to submit to the chain
             let hash = encode_tx_batch_confirm_hashed(gravity_id.clone(), batch.clone());
