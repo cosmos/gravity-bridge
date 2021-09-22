@@ -84,7 +84,16 @@ impl Application for GorcApp {
         if command.verbose {
             trace::Config::verbose()
         } else {
-            trace::Config::default()
+            match std::env::var("RUST_LOG") {
+                Ok(val) => {
+                    if val != "" {
+                        val.into()
+                    } else {
+                        trace::Config::default()
+                    }
+                }
+                Err(_) => trace::Config::default(),
+            }
         }
     }
 }
