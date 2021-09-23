@@ -796,8 +796,8 @@ func (m *MsgDelegateKeysResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgDelegateKeysResponse proto.InternalMessageInfo
 
 // DelegateKeysSignMsg defines the message structure an operator is expected to
-// sign when submitting a MsgDelegateKeys message. The resulting signature should
-// populate the eth_signature field.
+// sign when submitting a MsgDelegateKeys message. The resulting signature
+// should populate the eth_signature field.
 type DelegateKeysSignMsg struct {
 	ValidatorAddress string `protobuf:"bytes,1,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
 	Nonce            uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`

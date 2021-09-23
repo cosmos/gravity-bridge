@@ -37,7 +37,7 @@ func (btx *BatchTx) GetStoreIndex() []byte {
 }
 
 func (cctx *ContractCallTx) GetStoreIndex() []byte {
-	return MakeContractCallTxKey(cctx.InvalidationScope.Bytes(), cctx.InvalidationNonce)
+	return MakeContractCallTxKey(cctx.InvalidationScope, cctx.InvalidationNonce)
 }
 
 ///////////////////

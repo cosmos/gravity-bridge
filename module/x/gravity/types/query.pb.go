@@ -815,7 +815,7 @@ func (m *ContractCallTxsResponse) GetPagination() *query.PageResponse {
 // rpc UnsignedSignerSetTxs
 type UnsignedSignerSetTxsRequest struct {
 	// NOTE: this is an sdk.AccAddress and can represent either the
-	// orchestartor address or the cooresponding validator address
+	// orchestrator address or the corresponding validator address
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 }
 
@@ -905,7 +905,7 @@ func (m *UnsignedSignerSetTxsResponse) GetSignerSets() []*SignerSetTx {
 
 type UnsignedBatchTxsRequest struct {
 	// NOTE: this is an sdk.AccAddress and can represent either the
-	// orchestrator address or the cooresponding validator address
+	// orchestrator address or the corresponding validator address
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 }
 
@@ -2515,8 +2515,8 @@ type QueryClient interface {
 	BatchTxFees(ctx context.Context, in *BatchTxFeesRequest, opts ...grpc.CallOption) (*BatchTxFeesResponse, error)
 	// Query for info about denoms tracked by gravity
 	ERC20ToDenom(ctx context.Context, in *ERC20ToDenomRequest, opts ...grpc.CallOption) (*ERC20ToDenomResponse, error)
-	// DenomToERC20Params implements a query that allows ERC-20 parameter information
-	// to be retrieved by a Cosmos base denomination.
+	// DenomToERC20Params implements a query that allows ERC-20 parameter
+	// information to be retrieved by a Cosmos base denomination.
 	DenomToERC20Params(ctx context.Context, in *DenomToERC20ParamsRequest, opts ...grpc.CallOption) (*DenomToERC20ParamsResponse, error)
 	// Query for info about denoms tracked by gravity
 	DenomToERC20(ctx context.Context, in *DenomToERC20Request, opts ...grpc.CallOption) (*DenomToERC20Response, error)
@@ -2793,8 +2793,8 @@ type QueryServer interface {
 	BatchTxFees(context.Context, *BatchTxFeesRequest) (*BatchTxFeesResponse, error)
 	// Query for info about denoms tracked by gravity
 	ERC20ToDenom(context.Context, *ERC20ToDenomRequest) (*ERC20ToDenomResponse, error)
-	// DenomToERC20Params implements a query that allows ERC-20 parameter information
-	// to be retrieved by a Cosmos base denomination.
+	// DenomToERC20Params implements a query that allows ERC-20 parameter
+	// information to be retrieved by a Cosmos base denomination.
 	DenomToERC20Params(context.Context, *DenomToERC20ParamsRequest) (*DenomToERC20ParamsResponse, error)
 	// Query for info about denoms tracked by gravity
 	DenomToERC20(context.Context, *DenomToERC20Request) (*DenomToERC20Response, error)
