@@ -136,7 +136,7 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 
 	otx := k.GetOutgoingTx(ctx, confirmation.GetStoreIndex())
 	if otx == nil {
-		k.Logger(ctx).Info(
+		k.Logger(ctx).Error(
 			"no outgoing tx",
 			"store index", fmt.Sprintf("%x", confirmation.GetStoreIndex()),
 		)
@@ -172,6 +172,7 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 			hex.EncodeToString(confirmation.GetSignature()),
 			err,
 		))
+		k.Logger(ctx).Error("error validating signature", "error", err)
 		return nil, wrappedErr
 	}
 	k.Logger(ctx).Info(
