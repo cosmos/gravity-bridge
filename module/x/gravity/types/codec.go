@@ -119,7 +119,7 @@ func PackConfirmation(confirmation EthereumTxConfirmation) (*types.Any, error) {
 }
 
 // UnpackConfirmation unpacks an Any into a Confirm interface. It returns an error if the
-// confirm can't be unpacked.
+// confirmation can't be unpacked.
 func UnpackConfirmation(any *types.Any) (EthereumTxConfirmation, error) {
 	if any == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "protobuf Any message cannot be nil")

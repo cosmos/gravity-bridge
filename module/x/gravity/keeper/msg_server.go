@@ -138,7 +138,7 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 	if otx == nil {
 		k.Logger(ctx).Info(
 			"no outgoing tx",
-			"store index", confirmation.GetStoreIndex(),
+			"store index", fmt.Sprintf("%x", confirmation.GetStoreIndex()),
 		)
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find outgoing tx")
 	}
