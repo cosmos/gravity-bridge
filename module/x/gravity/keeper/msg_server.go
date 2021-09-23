@@ -129,10 +129,20 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 		return nil, err
 	}
 
+	k.Logger(ctx).Info(
+		"got signer validator",
+		"signer validator", val.String(),
+	)
+
 	otx := k.GetOutgoingTx(ctx, confirmation.GetStoreIndex())
 	if otx == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find outgoing tx")
 	}
+
+	k.Logger(ctx).Info(
+		"got outgoing tx",
+		"otx", otx,
+	)
 
 	gravityID := k.getGravityID(ctx)
 	checkpoint := otx.GetCheckpoint([]byte(gravityID))
@@ -141,6 +151,12 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 	if ethAddress != confirmation.GetSigner() {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "eth address does not match signer eth address")
 	}
+	k.Logger(ctx).Info(
+		"confirmed signer eth addr",
+		"gravity id", gravityID,
+		"checkpoint", checkpoint,
+		"eth address", ethAddress.String(),
+	)
 
 	if err = types.ValidateEthereumSignature(checkpoint, confirmation.GetSignature(), ethAddress); err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf(
@@ -153,13 +169,23 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 			err,
 		))
 	}
+	k.Logger(ctx).Info(
+		"Validated signature",
+	)
 
 	// TODO: should validators be able to overwrite their signatures?
 	if k.getEthereumSignature(ctx, confirmation.GetStoreIndex(), val) != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature duplicate")
 	}
+	k.Logger(ctx).Info(
+		"Signature doesn't exist",
+	)
 
 	key := k.SetEthereumSignature(ctx, confirmation, val)
+	k.Logger(ctx).Info(
+		"set signature",
+		"key", key,
+	)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
