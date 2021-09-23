@@ -87,9 +87,7 @@ pub fn contract_call_tx_confirmation_messages(
         let confirmation = proto::ContractCallTxConfirmation {
             ethereum_signer: ethereum_address.to_string(),
             signature: signature.to_bytes().to_vec(),
-            invalidation_scope: bytes_to_hex_str(&logic_call.invalidation_id)
-                .as_bytes()
-                .to_vec(),
+            invalidation_scope: logic_call.invalidation_id,
             invalidation_nonce: logic_call.invalidation_nonce,
         };
         let msg = proto::MsgSubmitEthereumTxConfirmation {

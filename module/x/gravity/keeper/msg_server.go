@@ -163,7 +163,7 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 	)
 
 	if err = types.ValidateEthereumSignature(checkpoint, confirmation.GetSignature(), ethAddress); err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf(
+		wrappedErr := sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf(
 			"signature verification failed ethAddress %s gravityID %s checkpoint %s typeURL %s signature %s err %s",
 			ethAddress.Hex(),
 			gravityID,
@@ -172,6 +172,7 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 			hex.EncodeToString(confirmation.GetSignature()),
 			err,
 		))
+		return nil, wrappedErr
 	}
 	k.Logger(ctx).Info(
 		"Validated signature",
