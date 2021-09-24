@@ -1,6 +1,5 @@
 use clarity::PrivateKey as EthPrivateKey;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
-use deep_space::utils::bytes_to_hex_str;
 use deep_space::Contact;
 use deep_space::Msg;
 use ethereum_gravity::utils::downcast_uint256;
@@ -84,12 +83,11 @@ pub fn contract_call_tx_confirmation_messages(
     for logic_call in logic_calls {
         let data = encode_logic_call_confirm(gravity_id.clone(), logic_call.clone());
         let signature = ethereum_key.sign_ethereum_msg(&data);
+        info!("encoded logic call data: {:?}", data);
         let confirmation = proto::ContractCallTxConfirmation {
             ethereum_signer: ethereum_address.to_string(),
             signature: signature.to_bytes().to_vec(),
-            invalidation_scope: bytes_to_hex_str(&logic_call.invalidation_id)
-                .as_bytes()
-                .to_vec(),
+            invalidation_scope: logic_call.invalidation_id,
             invalidation_nonce: logic_call.invalidation_nonce,
         };
         let msg = proto::MsgSubmitEthereumTxConfirmation {
