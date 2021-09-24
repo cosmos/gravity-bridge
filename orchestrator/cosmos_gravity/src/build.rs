@@ -2,9 +2,11 @@ use clarity::PrivateKey as EthPrivateKey;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use deep_space::Contact;
 use deep_space::Msg;
+use deep_space::utils;
 use ethereum_gravity::utils::downcast_uint256;
 use gravity_proto::gravity as proto;
 use gravity_proto::ToAny;
+use gravity_utils::message_signatures::encode_logic_call_confirm_hashed;
 use gravity_utils::message_signatures::{
     encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
 };
@@ -82,8 +84,9 @@ pub fn contract_call_tx_confirmation_messages(
     let mut msgs = Vec::new();
     for logic_call in logic_calls {
         let data = encode_logic_call_confirm(gravity_id.clone(), logic_call.clone());
+        let hashed_logic_call = encode_logic_call_confirm_hashed(gravity_id.clone(), logic_call.clone());
         let signature = ethereum_key.sign_ethereum_msg(&data);
-        info!("encoded logic call data: {:?}", data);
+        info!("hashed logic_call data: {}", utils::bytes_to_hex_str(&hashed_logic_call));
         let confirmation = proto::ContractCallTxConfirmation {
             ethereum_signer: ethereum_address.to_string(),
             signature: signature.to_bytes().to_vec(),
