@@ -22,7 +22,6 @@ members = [
 	"test_runner",
 	"gravity_proto",
 	"relayer",
-	"client",
 	"register_delegate_keys",
 	"gorc",
 ]
@@ -35,7 +34,6 @@ gravity_utils = { path = "./gravity_utils" }
 proto_build = { path = "./proto_build" }
 test_runner = { path = "./test_runner" }
 gravity_proto = { path = "./gravity_proto" }
-client = { path = "./client" }
 register_delegate_keys = { path = "./register_delegate_keys" }
 gorc = { path = "./gorc" }
 relayer = { path = "./relayer" }

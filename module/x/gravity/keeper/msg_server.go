@@ -136,7 +136,7 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 
 	otx := k.GetOutgoingTx(ctx, confirmation.GetStoreIndex())
 	if otx == nil {
-		k.Logger(ctx).Info(
+		k.Logger(ctx).Error(
 			"no outgoing tx",
 			"store index", fmt.Sprintf("%x", confirmation.GetStoreIndex()),
 		)
@@ -163,6 +163,13 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 	)
 
 	if err = types.ValidateEthereumSignature(checkpoint, confirmation.GetSignature(), ethAddress); err != nil {
+		k.Logger(ctx).Error("error validating signature",
+			"eth addr", ethAddress.String(),
+			"gravityID", gravityID,
+			"checkpoint", hex.EncodeToString(checkpoint),
+			"type url", msg.Confirmation.TypeUrl,
+			"signature", hex.EncodeToString(confirmation.GetSignature()),
+			"error", err)
 		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf(
 			"signature verification failed ethAddress %s gravityID %s checkpoint %s typeURL %s signature %s err %s",
 			ethAddress.Hex(),
