@@ -28,6 +28,7 @@ use std::{
     net,
     time::{Duration, Instant},
 };
+use tokio::join;
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -54,6 +55,7 @@ pub async fn orchestrator_main_loop(
     metrics_listen: &net::SocketAddr,
     eth_gas_multiplier: f32,
     blocks_to_search:u128,
+    relayer_opt_out: bool,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
@@ -79,22 +81,20 @@ pub async fn orchestrator_main_loop(
         tx.clone(),
     );
 
-    let d = relayer_main_loop(
-        ethereum_key,
-        web3.clone(),
-        grpc_client.clone(),
-        gravity_contract_address,
-        eth_gas_multiplier,
-    );
+    let d = metrics_main_loop(metrics_listen);
 
-    let e = check_for_eth(ethereum_key.to_public_key().unwrap() , web3.clone());
-
-    let f = metrics_main_loop(metrics_listen);
-
-    let g = futures::future::join(a, b);
-
-    let h = futures::future::join5(c, d, e, f, g);
-    h.await;
+    if !relayer_opt_out {
+        let e = relayer_main_loop(
+            ethereum_key,
+            web3,
+            grpc_client.clone(),
+            gravity_contract_address,
+            eth_gas_multiplier,
+        );
+        futures::future::join5(a, b, c, d, e).await;
+    } else {
+        futures::future::join4(a, b, c, d).await;
+    }
 }
 
 const DELAY: Duration = Duration::from_secs(5);

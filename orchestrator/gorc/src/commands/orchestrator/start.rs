@@ -18,6 +18,9 @@ pub struct StartCommand {
 
     #[options(help = "ethereum key name")]
     ethereum_key: String,
+
+    #[options(help = "run the oracle and signer without the relayer to Ethereum.")]
+    orchestrator_only: bool,
 }
 
 impl Runnable for StartCommand {
@@ -93,7 +96,8 @@ impl Runnable for StartCommand {
                 gas_price,
                 &config.metrics.listen_addr,
                 config.ethereum.gas_price_multiplier,
-                config.ethereum.blocks_to_search as u128
+                config.ethereum.blocks_to_search as u128,
+                self.orchestrator_only,
             )
             .await;
         })
