@@ -157,6 +157,7 @@ async fn main() {
         &metrics_listen,
         1f32,
         5000u128,
+        false,
     )
     .await;
 }
