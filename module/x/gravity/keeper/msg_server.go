@@ -158,7 +158,7 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 	k.Logger(ctx).Info(
 		"confirmed signer eth addr",
 		"gravity id", gravityID,
-		"checkpoint", checkpoint,
+		"checkpoint", hex.EncodeToString(checkpoint),
 		"eth address", ethAddress.String(),
 	)
 
