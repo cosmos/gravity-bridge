@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -204,5 +205,6 @@ func packCall(abiString, method string, args []interface{}) []byte {
 	if err != nil {
 		panic(sdkerrors.Wrap(err, "packing checkpoint"))
 	}
+	fmt.Printf("abiEncodedCall: %x\n", abiEncodedCall)
 	return crypto.Keccak256Hash(abiEncodedCall[4:]).Bytes()
 }
