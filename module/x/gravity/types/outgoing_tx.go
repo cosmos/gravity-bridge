@@ -145,6 +145,8 @@ func (b BatchTx) GetCheckpoint(gravityID []byte) []byte {
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 func (c ContractCallTx) GetCheckpoint(gravityID []byte) []byte {
 
+	fmt.Fprintf(os.Stderr, "gravityID: %x\n", gravityID)
+
 	// Create the methodName argument which salts the signature
 	methodNameBytes := []uint8("logicCall")
 	var logicCallMethodName [32]uint8
