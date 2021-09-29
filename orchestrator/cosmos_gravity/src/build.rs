@@ -86,7 +86,7 @@ pub fn contract_call_tx_confirmation_messages(
         let data = encode_logic_call_confirm(gravity_id.clone(), logic_call.clone());
         let hashed_logic_call = encode_logic_call_confirm_hashed(gravity_id.clone(), logic_call.clone());
         let signature = ethereum_key.sign_ethereum_msg(&data);
-        info!("gravity id {}",gravity_id);
+        info!("gravity id {}",utils::bytes_to_hex_str(gravity_id.as_bytes()));
         info!("hashed logic_call data: {}", utils::bytes_to_hex_str(&hashed_logic_call));
         info!("serialized logic_call data: {}", utils::bytes_to_hex_str(&data));
 
