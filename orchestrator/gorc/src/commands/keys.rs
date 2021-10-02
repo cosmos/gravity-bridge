@@ -15,9 +15,9 @@ use crate::commands::keys::eth::EthKeysCmd;
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options, Runnable)]
 pub enum KeysCmd {
-    #[options(name = "cosmos")]
+    #[options(name = "cosmos", help = "Cosmos key commands")]
     CosmosKeysCmd(CosmosKeysCmd),
 
-    #[options(name = "eth")]
+    #[options(name = "eth", help = "Ethereum key commands.")]
     EthKeysCmd(EthKeysCmd),
 }
