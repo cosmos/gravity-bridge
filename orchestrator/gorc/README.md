@@ -169,7 +169,7 @@ gorc tx eth send [from-key] [to-addr] [amount] [token-contract]
 ```
 
 ## Note
-`[]` means a free argument, `()` means a flag. For instance, `gorc sign-delegate-key [ethereum-key-name] [validator-address] (nonce)` translates to `gorc sign-delegate-key ethereum_key_name validator_address --nonce`.
+`[]` represents a free argument, `()` represents a flag. For instance, `gorc sign-delegate-key [ethereum-key-name] [validator-address] (nonce)` translates to `gorc sign-delegate-key ethereum_key_name validator_address --nonce`.
 
 For more information, see:
 
