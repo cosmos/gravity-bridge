@@ -7,7 +7,7 @@ use abscissa_core::{Command, Options, Runnable};
 pub enum Cosmos {
     #[options(help = "balance [key-name]")]
     Balance(Balance),
-    #[options(help = "gravity-keys [key-name] ")]
+    #[options(help = "gravity-keys [key-name]")]
     GravityKeys(GravityKeys),
 }
 

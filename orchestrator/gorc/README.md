@@ -6,7 +6,7 @@ Gorc is an application.
 
 This application is authored using [Abscissa], a Rust application framework.
 
-The `Gorc` application is still under development and the help message isn't very helpful. This is a comprehensive documentation on how to use `Gorc`.
+The `Gorc` application is still under development. This is a comprehensive documentation on how to use `Gorc`.
 
 ### Gorc subcommands
 
@@ -28,7 +28,7 @@ The `Gorc` application is still under development and the help message isn't ver
 **cosmos-to-eth:** To send Cosmos to Ethereum, run the command below:
 
 ```
-cosmos-to-eth [gravity_denom] [amount] [cosmos_key] [eth_dest] [times]
+gorc cosmos-to-eth [gravity_denom] [amount] [cosmos_key] [eth_dest] [times]
 ```
 The `cosmos-to-eth` command takes the following arguement/flags;
 
@@ -41,7 +41,7 @@ The `cosmos-to-eth` command takes the following arguement/flags;
 **deploy:** To deploy an `erc20` contract, run the command below:
 
 ```
-deploy erc20 [denom] -e [ETHEREUM-KEY]
+gorc deploy erc20 [denom] -e [ETHEREUM-KEY]
 ```
 The `deploy` command takes the following arguement/flags;
 
@@ -51,8 +51,9 @@ The `deploy` command takes the following arguement/flags;
 **eth-to-cosmos:** To send Ethereum to Cosmos, run the command below:
 
 ```
-eth-to-cosmos [erc20_address] [ethereum_key] [contract_address] [cosmos_dest] [amount] [times]
+gorc eth-to-cosmos [erc20_address] [ethereum_key] [contract_address] [cosmos_dest] [amount] [times]
 ```
+The `eth-to-cosmos` command takes the following arguement/flags;
 
 - erc20_address:
 - ethereum_key:
@@ -61,19 +62,112 @@ eth-to-cosmos [erc20_address] [ethereum_key] [contract_address] [cosmos_dest] [a
 - amount:
 - times:
 
-**keys:**
+**keys:** To manage keys in the Cosmos and Ethereum chain, run any of the commands below:
 
-**orchestrator**
+```
+// Create a new cosmos key
+gorc keys cosmos add [name]
 
-**print-config**
+// Delete a cosmos key
+gorc keys cosmos delete [name]
 
-**query**
+// List all cosmos keys
+gorc keys cosmos list
 
-**sign-delegate-keys**
+// Recover a cosmos key
+gorc keys cosmos recover [name] (bip39-mnemonic)
 
-**tests**
+// List a particular cosmos key
+gorc keys cosmos show [name]
 
-**tx**
+// Create a new eth key
+gorc keys eth add [name]
+
+// Delete an eth key
+gorc keys eth delete [name]
+
+// Import an eth key
+gorc keys eth import [name] (private-key)
+
+// List all eth keys
+gorc keys eth list
+
+// Recover an eth key
+gorc keys eth recover [name] (bip39-mnemonic)
+
+// Rename an eth key
+gorc keys eth rename [name] [new-name]
+
+// List a particular eth key
+gorc keys eth show [name]
+```
+
+The `keys` command takes the following arguement/flags;
+
+- name: 
+- bip39-mnemonic:
+- private-key
+
+**orchestrator:** To start the orchestrator, run the command below:
+
+```
+gorc orchestrator start
+```
+
+**print-config:** To print the config file in your console, run the command below.
+
+```
+gorc print-config
+```
+
+**query:** To query either the ethereum or cosmos chain, run any of the commands below:
+
+```
+// Query cosmos balance
+gorc query cosmos balance [key-name]
+
+// Query cosmos gravity keys
+gorc query cosmos gravity-keys [key-name]
+
+// Query eth balance
+gorc query eth balance [key-name]
+
+// Query eth contract
+gorc query eth contract
+```
+
+The `query` command takes the following arguement/flags;
+
+- key-name:
+
+**sign-delegate-keys:** To sign delegate keys, run the command below:
+
+```
+gorc sign-delegate-key [ethereum-key-name] [validator-address] (nonce)
+```
+
+The `sign-delegate-keys` command takes the following arguement/flags;
+
+- ethereum-key-name:
+- validator-address
+- nonce
+
+**tx:** To create transactions on either ethereum or cosmos chains, run any of the commands below:
+
+```
+
+// Send to Ethereum
+gorc tx cosmos send-to-eth [from-cosmos-key] [to-eth-addr] [erc20-coin] [[--times=int]]
+
+// Send
+gorc tx cosmos send [from-key] [to-addr] [coin-amount]
+
+// Send to Cosmos
+gorc tx eth send-to-cosmos [from-eth-key][to-cosmos-addr] [erc20 conract] [erc20 amount] [[--times=int]]
+
+// Send
+gorc tx eth send [from-key] [to-addr] [amount] [token-contract]
+```
 
 For more information, see:
 
