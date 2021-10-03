@@ -168,7 +168,7 @@ gorc tx eth send-to-cosmos [from-eth-key][to-cosmos-addr] [erc20 conract] [erc20
 gorc tx eth send [from-key] [to-addr] [amount] [token-contract]
 ```
 
-**Note**
+## Note
 `[]` means a free argument, `()` means a flag. For instance, `gorc sign-delegate-key [ethereum-key-name] [validator-address] (nonce)` translates to `gorc sign-delegate-key ethereum_key_name validator_address --nonce`.
 
 For more information, see:
