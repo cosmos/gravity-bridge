@@ -9,7 +9,8 @@
     "typechain": "npx hardhat typechain",
     "compile-deployer": "npx tsc -p . ; pkg dist/contract-deployer.js --targets node10-linux-x64",
     "evm_fork": "npx hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_ID} --fork-block-number 11780000",
-    "test_fork": "npx hardhat test --network localhost ./tests_mainnet_fork/*.ts"
+    "test_fork": "npx hardhat test --network localhost ./tests_mainnet_fork/*.ts",
+    "docify": "node docify.js"
   },
   "author": "Jehan Tremback",
   "license": "None",
@@ -50,10 +51,11 @@
     "prettier": "^2.1.2",
     "prettier-plugin-solidity": "^1.0.0-beta.1",
     "shelljs": "^0.8.4",
-    "solc": "0.7.4",
+    "solc": "0.6.6",
     "solhint": "^3.2.1",
     "solhint-plugin-prettier": "^0.0.5",
     "solidity-coverage": "^0.7.12",
+    "solidity-docgen": "^0.5.14",
     "ts-generator": "^0.1.1",
     "ts-node": "^8.10.2",
     "typechain": "^4.0.1",
