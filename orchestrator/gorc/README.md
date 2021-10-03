@@ -1,6 +1,6 @@
 # Gorc
 
-Gorc is an application.
+Gorc is an application for the gravity <-> ethereum bridge.
 
 ## Getting Started
 
@@ -36,7 +36,7 @@ The `cosmos-to-eth` command takes the following argument/flags;
 - amount: Amount to be sent.
 - cosmos key: Cosmos private key.
 - eth_dest: Ethereum destination address.
-- times: 
+- times: The times.
 
 **deploy:** To deploy an `erc20` contract, run the command below:
 
@@ -45,7 +45,7 @@ gorc deploy erc20 [denom] -e [ETHEREUM-KEY]
 ```
 The `deploy` command takes the following argument/flags;
 
-- denom:  
+- denom:  The denom
 - e: Eth flag
 
 **eth-to-cosmos:** To send Ethereum to Cosmos, run the command below:
@@ -59,8 +59,8 @@ The `eth-to-cosmos` command takes the following argument/flags;
 - ethereum_key: The Ethereum private key.
 - contract_address: The contract address.
 - cosmos_dest: The Cosmos destination.
-- amount: Amount to be sent
-- times:
+- amount: Amount to be sent.
+- times: The times
 
 **keys:** To manage keys in the Cosmos and Ethereum chain, run any of the commands below:
 
@@ -105,7 +105,7 @@ gorc keys eth show [name]
 The `keys` command takes the following argument/flags;
 
 - name: The key name.
-- bip39-mnemonic: Mnemonic seed for generating deterministic keys
+- bip39-mnemonic: Mnemonic seed for generating deterministic keys.
 - private-key: Ethereum private key.
 
 **orchestrator:** To start the orchestrator, run the command below:
@@ -169,7 +169,7 @@ gorc tx eth send [from-key] [to-addr] [amount] [token-contract]
 ```
 
 ## Note
-`[]` represents a free argument, `()` represents a flag. For instance, `gorc sign-delegate-key [ethereum-key-name] [validator-address] (nonce)` translates to `gorc sign-delegate-key ethereum_key_name validator_address --nonce`.
+`[]` means a free argument, `()` means a flag. For instance, `gorc sign-delegate-key [ethereum-key-name] [validator-address] (nonce)` translates to `gorc sign-delegate-key ethereum_key_name validator_address --nonce`.
 
 For more information, see:
 
