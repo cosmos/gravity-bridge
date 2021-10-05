@@ -176,11 +176,12 @@ pub async fn send_main_loop(
     cosmos_key: CosmosPrivateKey,
     gas_price: (f64, String),
     mut rx: tokio::sync::mpsc::Receiver<Vec<Msg>>,
+    msg_batch_size: usize,
 ) {
     while let Some(messages) = rx.recv().await {
         // TODO: Consider making the chunk size configurable in the cosmos
         // configuration.
-        for msg_chunk in messages.chunks(5) {
+        for msg_chunk in messages.chunks(msg_batch_size) {
             match send_messages(
                 contact,
                 cosmos_key,
