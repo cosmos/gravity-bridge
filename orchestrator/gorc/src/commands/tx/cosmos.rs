@@ -131,6 +131,7 @@ impl Runnable for SendToEth {
                 amount.clone(),
                 bridge_fee.clone(),
                 &contact,
+                200000
             )
             .await;
             match res {

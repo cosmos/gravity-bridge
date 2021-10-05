@@ -212,6 +212,7 @@ async fn main() {
                 amount.clone(),
                 bridge_fee.clone(),
                 &contact,
+                200000,
             )
             .await;
             match res {
@@ -222,7 +223,7 @@ async fn main() {
 
         if !args.flag_no_batch {
             println!("Requesting a batch to push transaction along immediately");
-            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact)
+            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact,500000)
                 .await
                 .expect("Failed to request batch");
         } else {

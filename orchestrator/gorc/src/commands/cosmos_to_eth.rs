@@ -147,6 +147,7 @@ impl Runnable for CosmosToEthCmd {
                 amount.clone(),
                 bridge_fee.clone(),
                 &contact,
+                200000
             )
             .await;
             match res {
@@ -157,7 +158,7 @@ impl Runnable for CosmosToEthCmd {
 
         if !self.flag_no_batch {
             println!("Requesting a batch to push transaction along immediately");
-            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact)
+            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact,500000)
                 .await
                 .expect("Failed to request batch");
         } else {
