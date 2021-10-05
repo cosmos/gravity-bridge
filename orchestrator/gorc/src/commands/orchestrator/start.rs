@@ -18,12 +18,15 @@ pub struct StartCommand {
 
     #[options(help = "ethereum key name")]
     ethereum_key: String,
+
+    #[options(help = "run the oracle and signer without the relayer to Ethereum.")]
+    orchestrator_only: bool,
 }
 
 impl Runnable for StartCommand {
     fn run(&self) {
         openssl_probe::init_ssl_cert_env_vars();
-
+        
         let config = APP.config();
         let cosmos_prefix = config.cosmos.prefix.clone();
 
@@ -94,7 +97,9 @@ impl Runnable for StartCommand {
                 &config.metrics.listen_addr,
                 config.ethereum.gas_price_multiplier,
                 config.ethereum.blocks_to_search as u128,
-                config.cosmos.gas_price_limit,
+                config.cosmos.gas_limit,
+                self.orchestrator_only,
+                config.cosmos.msg_batch_size,
             )
             .await;
         })

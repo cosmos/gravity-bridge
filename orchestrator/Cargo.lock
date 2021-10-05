@@ -876,28 +876,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "client"
-version = "0.4.1"
-dependencies = [
- "actix-rt 2.2.0",
- "clarity",
- "cosmos_gravity",
- "deep_space 2.4.3",
- "docopt",
- "env_logger",
- "ethereum_gravity",
- "gravity_proto",
- "gravity_utils",
- "lazy_static",
- "openssl-probe",
- "serde",
- "serde_derive",
- "tokio 1.12.0",
- "url",
- "web30",
-]
-
-[[package]]
 name = "color-eyre"
 version = "0.5.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1537,7 +1515,7 @@ checksum = "f0a01e0497841a3b2db4f8afa483cce65f7e96a3498bd6c541734792aeac8fe7"
 
 [[package]]
 name = "gorc"
-version = "0.2.13"
+version = "0.2.15"
 dependencies = [
  "abscissa_core",
  "abscissa_tokio",
@@ -1547,11 +1525,13 @@ dependencies = [
  "clarity",
  "cosmos_gravity",
  "deep_space 2.4.3",
+ "env_logger",
  "ethereum_gravity",
  "gravity_proto",
  "gravity_utils",
  "gumdrop",
  "k256",
+ "log",
  "once_cell",
  "openssl-probe",
  "orchestrator",
@@ -1574,7 +1554,6 @@ dependencies = [
 name = "gravity_bridge"
 version = "0.1.0"
 dependencies = [
- "client",
  "cosmos_gravity",
  "ethereum_gravity",
  "gorc",

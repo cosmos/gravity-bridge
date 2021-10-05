@@ -24,10 +24,12 @@ use deep_space::{Contact, Msg};
 use ethereum_gravity::utils::get_gravity_id;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use relayer::main_loop::relayer_main_loop;
+use std::convert::TryInto;
 use std::{
     net,
     time::{Duration, Instant},
 };
+use tokio::join;
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -54,11 +56,13 @@ pub async fn orchestrator_main_loop(
     metrics_listen: &net::SocketAddr,
     eth_gas_multiplier: f32,
     blocks_to_search:u128,
-    gas_price_limit: u64,
+    gas_limit: u64,
+    relayer_opt_out: bool,
+    cosmos_msg_batch_size: u32,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
-    let a = send_main_loop(&contact, cosmos_key, gas_price, rx, gas_price_limit);
+    let a = send_main_loop(&contact, cosmos_key, gas_price, rx,gas_limit,cosmos_msg_batch_size.try_into().unwrap());
 
     let b = eth_oracle_main_loop(
         cosmos_key,
@@ -80,22 +84,20 @@ pub async fn orchestrator_main_loop(
         tx.clone(),
     );
 
-    let d = relayer_main_loop(
-        ethereum_key,
-        web3.clone(),
-        grpc_client.clone(),
-        gravity_contract_address,
-        eth_gas_multiplier,
-    );
+    let d = metrics_main_loop(metrics_listen);
 
-    let e = check_for_eth(gravity_contract_address, web3.clone());
-
-    let f = metrics_main_loop(metrics_listen);
-
-    let g = futures::future::join(a, b);
-
-    let h = futures::future::join5(c, d, e, f, g);
-    h.await;
+    if !relayer_opt_out {
+        let e = relayer_main_loop(
+            ethereum_key,
+            web3,
+            grpc_client.clone(),
+            gravity_contract_address,
+            eth_gas_multiplier,
+        );
+        futures::future::join5(a, b, c, d, e).await;
+    } else {
+        futures::future::join4(a, b, c, d).await;
+    }
 }
 
 const DELAY: Duration = Duration::from_secs(5);
@@ -379,13 +381,13 @@ pub async fn eth_signer_main_loop(
     }
 }
 
-pub async fn check_for_eth(gravity_contract_address: EthAddress, web3: Web3) {
+pub async fn check_for_eth(orchestrator_address: EthAddress, web3: Web3) {
     let balance = web3
-        .eth_get_balance(gravity_contract_address)
+        .eth_get_balance(orchestrator_address)
         .await
         .unwrap();
     if balance == 0u8.into() {
-        warn!("You don't have any Ethereum! You will need to send some to {} for this program to work. Dust will do for basic operations, more info about average relaying costs will be presented as the program runs", gravity_contract_address);
+        warn!("You don't have any Ethereum! You will need to send some to {} for this program to work. Dust will do for basic operations, more info about average relaying costs will be presented as the program runs", orchestrator_address);
     }
     metrics::set_ethereum_bal(balance);
 }
