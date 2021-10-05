@@ -40,8 +40,8 @@ pub async fn update_gravity_delegate_addresses(
     let nonce = contact
         .get_account_info(cosmos_key.to_address(&contact.get_prefix()).unwrap())
         .await?
-        .get_sequence().unwrap_or( 0 );
-    
+        .get_sequence()
+        .unwrap_or(0);
 
     let eth_sign_msg = proto::DelegateKeysSignMsg {
         validator_address: our_valoper_address.clone(),
@@ -176,11 +176,23 @@ pub async fn send_main_loop(
     cosmos_key: CosmosPrivateKey,
     gas_price: (f64, String),
     mut rx: tokio::sync::mpsc::Receiver<Vec<Msg>>,
+    msg_batch_size: usize,
 ) {
     while let Some(messages) = rx.recv().await {
-        match send_messages(contact, cosmos_key, gas_price.to_owned(), messages).await {
-            Ok(res) => trace!("okay: {:?}", res),
-            Err(err) => error!("fail: {}", err),
+        // TODO: Consider making the chunk size configurable in the cosmos
+        // configuration.
+        for msg_chunk in messages.chunks(msg_batch_size) {
+            match send_messages(
+                contact,
+                cosmos_key,
+                gas_price.to_owned(),
+                msg_chunk.to_vec(),
+            )
+            .await
+            {
+                Ok(res) => trace!("okay: {:?}", res),
+                Err(err) => error!("fail: {}", err),
+            }
         }
     }
 }

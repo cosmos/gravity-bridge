@@ -24,6 +24,7 @@ use deep_space::{Contact, Msg};
 use ethereum_gravity::utils::get_gravity_id;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use relayer::main_loop::relayer_main_loop;
+use std::convert::TryInto;
 use std::{
     net,
     time::{Duration, Instant},
@@ -56,10 +57,11 @@ pub async fn orchestrator_main_loop(
     eth_gas_multiplier: f32,
     blocks_to_search:u128,
     relayer_opt_out: bool,
+    cosmos_msg_batch_size: u32,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
-    let a = send_main_loop(&contact, cosmos_key, gas_price, rx);
+    let a = send_main_loop(&contact, cosmos_key, gas_price, rx,cosmos_msg_batch_size.try_into().unwrap());
 
     let b = eth_oracle_main_loop(
         cosmos_key,
