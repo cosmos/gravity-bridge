@@ -3,7 +3,7 @@ use clarity::{abi::Token, utils::bytes_to_hex_str, PrivateKey as EthPrivateKey};
 use clarity::{Address as EthAddress, Uint256};
 use gravity_utils::types::*;
 use gravity_utils::{error::GravityError, message_signatures::encode_logic_call_confirm_hashed};
-use web30::types::SendTxOption;
+use web30::types::{SendTxOption};
 use std::{cmp::min, time::Duration};
 use web30::{client::Web3, types::TransactionRequest};
 
@@ -89,6 +89,14 @@ pub async fn send_eth_logic_call(
     Ok(())
 }
 
+pub fn to_hex_string(bytes: Vec<u8>) -> String {
+    let strs: Vec<String> = bytes.iter()
+        .map(|b| format!("{:02X}", b))
+        .collect();
+    strs.join(" ")
+}
+
+
 /// Returns the cost in Eth of sending this batch
 pub async fn estimate_logic_call_cost(
     current_valset: Valset,
@@ -100,24 +108,30 @@ pub async fn estimate_logic_call_cost(
     our_eth_key: EthPrivateKey,
 ) -> Result<GasCost, GravityError> {
     let our_eth_address = our_eth_key.to_public_key().unwrap();
+    info!("eth address: {}", our_eth_address);
     let our_balance = web3.eth_get_balance(our_eth_address).await?;
+    info!("balance: {}", our_balance);
     let our_nonce = web3.eth_get_transaction_count(our_eth_address).await?;
+    info!("nonce: {}", our_nonce);
     let gas_limit = min((u64::MAX - 1).into(), our_balance.clone());
+    info!("gas limit: {}", gas_limit);
     let gas_price = web3.eth_gas_price().await?;
+    info!("gas price: {}", gas_price);
     let zero: Uint256 = 0u8.into();
-    let val = web3
-        .eth_estimate_gas(TransactionRequest {
-            from: Some(our_eth_address),
-            to: gravity_contract_address,
-            nonce: Some(our_nonce.clone().into()),
-            gas_price: Some(gas_price.clone().into()),
-            gas: Some(gas_limit.into()),
-            value: Some(zero.into()),
-            data: Some(
-                encode_logic_call_payload(current_valset, &call, confirms, gravity_id)?.into(),
-            ),
-        })
-        .await?;
+    let bytes = encode_logic_call_payload(current_valset, &call, confirms, gravity_id)?;
+    info!("bytes: {:x?}", bytes);
+    info!("hex: {}", to_hex_string(bytes.clone()));
+
+    let transaction = TransactionRequest {
+        from: Some(our_eth_address),
+        to: gravity_contract_address,
+        nonce: Some(our_nonce.clone().into()),
+        gas_price: Some(gas_price.clone().into()),
+        gas: Some(gas_limit.into()),
+        value: Some(zero.into()),
+        data: Some(bytes.into()),
+    };
+    let val = web3.eth_estimate_gas(transaction).await?;
 
     Ok(GasCost {
         gas: val,
