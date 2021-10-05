@@ -177,6 +177,8 @@ pub async fn check_for_events(
                 valsets.to_owned(),
             );
 
+            info!("Sending {} messages to cosmos", messages.len());
+
             if let Some(deposit) = deposits.last() {
                 metrics::set_ethereum_last_deposit_event(deposit.event_nonce.clone());
                 metrics::set_ethereum_last_deposit_block(deposit.block_height.clone());
