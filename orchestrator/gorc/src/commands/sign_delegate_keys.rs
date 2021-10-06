@@ -1,14 +1,11 @@
 use crate::{application::APP, prelude::*};
-use abscissa_core::{Application, Command, Options, Runnable};
+use abscissa_core::{Application, Command, Clap, Runnable};
 use gravity_proto::gravity as proto;
 use std::time::Duration;
 
-#[derive(Command, Debug, Default, Options)]
+#[derive(Command, Debug, Default, Clap)]
 pub struct SignDelegateKeysCmd {
-    #[options(
-        free,
-        help = "sign-delegate-key [ethereum-key-name] [validator-address] (nonce)"
-    )]
+    #[clap(short, long)]
     pub args: Vec<String>,
 }
 
