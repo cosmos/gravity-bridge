@@ -14,49 +14,46 @@ mod tx;
 mod version;
 
 use crate::config::GorcConfig;
-use abscissa_core::{Command, Configurable, Help, Options, Runnable};
+use abscissa_core::{Application, Command, Clap, Runnable, Configurable};
 use std::path::PathBuf;
 
 /// Gorc Configuration Filename
 pub const CONFIG_FILE: &str = "gorc.toml";
 
 /// Gorc Subcommands
-#[derive(Command, Debug, Options, Runnable)]
+#[derive(Command, Debug, Clap)]
 pub enum GorcCmd {
-    #[options(help = "Send Cosmos to Ethereum")]
+    #[clap(short, long)]
     CosmosToEth(cosmos_to_eth::CosmosToEthCmd),
 
-    #[options(help = "tools for contract deployment")]
+    #[clap(short, long)]
     Deploy(deploy::DeployCmd),
 
-    #[options(help = "Send Ethereum to Cosmos")]
+    #[clap(short, long)]
     EthToCosmos(eth_to_cosmos::EthToCosmosCmd),
 
-    #[options(help = "get usage information")]
-    Help(Help<Self>),
-
-    #[options(help = "key management commands")]
+    #[clap(short, long)]
     Keys(keys::KeysCmd),
 
-    #[options(help = "orchestrator management commands")]
+    #[clap(short, long)]
     Orchestrator(orchestrator::OrchestratorCmd),
 
-    #[options(help = "print config file template")]
+    #[clap(short, long)]
     PrintConfig(print_config::PrintConfigCmd),
 
-    #[options(help = "query state on either ethereum or cosmos chains")]
+    #[clap(short, long)]
     Query(query::QueryCmd),
 
-    #[options(help = "sign delegate keys")]
+    #[clap(short, long)]
     SignDelegateKeys(sign_delegate_keys::SignDelegateKeysCmd),
 
-    #[options(help = "run tests against configured chains")]
+    #[clap(short, long)]
     Tests(tests::TestsCmd),
 
-    #[options(help = "create transactions on either ethereum or cosmos chains")]
+    #[clap(short, long)]
     Tx(tx::TxCmd),
 
-    #[options(help = "display version information")]
+    #[clap(short, long)]
     Version(version::VersionCmd),
 }
 
