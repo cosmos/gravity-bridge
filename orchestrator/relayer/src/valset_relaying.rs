@@ -62,7 +62,7 @@ pub async fn relay_valsets(
             assert_eq!(cosmos_valset.nonce, latest_nonce);
             let confirms = get_all_valset_confirms(grpc_client, latest_nonce).await;
             if let Ok(confirms) = confirms {
-                info!(
+                debug!(
                     "Considering cosmos_valset {:?} confirms {:?}",
                     cosmos_valset, confirms
                 );
