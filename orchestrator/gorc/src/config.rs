@@ -88,9 +88,9 @@ pub struct CosmosSection {
     pub key_derivation_path: String,
     pub grpc: String,
     pub prefix: String,
-    pub gas_price: GasPrice,
     pub gas_limit: u64,
     pub msg_batch_size:u32,
+    pub gas_price: GasPrice,
 }
 
 impl Default for CosmosSection {
