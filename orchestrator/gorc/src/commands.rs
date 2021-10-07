@@ -23,37 +23,37 @@ pub const CONFIG_FILE: &str = "gorc.toml";
 /// Gorc Subcommands
 #[derive(Command, Debug, Clap)]
 pub enum GorcCmd {
-    #[clap(short, long)]
+    #[clap(subcommand)]
     CosmosToEth(cosmos_to_eth::CosmosToEthCmd),
 
-    #[clap(short, long)]
+    #[clap(subcommand)]
     Deploy(deploy::DeployCmd),
 
-    #[clap(short, long)]
+    #[clap(subcommand)]
     EthToCosmos(eth_to_cosmos::EthToCosmosCmd),
 
-    #[clap(short, long)]
+    #[clap(subcommand)]
     Keys(keys::KeysCmd),
 
-    #[clap(short, long)]
+    #[clap(subcommand)]
     Orchestrator(orchestrator::OrchestratorCmd),
 
-    #[clap(short, long)]
+    #[clap(name = "print-config")]
     PrintConfig(print_config::PrintConfigCmd),
 
-    #[clap(short, long)]
+    #[clap(subcommand)]
     Query(query::QueryCmd),
 
-    #[clap(short, long)]
+    #[clap(subcommand)]
     SignDelegateKeys(sign_delegate_keys::SignDelegateKeysCmd),
 
-    #[clap(short, long)]
+    #[clap(subcommand)]
     Tests(tests::TestsCmd),
 
-    #[clap(short, long)]
+    #[clap(subcommand)]
     Tx(tx::TxCmd),
 
-    #[clap(short, long)]
+    #[clap(subcommand)]
     Version(version::VersionCmd),
 }
 

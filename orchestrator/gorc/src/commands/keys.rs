@@ -15,9 +15,9 @@ use crate::commands::keys::eth::EthKeysCmd;
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Clap, Runnable)]
 pub enum KeysCmd {
-    #[clap(name = "cosmos")]
+    #[clap(subcommand)]
     CosmosKeysCmd(CosmosKeysCmd),
 
-    #[clap(name = "eth")]
+    #[clap(subcommand)]
     EthKeysCmd(EthKeysCmd),
 }
