@@ -4,37 +4,11 @@ version = 3
 
 [[package]]
 name = "abscissa_core"
-version = "0.6.0-pre.1"
+version = "0.6.0-pre.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "576dbfaac815924aefd67b1a6566fefdb617f3df250a9eb384440078831143e4"
+checksum = "7586ed2c98e5727cecb6c36ab8af370ad48505719e004d0ae9bd85f1416b76fa"
 dependencies = [
- "abscissa_derive 0.5.0",
- "arc-swap",
- "backtrace",
- "canonical-path",
- "chrono",
- "color-eyre",
- "fs-err",
- "gumdrop",
- "once_cell",
- "regex",
- "secrecy 0.7.0",
- "semver 0.10.0",
- "serde",
- "termcolor",
- "toml",
- "tracing",
- "tracing-log",
- "tracing-subscriber",
- "wait-timeout",
-]
-
-[[package]]
-name = "abscissa_core"
-version = "0.6.0-pre.1"
-source = "git+https://github.com/iqlusioninc/abscissa#127e1d1f4e871604e059e8aac0417855975a8117"
-dependencies = [
- "abscissa_derive 0.6.0-pre.1",
+ "abscissa_derive",
  "arc-swap",
  "backtrace",
  "canonical-path",
@@ -44,7 +18,7 @@ dependencies = [
  "fs-err",
  "once_cell",
  "regex",
- "secrecy 0.8.0",
+ "secrecy",
  "semver 1.0.4",
  "serde",
  "termcolor",
@@ -57,24 +31,11 @@ dependencies = [
 
 [[package]]
 name = "abscissa_derive"
-version = "0.5.0"
+version = "0.6.0-pre.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74f5722bc48763cb9d81d8427ca05b6aa2842f6632cf8e4c0a29eef9baececcc"
+checksum = "105766c2cc2671f5ad1542922ee315f26de7e1b4d1a7500438929575136d9c7e"
 dependencies = [
- "darling 0.10.2",
- "ident_case",
- "proc-macro2",
- "quote",
- "syn",
- "synstructure",
-]
-
-[[package]]
-name = "abscissa_derive"
-version = "0.6.0-pre.1"
-source = "git+https://github.com/iqlusioninc/abscissa#127e1d1f4e871604e059e8aac0417855975a8117"
-dependencies = [
- "darling 0.13.0",
+ "darling",
  "ident_case",
  "proc-macro2",
  "quote",
@@ -84,11 +45,11 @@ dependencies = [
 
 [[package]]
 name = "abscissa_tokio"
-version = "0.6.0-pre.2"
+version = "0.6.0-pre.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80063fd5884d9a4220c4de14287b19c6aaf4a8f30a7dafb84cb757ff202edbff"
+checksum = "e61e91dc9c4e23856a7339f22570670dfa3ddf3511c2ac1e119c500a5ae2d1fd"
 dependencies = [
- "abscissa_core 0.6.0-pre.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "abscissa_core",
  "actix-rt 2.2.0",
  "tokio 1.5.0",
 ]
@@ -907,7 +868,7 @@ dependencies = [
  "indexmap",
  "lazy_static",
  "os_str_bytes",
- "strsim 0.10.0",
+ "strsim",
  "termcolor",
  "textwrap",
  "vec_map",
@@ -1115,36 +1076,12 @@ dependencies = [
 
 [[package]]
 name = "darling"
-version = "0.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d706e75d87e35569db781a9b5e2416cff1236a47ed380831f959382ccd5f858"
-dependencies = [
- "darling_core 0.10.2",
- "darling_macro 0.10.2",
-]
-
-[[package]]
-name = "darling"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "757c0ded2af11d8e739c4daea1ac623dd1624b06c844cf3f5a39f1bdbd99bb12"
 dependencies = [
- "darling_core 0.13.0",
- "darling_macro 0.13.0",
-]
-
-[[package]]
-name = "darling_core"
-version = "0.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0c960ae2da4de88a91b2d920c2a7233b400bc33cb28453a2987822d8392519b"
-dependencies = [
- "fnv",
- "ident_case",
- "proc-macro2",
- "quote",
- "strsim 0.9.3",
- "syn",
+ "darling_core",
+ "darling_macro",
 ]
 
 [[package]]
@@ -1157,18 +1094,7 @@ dependencies = [
  "ident_case",
  "proc-macro2",
  "quote",
- "strsim 0.10.0",
- "syn",
-]
-
-[[package]]
-name = "darling_macro"
-version = "0.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9b5a2f4ac4969822c62224815d069952656cadc7084fdca9751e6d959189b72"
-dependencies = [
- "darling_core 0.10.2",
- "quote",
+ "strsim",
  "syn",
 ]
 
@@ -1178,7 +1104,7 @@ version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ade7bff147130fe5e6d39f089c6bd49ec0250f35d70b2eebf72afdfc919f15cc"
 dependencies = [
- "darling_core 0.13.0",
+ "darling_core",
  "quote",
  "syn",
 ]
@@ -1282,7 +1208,7 @@ dependencies = [
  "lazy_static",
  "regex",
  "serde",
- "strsim 0.10.0",
+ "strsim",
 ]
 
 [[package]]
@@ -1616,7 +1542,7 @@ checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
 name = "gorc"
 version = "0.2.15"
 dependencies = [
- "abscissa_core 0.6.0-pre.1 (git+https://github.com/iqlusioninc/abscissa)",
+ "abscissa_core",
  "abscissa_tokio",
  "actix-rt 2.2.0",
  "bip32",
@@ -1708,26 +1634,6 @@ dependencies = [
  "ff",
  "rand_core 0.6.2",
  "subtle",
-]
-
-[[package]]
-name = "gumdrop"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee50908bc1beeac1f2902e0b4e0cd0d844e716f5ebdc6f0cfc1163fe5e10bcde"
-dependencies = [
- "gumdrop_derive",
-]
-
-[[package]]
-name = "gumdrop_derive"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90454ce4de40b7ca6a8968b5ef367bdab48413962588d0d2b1638d60090c35d7"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -3142,16 +3048,6 @@ dependencies = [
 
 [[package]]
 name = "secrecy"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0673d6a6449f5e7d12a1caf424fd9363e2af3a4953023ed455e3c4beef4597c0"
-dependencies = [
- "serde",
- "zeroize",
-]
-
-[[package]]
-name = "secrecy"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9bd1c54ea06cfd2f6b63219704de0b9b4f72dcc2b8fdef820be6cd799780e91e"
@@ -3167,16 +3063,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
 dependencies = [
  "semver-parser",
-]
-
-[[package]]
-name = "semver"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "394cec28fa623e00903caf7ba4fa6fb9a0e260280bb8cdbbba029611108a0190"
-dependencies = [
- "semver-parser",
- "serde",
 ]
 
 [[package]]
@@ -3441,12 +3327,6 @@ name = "stdweb-internal-runtime"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
-
-[[package]]
-name = "strsim"
-version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6446ced80d6c486436db5c078dde11a9f73d42b57fb273121e160b84f63d894c"
 
 [[package]]
 name = "strsim"

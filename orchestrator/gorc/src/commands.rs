@@ -21,15 +21,15 @@ use std::path::PathBuf;
 pub const CONFIG_FILE: &str = "gorc.toml";
 
 /// Gorc Subcommands
-#[derive(Command, Debug, Clap)]
+#[derive(Command, Debug, Clap, Runnable)]
 pub enum GorcCmd {
-    #[clap(subcommand)]
+    #[clap(name = "cosmos-to-eth")]
     CosmosToEth(cosmos_to_eth::CosmosToEthCmd),
 
     #[clap(subcommand)]
     Deploy(deploy::DeployCmd),
 
-    #[clap(subcommand)]
+    #[clap(name = "eth-to-cosmos")]
     EthToCosmos(eth_to_cosmos::EthToCosmosCmd),
 
     #[clap(subcommand)]
@@ -44,7 +44,7 @@ pub enum GorcCmd {
     #[clap(subcommand)]
     Query(query::QueryCmd),
 
-    #[clap(subcommand)]
+    #[clap(name = "sign-delegate-keys")]
     SignDelegateKeys(sign_delegate_keys::SignDelegateKeysCmd),
 
     #[clap(subcommand)]
@@ -53,7 +53,7 @@ pub enum GorcCmd {
     #[clap(subcommand)]
     Tx(tx::TxCmd),
 
-    #[clap(subcommand)]
+    #[clap(name = "version")]
     Version(version::VersionCmd),
 }
 

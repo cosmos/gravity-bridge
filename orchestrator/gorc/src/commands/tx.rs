@@ -4,7 +4,7 @@ mod cosmos;
 
 mod eth;
 
-use abscissa_core::{Command, Options, Runnable};
+use abscissa_core::{Command, Clap, Runnable};
 
 /// `tx` subcommand
 ///
@@ -13,9 +13,12 @@ use abscissa_core::{Command, Options, Runnable};
 /// for a more comprehensive example:
 ///
 /// <https://docs.rs/gumdrop/>
-#[derive(Command, Debug, Options)]
+#[derive(Command, Debug, Clap)]
 pub enum TxCmd {
+    #[clap(subcommand)]
     Cosmos(cosmos::Cosmos),
+
+    #[clap(subcommand)]
     Eth(eth::Eth),
 }
 
