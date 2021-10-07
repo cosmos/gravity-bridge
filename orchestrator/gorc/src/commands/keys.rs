@@ -1,7 +1,7 @@
 mod cosmos;
 mod eth;
 
-use abscissa_core::{Command, Options, Runnable};
+use abscissa_core::{Command, Clap, Runnable};
 
 use crate::commands::keys::cosmos::CosmosKeysCmd;
 use crate::commands::keys::eth::EthKeysCmd;
@@ -13,11 +13,11 @@ use crate::commands::keys::eth::EthKeysCmd;
 /// for a more comprehensive example:
 ///
 /// <https://docs.rs/gumdrop/>
-#[derive(Command, Debug, Options, Runnable)]
+#[derive(Command, Debug, Clap, Runnable)]
 pub enum KeysCmd {
-    #[options(name = "cosmos", help = "Cosmos key commands")]
+    #[clap(name = "cosmos")]
     CosmosKeysCmd(CosmosKeysCmd),
 
-    #[options(name = "eth", help = "Ethereum key commands.")]
+    #[clap(name = "eth")]
     EthKeysCmd(EthKeysCmd),
 }

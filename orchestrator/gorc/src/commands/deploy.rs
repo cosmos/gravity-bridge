@@ -1,13 +1,10 @@
 mod erc20;
 use erc20::Erc20;
 
-use abscissa_core::{Command, Options, Runnable};
+use abscissa_core::{Command, Clap, Runnable};
 
-#[derive(Command, Debug, Options, Runnable)]
+#[derive(Command, Debug, Clap, Runnable)]
 pub enum DeployCmd {
-    #[options(
-        name = "erc20",
-        help = "deploy an ERC20 representation of a cosmos denom"
-    )]
+    #[clap(name = "erc20")]
     Erc20(Erc20),
 }

@@ -1,17 +1,17 @@
 use super::show::ShowCosmosKeyCmd;
 use crate::application::APP;
-use abscissa_core::{Application, Command, Options, Runnable};
+use abscissa_core::{Application, Command, Clap, Runnable};
 use k256::pkcs8::ToPrivateKey;
 use rand_core::OsRng;
 use signatory::FsKeyStore;
 use std::path;
 
-#[derive(Command, Debug, Default, Options)]
+#[derive(Command, Debug, Default, Clap)]
 pub struct AddCosmosKeyCmd {
-    #[options(free, help = "add [name]")]
+    #[clap()]
     pub args: Vec<String>,
 
-    #[options(help = "overwrite existing key")]
+    #[clap(short, long)]
     pub overwrite: bool,
 }
 

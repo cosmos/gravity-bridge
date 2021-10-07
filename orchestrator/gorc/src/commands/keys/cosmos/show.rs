@@ -1,9 +1,9 @@
 use crate::application::APP;
-use abscissa_core::{Application, Command, Options, Runnable};
+use abscissa_core::{Application, Command, Clap, Runnable};
 
-#[derive(Command, Debug, Default, Options)]
+#[derive(Command, Debug, Default, Clap)]
 pub struct ShowCosmosKeyCmd {
-    #[options(free, help = "show [name]")]
+    #[clap()]
     pub args: Vec<String>,
 }
 

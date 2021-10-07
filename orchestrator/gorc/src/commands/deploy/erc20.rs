@@ -1,5 +1,5 @@
 use crate::{application::APP, prelude::*};
-use abscissa_core::{Command, Options, Runnable};
+use abscissa_core::{Command, Clap, Runnable};
 use ethereum_gravity::deploy_erc20::deploy_erc20;
 use gravity_proto::gravity::{DenomToErc20ParamsRequest, DenomToErc20Request};
 use gravity_utils::connection_prep::{check_for_eth, create_rpc_connections};
@@ -8,12 +8,12 @@ use std::process::exit;
 use std::time::{Duration, Instant};
 use tokio::time::sleep as delay_for;
 
-#[derive(Command, Debug, Options)]
+#[derive(Command, Debug, Clap)]
 pub struct Erc20 {
-    #[options(free, help = "denom")]
+    #[clap()]
     args: Vec<String>,
 
-    #[options(help = "ethereum key name")]
+    #[clap(short, long)]
     ethereum_key: String,
 }
 
