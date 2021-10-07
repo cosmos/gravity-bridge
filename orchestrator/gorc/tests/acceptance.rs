@@ -86,6 +86,6 @@ pub static RUNNER: Lazy<CmdRunner> = Lazy::new(|| CmdRunner::default());
 #[test]
 fn version_no_args() {
     let mut runner = RUNNER.clone();
-    let mut cmd = runner.arg("version").capture_stdout().run();
+    let mut cmd = runner.arg("--version").capture_stdout().run();
     cmd.stdout().expect_regex(r"\A\w+ [\d\.\-]+\z");
 }
