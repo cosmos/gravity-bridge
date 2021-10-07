@@ -6,28 +6,28 @@ mod recover;
 mod rename;
 mod show;
 
-use abscissa_core::{Command, Options, Runnable};
+use abscissa_core::{Command, Clap, Runnable};
 
-#[derive(Command, Debug, Options, Runnable)]
+#[derive(Command, Debug, Clap, Runnable)]
 pub enum EthKeysCmd {
-    #[options(help = "add [name]")]
+    #[clap(name = "add")]
     Add(add::AddEthKeyCmd),
 
-    #[options(help = "delete [name]")]
+    #[clap(name = "delete")]
     Delete(delete::DeleteEthKeyCmd),
 
-    #[options(help = "import [name] (private-key)")]
+    #[clap(name = "import")]
     Import(import::ImportEthKeyCmd),
 
-    #[options(help = "list")]
+    #[clap(name = "list")]
     List(list::ListEthKeyCmd),
 
-    #[options(help = "recover [name] (bip39-mnemonic)")]
+    #[clap(name = "recover")]
     Recover(recover::RecoverEthKeyCmd),
 
-    #[options(help = "rename [name] [new-name]")]
+    #[clap(name = "rename")]
     Rename(rename::RenameEthKeyCmd),
 
-    #[options(help = "show [name]")]
+    #[clap(name = "show")]
     Show(show::ShowEthKeyCmd),
 }

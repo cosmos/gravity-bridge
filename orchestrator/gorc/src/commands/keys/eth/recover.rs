@@ -1,19 +1,19 @@
 use super::show::ShowEthKeyCmd;
 use crate::application::APP;
-use abscissa_core::{Application, Command, Options, Runnable};
+use abscissa_core::{Application, Command, Clap, Runnable};
 use k256::pkcs8::ToPrivateKey;
 use signatory::FsKeyStore;
 use std::path;
 
-#[derive(Command, Debug, Default, Options)]
+#[derive(Command, Debug, Default, Clap)]
 pub struct RecoverEthKeyCmd {
-    #[options(free, help = "recover [name] (bip39-mnemonic)")]
+    #[clap()]
     pub args: Vec<String>,
 
-    #[options(help = "overwrite existing key")]
+    #[clap(short, long)]
     pub overwrite: bool,
 
-    #[options(help = "show private key")]
+    #[clap(short, long)]
     show_private_key: bool,
 }
 
