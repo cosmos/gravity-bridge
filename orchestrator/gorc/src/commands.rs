@@ -11,7 +11,6 @@ mod query;
 mod sign_delegate_keys;
 mod tests;
 mod tx;
-mod version;
 
 use crate::config::GorcConfig;
 use abscissa_core::{Application, Command, Clap, Runnable, Configurable};
@@ -52,13 +51,32 @@ pub enum GorcCmd {
 
     #[clap(subcommand)]
     Tx(tx::TxCmd),
+}
 
-    #[clap(name = "version")]
-    Version(version::VersionCmd),
+/// Entry point for the application. It needs to be a struct to allow using subcommands!
+#[derive(Command, Debug, Clap)]
+#[clap(author, about, version)]
+pub struct EntryPoint {
+    #[clap(subcommand)]
+    cmd: GorcCmd,
+
+    /// Enable verbose logging
+    #[clap(short, long)]
+    pub verbose: bool,
+
+    /// Use the specified config file
+    #[clap(short, long)]
+    pub config: Option<String>,
+}
+
+impl Runnable for EntryPoint {
+    fn run(&self) {
+        self.cmd.run()
+    }
 }
 
 /// This trait allows you to define how application configuration is loaded.
-impl Configurable<GorcConfig> for GorcCmd {
+impl Configurable<GorcConfig> for EntryPoint {
     /// Location of the configuration file
     fn config_path(&self) -> Option<PathBuf> {
         // Check if the config file exists, and if it does not, ignore it.
