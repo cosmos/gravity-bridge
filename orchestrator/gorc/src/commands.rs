@@ -22,13 +22,11 @@ pub const CONFIG_FILE: &str = "gorc.toml";
 /// Gorc Subcommands
 #[derive(Command, Debug, Clap, Runnable)]
 pub enum GorcCmd {
-    #[clap(name = "cosmos-to-eth")]
     CosmosToEth(cosmos_to_eth::CosmosToEthCmd),
 
     #[clap(subcommand)]
     Deploy(deploy::DeployCmd),
 
-    #[clap(name = "eth-to-cosmos")]
     EthToCosmos(eth_to_cosmos::EthToCosmosCmd),
 
     #[clap(subcommand)]
@@ -37,13 +35,11 @@ pub enum GorcCmd {
     #[clap(subcommand)]
     Orchestrator(orchestrator::OrchestratorCmd),
 
-    #[clap(name = "print-config")]
     PrintConfig(print_config::PrintConfigCmd),
 
     #[clap(subcommand)]
     Query(query::QueryCmd),
 
-    #[clap(name = "sign-delegate-keys")]
     SignDelegateKeys(sign_delegate_keys::SignDelegateKeysCmd),
 
     #[clap(subcommand)]

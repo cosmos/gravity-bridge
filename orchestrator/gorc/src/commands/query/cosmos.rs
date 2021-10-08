@@ -6,9 +6,8 @@ use abscissa_core::{Command, Clap, Runnable};
 /// Query cosmos chain
 #[derive(Command, Debug, Clap)]
 pub enum Cosmos {
-    #[clap(name = "balance")]
     Balance(Balance),
-    #[clap(name = "gravity-keys")]
+
     GravityKeys(GravityKeys),
 }
 
@@ -21,7 +20,6 @@ impl Runnable for Cosmos {
 
 #[derive(Command, Debug, Clap)]
 pub struct Balance {
-    #[clap()]
     free: Vec<String>,
 
     #[clap(short, long)]
@@ -37,7 +35,6 @@ impl Runnable for Balance {
 
 #[derive(Command, Debug, Clap)]
 pub struct GravityKeys {
-    #[clap()]
     free: Vec<String>,
 
     #[clap(short, long)]

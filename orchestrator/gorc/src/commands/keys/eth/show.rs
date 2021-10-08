@@ -4,7 +4,6 @@ use abscissa_core::{Application, Command, Clap, Runnable};
 /// Show an Eth Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct ShowEthKeyCmd {
-    #[clap()]
     pub args: Vec<String>,
 
     #[clap(short, long)]

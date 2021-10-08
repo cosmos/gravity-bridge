@@ -6,7 +6,6 @@ use std::path::Path;
 /// Delete a Cosmos Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct DeleteCosmosKeyCmd {
-    #[clap()]
     pub args: Vec<String>,
 }
 

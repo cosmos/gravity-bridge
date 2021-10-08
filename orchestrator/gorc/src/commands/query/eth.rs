@@ -6,10 +6,8 @@ use abscissa_core::{Command, Clap, Runnable};
 /// Query Eth chain
 #[derive(Command, Debug, Clap)]
 pub enum Eth {
-    #[clap(name = "balance")]
     Balance(Balance),
 
-    #[clap(name = "contract")]
     Contract(Contract),
 }
 
@@ -22,7 +20,6 @@ impl Runnable for Eth {
 
 #[derive(Command, Debug, Clap)]
 pub struct Balance {
-    #[clap()]
     free: Vec<String>,
 
     #[clap(short, long)]

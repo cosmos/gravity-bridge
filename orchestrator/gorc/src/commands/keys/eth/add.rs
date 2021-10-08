@@ -9,7 +9,6 @@ use std::path;
 /// Add a new Eth Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct AddEthKeyCmd {
-    #[clap()]
     pub args: Vec<String>,
 
     #[clap(short, long)]

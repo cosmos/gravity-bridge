@@ -9,7 +9,6 @@ use std::path;
 ///Import an Eth Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct ImportEthKeyCmd {
-    #[clap()]
     pub args: Vec<String>,
 
     #[clap(short, long)]

@@ -6,7 +6,6 @@ use std::path;
 /// Rename an Eth Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct RenameEthKeyCmd {
-    #[clap()]
     pub args: Vec<String>,
 
     #[clap(short, long)]

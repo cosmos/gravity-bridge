@@ -8,7 +8,6 @@ use std::path;
 /// Recover a Cosmos Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct RecoverCosmosKeyCmd {
-    #[clap()]
     pub args: Vec<String>,
 
     #[clap(short, long)]

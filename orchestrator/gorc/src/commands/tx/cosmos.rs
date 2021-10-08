@@ -13,9 +13,7 @@ use std::process::exit;
 /// Create transactions in Cosmos chain
 #[derive(Command, Debug, Clap)]
 pub enum Cosmos {
-    #[clap(name = "send-to-eth")]
     SendToEth(SendToEth),
-    #[clap(name = "send")]
     Send(Send),
 }
 
@@ -28,7 +26,6 @@ impl Runnable for Cosmos {
 
 #[derive(Command, Debug, Clap)]
 pub struct SendToEth {
-    #[clap()]
     free: Vec<String>,
 
     #[clap(short, long)]
@@ -148,7 +145,6 @@ impl Runnable for SendToEth {
 
 #[derive(Command, Debug, Clap)]
 pub struct Send {
-    #[clap()]
     free: Vec<String>,
 
     #[clap(short, long)]

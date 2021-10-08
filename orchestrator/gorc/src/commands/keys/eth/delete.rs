@@ -6,7 +6,6 @@ use std::path;
 /// Delete an Eth Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct DeleteEthKeyCmd {
-    #[clap()]
     pub args: Vec<String>,
 }
 

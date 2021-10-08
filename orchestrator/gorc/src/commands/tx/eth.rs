@@ -11,10 +11,8 @@ use gravity_utils::connection_prep::{check_for_eth, create_rpc_connections};
 /// Create transactions in Eth chain
 #[derive(Command, Debug, Clap)]
 pub enum Eth {
-    #[clap(name = "send-to-cosmos")]
     SendToCosmos(SendToCosmos),
 
-    #[clap(name = "send")]
     Send(Send),
 }
 
@@ -24,7 +22,6 @@ impl Runnable for Eth {
 
 #[derive(Command, Debug, Clap)]
 pub struct SendToCosmos {
-    #[clap()]
     free: Vec<String>,
 
     #[clap(short, long)]
@@ -118,7 +115,6 @@ impl Runnable for SendToCosmos {
 
 #[derive(Command, Debug, Clap)]
 pub struct Send {
-    #[clap()]
     free: Vec<String>,
 
     #[clap(short, long)]

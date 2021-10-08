@@ -5,7 +5,6 @@ use std::path;
 /// Rename a Cosmos Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct RenameCosmosKeyCmd {
-    #[clap()]
     pub args: Vec<String>,
 
     #[clap(short, long)]

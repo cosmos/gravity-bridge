@@ -12,7 +12,6 @@ const TIMEOUT: Duration = Duration::from_secs(60);
 /// This command send Ethereum to Cosmos
 #[derive(Command, Debug, Default, Clap)]
 pub struct EthToCosmosCmd {
-    #[clap()]
     pub args: Vec<String>,
 }
 

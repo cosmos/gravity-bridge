@@ -3,7 +3,6 @@ use abscissa_core::{Command, Clap, Runnable};
 /// Run tests against configured chains
 #[derive(Command, Debug, Clap)]
 pub enum TestsCmd {
-    #[clap(name = "runner")]
     Runner(Runner),
 }
 
@@ -16,7 +15,6 @@ impl Runnable for TestsCmd {
 
 #[derive(Command, Debug, Clap)]
 pub struct Runner {
-    #[clap()]
     free: Vec<String>,
 
     #[clap(short, long)]

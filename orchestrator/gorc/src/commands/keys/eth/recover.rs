@@ -8,7 +8,6 @@ use std::path;
 /// Recover an Eth Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct RecoverEthKeyCmd {
-    #[clap()]
     pub args: Vec<String>,
 
     #[clap(short, long)]

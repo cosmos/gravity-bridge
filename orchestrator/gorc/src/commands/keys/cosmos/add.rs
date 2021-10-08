@@ -9,7 +9,6 @@ use std::path;
 /// Add a new Cosmos Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct AddCosmosKeyCmd {
-    #[clap()]
     pub args: Vec<String>,
 
     #[clap(short, long)]
