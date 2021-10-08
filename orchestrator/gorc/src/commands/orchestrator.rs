@@ -1,9 +1,9 @@
 mod start;
 
-use abscissa_core::{Command, Options, Runnable};
+use abscissa_core::{Command, Clap, Runnable};
 
-#[derive(Command, Debug, Options, Runnable)]
+/// Management commannds for the orchestrator
+#[derive(Command, Debug, Clap, Runnable)]
 pub enum OrchestratorCmd {
-	#[options(help = "start the orchestrator")]
 	Start(start::StartCommand),
 }

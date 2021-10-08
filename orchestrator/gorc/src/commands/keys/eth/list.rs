@@ -1,11 +1,12 @@
 use super::show::ShowEthKeyCmd;
 use crate::application::APP;
-use abscissa_core::{Application, Command, Options, Runnable};
+use abscissa_core::{Application, Command, Clap, Runnable};
 use std::path;
 
-#[derive(Command, Debug, Default, Options)]
+/// List all Eth Keys
+#[derive(Command, Debug, Default, Clap)]
 pub struct ListEthKeyCmd {
-    #[options(help = "show private key")]
+    #[clap(short, long)]
     pub show_private_key: bool,
 }
 

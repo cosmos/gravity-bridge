@@ -1,6 +1,6 @@
 # Reference: https://www.lpalmieri.com/posts/fast-rust-docker-builds/
 
-FROM rust:1.52 as cargo-chef-rust
+FROM rust:1.55 as cargo-chef-rust
 RUN apt-get install bash
 RUN cargo install cargo-chef
 
