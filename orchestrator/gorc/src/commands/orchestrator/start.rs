@@ -11,6 +11,7 @@ use orchestrator::main_loop::{
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
 use std::cmp::min;
 
+/// Start the Orchestrator
 #[derive(Command, Debug, Clap)]
 pub struct StartCommand {
     #[clap(short, long)]

@@ -8,6 +8,7 @@ use deep_space::address::Address as CosmosAddress;
 use ethereum_gravity::send_to_cosmos::send_to_cosmos;
 use gravity_utils::connection_prep::{check_for_eth, create_rpc_connections};
 
+/// Create transactions in Eth chain
 #[derive(Command, Debug, Clap)]
 pub enum Eth {
     #[clap(name = "send-to-cosmos")]

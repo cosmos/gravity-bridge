@@ -6,6 +6,7 @@ use rand_core::OsRng;
 use signatory::FsKeyStore;
 use std::path;
 
+/// Add a new Cosmos Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct AddCosmosKeyCmd {
     #[clap()]
@@ -15,8 +16,6 @@ pub struct AddCosmosKeyCmd {
     pub overwrite: bool,
 }
 
-// `gorc keys cosmos add [name]`
-// - [name] required; key name
 impl Runnable for AddCosmosKeyCmd {
     fn run(&self) {
         let config = APP.config();

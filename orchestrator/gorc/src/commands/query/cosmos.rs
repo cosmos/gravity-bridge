@@ -3,6 +3,7 @@
 use crate::{application::APP, prelude::*};
 use abscissa_core::{Command, Clap, Runnable};
 
+/// Query cosmos chain
 #[derive(Command, Debug, Clap)]
 pub enum Cosmos {
     #[clap(name = "balance")]

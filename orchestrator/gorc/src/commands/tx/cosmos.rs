@@ -10,6 +10,7 @@ use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections
 use regex::Regex;
 use std::process::exit;
 
+/// Create transactions in Cosmos chain
 #[derive(Command, Debug, Clap)]
 pub enum Cosmos {
     #[clap(name = "send-to-eth")]

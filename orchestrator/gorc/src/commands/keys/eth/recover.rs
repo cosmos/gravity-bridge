@@ -5,6 +5,7 @@ use k256::pkcs8::ToPrivateKey;
 use signatory::FsKeyStore;
 use std::path;
 
+/// Recover an Eth Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct RecoverEthKeyCmd {
     #[clap()]

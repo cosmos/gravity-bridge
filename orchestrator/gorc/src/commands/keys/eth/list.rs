@@ -3,6 +3,7 @@ use crate::application::APP;
 use abscissa_core::{Application, Command, Clap, Runnable};
 use std::path;
 
+/// List all Eth Keys
 #[derive(Command, Debug, Default, Clap)]
 pub struct ListEthKeyCmd {
     #[clap(short, long)]

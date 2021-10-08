@@ -6,13 +6,7 @@ mod eth;
 
 use abscissa_core::{Command, Clap, Runnable};
 
-/// `query` subcommand
-///
-/// The `Options` proc macro generates an option parser based on the struct
-/// definition, and is defined in the `gumdrop` crate. See their documentation
-/// for a more comprehensive example:
-///
-/// <https://docs.rs/gumdrop/>
+/// Query state on either ethereum or cosmos chains
 #[derive(Command, Debug, Clap)]
 pub enum QueryCmd {
     #[clap(subcommand)]

@@ -10,6 +10,7 @@ use std::{process::exit, time::Duration};
 
 const TIMEOUT: Duration = Duration::from_secs(60);
 
+/// This command, send Cosmos to Ethereum
 #[derive(Command, Debug, Default, Clap)]
 pub struct CosmosToEthCmd {
     #[clap()]

@@ -2,6 +2,7 @@ use crate::config::GorcConfig;
 use crate::{application::APP, prelude::*};
 use abscissa_core::{Application, Command, Clap, Runnable};
 
+/// Command for printing configurations
 #[derive(Command, Debug, Default, Clap)]
 pub struct PrintConfigCmd {
     #[clap(short, long)]

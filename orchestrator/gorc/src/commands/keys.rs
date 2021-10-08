@@ -6,18 +6,13 @@ use abscissa_core::{Command, Clap, Runnable};
 use crate::commands::keys::cosmos::CosmosKeysCmd;
 use crate::commands::keys::eth::EthKeysCmd;
 
-/// `keys` subcommand
-///
-/// The `Options` proc macro generates an option parser based on the struct
-/// definition, and is defined in the `gumdrop` crate. See their documentation
-/// for a more comprehensive example:
-///
-/// <https://docs.rs/gumdrop/>
+/// Key management commands for Ethereum and Cosmos
+
 #[derive(Command, Debug, Clap, Runnable)]
 pub enum KeysCmd {
     #[clap(subcommand)]
-    CosmosKeysCmd(CosmosKeysCmd),
+    Cosmos(CosmosKeysCmd),
 
     #[clap(subcommand)]
-    EthKeysCmd(EthKeysCmd),
+    Eth(EthKeysCmd),
 }

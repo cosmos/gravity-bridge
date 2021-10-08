@@ -6,6 +6,7 @@ use k256::{pkcs8::ToPrivateKey, SecretKey};
 use signatory::FsKeyStore;
 use std::path;
 
+///Import an Eth Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct ImportEthKeyCmd {
     #[clap()]

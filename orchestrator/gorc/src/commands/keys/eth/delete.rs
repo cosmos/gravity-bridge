@@ -3,6 +3,7 @@ use abscissa_core::{Application, Command, Clap, Runnable};
 use signatory::FsKeyStore;
 use std::path;
 
+/// Delete an Eth Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct DeleteEthKeyCmd {
     #[clap()]

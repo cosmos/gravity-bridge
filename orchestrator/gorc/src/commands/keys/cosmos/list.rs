@@ -3,6 +3,7 @@ use crate::application::APP;
 use abscissa_core::{Application, Command, Clap, Runnable};
 use std::path::Path;
 
+/// List all Cosmos Keys
 #[derive(Command, Debug, Default, Clap)]
 pub struct ListCosmosKeyCmd {}
 

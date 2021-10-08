@@ -6,6 +6,7 @@ use rand_core::OsRng;
 use signatory::FsKeyStore;
 use std::path;
 
+/// Add a new Eth Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct AddEthKeyCmd {
     #[clap()]

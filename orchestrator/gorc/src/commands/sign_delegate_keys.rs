@@ -3,6 +3,7 @@ use abscissa_core::{Application, Command, Clap, Runnable};
 use gravity_proto::gravity as proto;
 use std::time::Duration;
 
+/// Sign delegate keys command
 #[derive(Command, Debug, Default, Clap)]
 pub struct SignDelegateKeysCmd {
     #[clap(short, long)]

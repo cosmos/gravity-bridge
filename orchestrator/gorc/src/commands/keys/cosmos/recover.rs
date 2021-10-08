@@ -5,6 +5,7 @@ use k256::pkcs8::ToPrivateKey;
 use signatory::FsKeyStore;
 use std::path;
 
+/// Recover a Cosmos Key
 #[derive(Command, Debug, Default, Clap)]
 pub struct RecoverCosmosKeyCmd {
     #[clap()]
