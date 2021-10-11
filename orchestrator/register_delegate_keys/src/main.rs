@@ -119,6 +119,7 @@ async fn main() {
         validator_key,
         ethereum_key,
         fee.clone(),
+        500000,
     )
     .await
     .expect("Failed to update Eth address");

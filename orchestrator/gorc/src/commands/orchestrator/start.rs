@@ -98,6 +98,7 @@ impl Runnable for StartCommand {
                 &config.metrics.listen_addr,
                 config.ethereum.gas_price_multiplier,
                 config.ethereum.blocks_to_search as u128,
+                config.cosmos.gas_limit,
                 self.orchestrator_only,
                 config.cosmos.msg_batch_size,
             )
