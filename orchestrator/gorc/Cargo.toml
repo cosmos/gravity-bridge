@@ -5,7 +5,7 @@ version = "0.2.17"
 edition = "2018"
 
 [dependencies]
-gumdrop = "0.7"
+clap = "3.0.0-beta.4"
 serde = { version = "1", features = ["serde_derive"] }
 thiserror = "1"
 regex = "1.5.4"
@@ -38,13 +38,14 @@ log = "0.4"
 
 prost = "0.7"
 bytes = "1"
+proc-macro2 = "1.0.28"
 
 [dependencies.abscissa_core]
-version = "0.6.0-pre.1"
+version = "0.6.0-pre.2"
 # optional: use `gimli` to capture backtraces
 # see https://github.com/rust-lang/backtrace-rs/issues/189
 # features = ["gimli-backtrace"]
 
 [dev-dependencies]
-abscissa_core = { version = "0.6.0-pre.1", features = ["testing"] }
-once_cell = "1.2"
+abscissa_core = "0.6.0-pre.2"
+once_cell = "1.4"

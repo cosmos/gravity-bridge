@@ -4,18 +4,15 @@ mod cosmos;
 
 mod eth;
 
-use abscissa_core::{Command, Options, Runnable};
+use abscissa_core::{Command, Clap, Runnable};
 
-/// `query` subcommand
-///
-/// The `Options` proc macro generates an option parser based on the struct
-/// definition, and is defined in the `gumdrop` crate. See their documentation
-/// for a more comprehensive example:
-///
-/// <https://docs.rs/gumdrop/>
-#[derive(Command, Debug, Options)]
+/// Query state on either ethereum or cosmos chains
+#[derive(Command, Debug, Clap)]
 pub enum QueryCmd {
+    #[clap(subcommand)]
     Cosmos(cosmos::Cosmos),
+
+    #[clap(subcommand)]
     Eth(eth::Eth),
     // Example `--foobar` (with short `-f` argument)
     // #[options(short = "f", help = "foobar path"]

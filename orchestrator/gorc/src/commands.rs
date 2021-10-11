@@ -11,57 +11,68 @@ mod query;
 mod sign_delegate_keys;
 mod tests;
 mod tx;
-mod version;
 
 use crate::config::GorcConfig;
-use abscissa_core::{Command, Configurable, Help, Options, Runnable};
+use abscissa_core::{Application, Command, Clap, Runnable, Configurable};
 use std::path::PathBuf;
 
 /// Gorc Configuration Filename
 pub const CONFIG_FILE: &str = "gorc.toml";
 
 /// Gorc Subcommands
-#[derive(Command, Debug, Options, Runnable)]
+#[derive(Command, Debug, Clap, Runnable)]
 pub enum GorcCmd {
-    #[options(help = "Send Cosmos to Ethereum")]
     CosmosToEth(cosmos_to_eth::CosmosToEthCmd),
 
-    #[options(help = "tools for contract deployment")]
+    #[clap(subcommand)]
     Deploy(deploy::DeployCmd),
 
-    #[options(help = "Send Ethereum to Cosmos")]
     EthToCosmos(eth_to_cosmos::EthToCosmosCmd),
 
-    #[options(help = "get usage information")]
-    Help(Help<Self>),
-
-    #[options(help = "key management commands")]
+    #[clap(subcommand)]
     Keys(keys::KeysCmd),
 
-    #[options(help = "orchestrator management commands")]
+    #[clap(subcommand)]
     Orchestrator(orchestrator::OrchestratorCmd),
 
-    #[options(help = "print config file template")]
     PrintConfig(print_config::PrintConfigCmd),
 
-    #[options(help = "query state on either ethereum or cosmos chains")]
+    #[clap(subcommand)]
     Query(query::QueryCmd),
 
-    #[options(help = "sign delegate keys")]
     SignDelegateKeys(sign_delegate_keys::SignDelegateKeysCmd),
 
-    #[options(help = "run tests against configured chains")]
+    #[clap(subcommand)]
     Tests(tests::TestsCmd),
 
-    #[options(help = "create transactions on either ethereum or cosmos chains")]
+    #[clap(subcommand)]
     Tx(tx::TxCmd),
+}
 
-    #[options(help = "display version information")]
-    Version(version::VersionCmd),
+/// Entry point for the application. It needs to be a struct to allow using subcommands!
+#[derive(Command, Debug, Clap)]
+#[clap(author, about, version)]
+pub struct EntryPoint {
+    #[clap(subcommand)]
+    cmd: GorcCmd,
+
+    /// Enable verbose logging
+    #[clap(short, long)]
+    pub verbose: bool,
+
+    /// Use the specified config file
+    #[clap(short, long)]
+    pub config: Option<String>,
+}
+
+impl Runnable for EntryPoint {
+    fn run(&self) {
+        self.cmd.run()
+    }
 }
 
 /// This trait allows you to define how application configuration is loaded.
-impl Configurable<GorcConfig> for GorcCmd {
+impl Configurable<GorcConfig> for EntryPoint {
     /// Location of the configuration file
     fn config_path(&self) -> Option<PathBuf> {
         // Check if the config file exists, and if it does not, ignore it.

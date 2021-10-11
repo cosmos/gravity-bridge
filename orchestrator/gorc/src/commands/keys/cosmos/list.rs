@@ -1,9 +1,10 @@
 use super::show::ShowCosmosKeyCmd;
 use crate::application::APP;
-use abscissa_core::{Application, Command, Options, Runnable};
+use abscissa_core::{Application, Command, Clap, Runnable};
 use std::path::Path;
 
-#[derive(Command, Debug, Default, Options)]
+/// List all Cosmos Keys
+#[derive(Command, Debug, Default, Clap)]
 pub struct ListCosmosKeyCmd {}
 
 // Entry point for `gorc keys cosmos list`
