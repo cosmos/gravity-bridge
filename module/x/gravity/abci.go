@@ -43,6 +43,7 @@ func createBatchTxs(ctx sdk.Context, k keeper.Keeper) {
 		for k := range cm {
 			contracts = append(contracts, k)
 		}
+		sort.Strings(contracts)
 
 		for _, c := range contracts {
 			// NOTE: this doesn't emit events which would be helpful for client processes
