@@ -186,8 +186,6 @@ pub async fn send_main_loop(
 
 ) {
     while let Some(messages) = rx.recv().await {
-        // TODO: Consider making the chunk size configurable in the cosmos
-        // configuration.
         for msg_chunk in messages.chunks(msg_batch_size) {
             match send_messages(
                 contact,
