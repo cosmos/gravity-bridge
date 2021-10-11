@@ -1,14 +1,15 @@
 use crate::application::APP;
-use abscissa_core::{Application, Command, Options, Runnable};
+use abscissa_core::{Application, Command, Clap, Runnable};
 
-#[derive(Command, Debug, Default, Options)]
+/// Show an Eth Key
+#[derive(Command, Debug, Default, Clap)]
 pub struct ShowEthKeyCmd {
-    #[options(free, help = "show [name]")]
     pub args: Vec<String>,
 
-    #[options(help = "show private key")]
+    #[clap(short, long)]
     pub show_private_key: bool,
 
+    #[clap(short, long)]
     pub show_name: bool,
 }
 
