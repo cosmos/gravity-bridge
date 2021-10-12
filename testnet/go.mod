@@ -1,4 +1,3 @@
-
 module github.com/peggyjv/gravity-bridge/testnet
 
 go 1.16
