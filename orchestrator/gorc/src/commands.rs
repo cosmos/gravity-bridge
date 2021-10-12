@@ -13,7 +13,7 @@ mod tests;
 mod tx;
 
 use crate::config::GorcConfig;
-use abscissa_core::{Application, Command, Clap, Runnable, Configurable};
+use abscissa_core::{Application, Clap, Command, Configurable, FrameworkError, Runnable};
 use std::path::PathBuf;
 
 /// Gorc Configuration Filename
@@ -71,6 +71,8 @@ impl Runnable for EntryPoint {
     }
 }
 
+
+
 /// This trait allows you to define how application configuration is loaded.
 impl Configurable<GorcConfig> for EntryPoint {
     /// Location of the configuration file
@@ -78,12 +80,30 @@ impl Configurable<GorcConfig> for EntryPoint {
         // Check if the config file exists, and if it does not, ignore it.
         // If you'd like for a missing configuration file to be a hard error
         // instead, always return `Some(CONFIG_FILE)` here.
-        let filename = PathBuf::from(CONFIG_FILE);
+        let filename = self
+            .config
+            .as_ref()
+            .map(PathBuf::from)
+            .unwrap_or_else(|| CONFIG_FILE.into());
 
         if filename.exists() {
             Some(filename)
         } else {
             None
+        }
+    }
+
+    /// Apply changes to the config after it's been loaded, e.g. overriding
+    /// values in a config file using command-line options.
+    ///
+    /// This can be safely deleted if you don't want to override config
+    /// settings from command-line options.
+    fn process_config(
+        &self,
+        config: GorcConfig,
+    ) -> Result<GorcConfig, FrameworkError> {
+        match &self.cmd {
+             _ => Ok(config),
         }
     }
 }
