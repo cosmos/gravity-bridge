@@ -1,13 +1,13 @@
-use abscissa_core::{Application, Command, Options, Runnable};
+use abscissa_core::{Application, Command, Clap, Runnable};
 use crate::application::APP;
 use std::path;
 
-#[derive(Command, Debug, Default, Options)]
+/// Rename a Cosmos Key
+#[derive(Command, Debug, Default, Clap)]
 pub struct RenameCosmosKeyCmd {
-    #[options(free, help = "rename [name] [new_name]")]
     pub args: Vec<String>,
 
-    #[options(help = "overwrite existing key")]
+    #[clap(short, long)]
     pub overwrite: bool,
 }
 

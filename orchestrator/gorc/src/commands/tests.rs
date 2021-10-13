@@ -1,10 +1,8 @@
-//! `tests` subcommand
+use abscissa_core::{Command, Clap, Runnable};
 
-use abscissa_core::{Command, Options, Runnable};
-
-#[derive(Command, Debug, Options)]
+/// Run tests against configured chains
+#[derive(Command, Debug, Clap)]
 pub enum TestsCmd {
-    #[options(help = "runner")]
     Runner(Runner),
 }
 
@@ -15,12 +13,11 @@ impl Runnable for TestsCmd {
     }
 }
 
-#[derive(Command, Debug, Options)]
+#[derive(Command, Debug, Clap)]
 pub struct Runner {
-    #[options(free)]
     free: Vec<String>,
 
-    #[options(help = "print help message")]
+    #[clap(short, long)]
     help: bool,
 }
 

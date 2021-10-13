@@ -62,7 +62,7 @@ pub async fn relay_valsets(
             assert_eq!(cosmos_valset.nonce, latest_nonce);
             let confirms = get_all_valset_confirms(grpc_client, latest_nonce).await;
             if let Ok(confirms) = confirms {
-                info!(
+                debug!(
                     "Considering cosmos_valset {:?} confirms {:?}",
                     cosmos_valset, confirms
                 );
@@ -75,12 +75,7 @@ pub async fn relay_valsets(
                 // there are two possible encoding problems that could cause the very rare sig failure bug,
                 // one of them is that the hash is incorrect, that's not probable considering that
                 // both Geth and Clarity agree on it. but this lets us check
-                info!(
-                    "New valset hash {} new valset data {:?} old valset data {:?}",
-                    bytes_to_hex_str(&hash),
-                    latest_cosmos_valset,
-                    current_eth_valset,
-                );
+                info!("New valset hash {}", bytes_to_hex_str(&hash),);
 
                 // order valset sigs prepares signatures for submission, notice we compare
                 // them to the 'current' set in the bridge, this confirms for us that the validator set
@@ -105,8 +100,8 @@ pub async fn relay_valsets(
     }
     // TODO(levi) this is ignoring/swallowing errors
 
-    info!("Relaying latest_confirmed {:?}", latest_confirmed);
-    info!("Relaying latest_cosmos_valset {:?}", latest_cosmos_valset);
+    debug!("Relaying latest_confirmed {:?}", latest_confirmed);
+    debug!("Relaying latest_cosmos_valset {:?}", latest_cosmos_valset);
 
     if latest_confirmed.is_none() {
         error!("We don't have a latest confirmed valset?");

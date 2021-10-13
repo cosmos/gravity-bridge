@@ -1,5 +1,5 @@
 use crate::application::APP;
-use abscissa_core::{status_err, Application, Command, Options, Runnable};
+use abscissa_core::{status_err, Application, Command, Clap, Runnable};
 use clarity::Address as EthAddress;
 use clarity::Uint256;
 use deep_space::address::Address as CosmosAddress;
@@ -9,12 +9,9 @@ use std::time::Duration;
 
 const TIMEOUT: Duration = Duration::from_secs(60);
 
-#[derive(Command, Debug, Default, Options)]
+/// This command send Ethereum to Cosmos
+#[derive(Command, Debug, Default, Clap)]
 pub struct EthToCosmosCmd {
-    #[options(
-        free,
-        help = "eth-to-cosmos [erc20_address] [ethereum_key] [contract_address] [cosmos_dest] [amount] [times]"
-    )]
     pub args: Vec<String>,
 }
 

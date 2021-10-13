@@ -1,5 +1,5 @@
 use crate::application::APP;
-use abscissa_core::{status_err, Application, Command, Options, Runnable};
+use abscissa_core::{status_err, Application, Command, Clap, Runnable};
 use clarity::Address as EthAddress;
 use clarity::Uint256;
 use cosmos_gravity::send::{send_request_batch_tx, send_to_eth};
@@ -10,15 +10,12 @@ use std::{process::exit, time::Duration};
 
 const TIMEOUT: Duration = Duration::from_secs(60);
 
-#[derive(Command, Debug, Default, Options)]
+/// This command, send Cosmos to Ethereum
+#[derive(Command, Debug, Default, Clap)]
 pub struct CosmosToEthCmd {
-    #[options(
-        free,
-        help = "cosmos-to-eth [gravity_denom] [amount] [cosmos_key] [eth_dest] [times]"
-    )]
     pub args: Vec<String>,
 
-    #[options(help = "don't batch, send request to be sent immediately")]
+    #[clap(short, long)]
     pub flag_no_batch: bool,
 }
 
@@ -147,6 +144,7 @@ impl Runnable for CosmosToEthCmd {
                 amount.clone(),
                 bridge_fee.clone(),
                 &contact,
+                200000
             )
             .await;
             match res {
@@ -157,7 +155,7 @@ impl Runnable for CosmosToEthCmd {
 
         if !self.flag_no_batch {
             println!("Requesting a batch to push transaction along immediately");
-            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact)
+            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact,500000)
                 .await
                 .expect("Failed to request batch");
         } else {

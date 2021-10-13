@@ -146,6 +146,7 @@ pub async fn happy_path_test_v2(
         send_to_eth_coin,
         get_fee(),
         contact,
+        200000
     )
     .await
     .unwrap();
@@ -160,6 +161,7 @@ pub async fn happy_path_test_v2(
         token_to_send_to_eth.clone(),
         get_fee(),
         contact,
+        500000,
     )
     .await
     .unwrap();

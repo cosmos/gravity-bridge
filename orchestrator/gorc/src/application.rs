@@ -1,10 +1,10 @@
 //! Gorc Abscissa Application
 
-use crate::{commands::GorcCmd, config::GorcConfig};
+use crate::{commands::EntryPoint, config::GorcConfig};
 use abscissa_core::{
     application::{self, AppCell},
     config::{self, CfgCell},
-    trace, Application, EntryPoint, FrameworkError, StandardPaths,
+    trace, Application, FrameworkError, StandardPaths,
 };
 
 /// Application state
@@ -35,7 +35,7 @@ impl Default for GorcApp {
 
 impl Application for GorcApp {
     /// Entrypoint command for this application.
-    type Cmd = EntryPoint<GorcCmd>;
+    type Cmd = EntryPoint;
 
     /// Application configuration.
     type Cfg = GorcConfig;
@@ -80,7 +80,7 @@ impl Application for GorcApp {
     }
 
     /// Get tracing configuration from command-line options
-    fn tracing_config(&self, command: &EntryPoint<GorcCmd>) -> trace::Config {
+    fn tracing_config(&self, command: &EntryPoint) -> trace::Config {
         if command.verbose {
             trace::Config::verbose()
         } else {

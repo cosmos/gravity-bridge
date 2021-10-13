@@ -119,7 +119,6 @@ pub async fn estimate_logic_call_cost(
     info!("gas price: {}", gas_price);
     let zero: Uint256 = 0u8.into();
     let bytes = encode_logic_call_payload(current_valset, &call, confirms, gravity_id)?;
-    info!("bytes: {:x?}", bytes);
     info!("hex: {}", to_hex_string(bytes.clone()));
 
     let transaction = TransactionRequest {
@@ -208,6 +207,7 @@ fn encode_logic_call_payload(
         sig_arrays.s,
         Token::Struct(struct_tokens.to_vec()),
     ];
+    info!("tokens: {:#?}", tokens);
     let payload = clarity::abi::encode_call(
         "submitLogicCall(address[],uint256[],uint256,uint8[],bytes32[],bytes32[],(uint256[],address[],uint256[],address[],address,bytes,uint256,bytes32,uint256))",
         tokens,

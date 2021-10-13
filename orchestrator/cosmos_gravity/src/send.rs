@@ -26,6 +26,7 @@ pub async fn update_gravity_delegate_addresses(
     cosmos_key: CosmosPrivateKey,
     etheruem_key: EthPrivateKey,
     fee: Coin,
+    gas_limit: u64
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_valoper_address = cosmos_key
         .to_address(&contact.get_prefix())
@@ -40,8 +41,8 @@ pub async fn update_gravity_delegate_addresses(
     let nonce = contact
         .get_account_info(cosmos_key.to_address(&contact.get_prefix()).unwrap())
         .await?
-        .get_sequence().unwrap_or( 0 );
-    
+        .get_sequence()
+        .unwrap_or(0);
 
     let eth_sign_msg = proto::DelegateKeysSignMsg {
         validator_address: our_valoper_address.clone(),
@@ -59,7 +60,8 @@ pub async fn update_gravity_delegate_addresses(
         eth_signature,
     };
     let msg = Msg::new("/gravity.v1.MsgDelegateKeys", msg);
-    __send_messages(contact, cosmos_key, fee, vec![msg]).await
+
+    __send_messages(contact, cosmos_key, fee, vec![msg], gas_limit).await
 }
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
@@ -70,6 +72,7 @@ pub async fn send_to_eth(
     amount: Coin,
     fee: Coin,
     contact: &Contact,
+    gas_limit: u64
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
@@ -80,7 +83,7 @@ pub async fn send_to_eth(
         bridge_fee: Some(fee.clone().into()),
     };
     let msg = Msg::new("/gravity.v1.MsgSendToEthereum", msg);
-    __send_messages(contact, cosmos_key, fee, vec![msg]).await
+    __send_messages(contact, cosmos_key, fee, vec![msg], gas_limit).await
 }
 
 pub async fn send_request_batch_tx(
@@ -88,6 +91,7 @@ pub async fn send_request_batch_tx(
     denom: String,
     fee: Coin,
     contact: &Contact,
+    gas_limit: u64,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
     let msg_request_batch = proto::MsgRequestBatchTx {
@@ -95,7 +99,7 @@ pub async fn send_request_batch_tx(
         denom,
     };
     let msg = Msg::new("/gravity.v1.MsgRequestBatchTx", msg_request_batch);
-    __send_messages(contact, cosmos_key, fee, vec![msg]).await
+    __send_messages(contact, cosmos_key, fee, vec![msg], gas_limit).await
 }
 
 // TODO(Levi) teach this branch to accept gas_prices
@@ -104,12 +108,13 @@ async fn __send_messages(
     cosmos_key: CosmosPrivateKey,
     fee: Coin,
     messages: Vec<Msg>,
+    gas_limit: u64
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
     let fee = Fee {
         amount: vec![fee],
-        gas_limit: 500_000u64 * (messages.len() as u64),
+        gas_limit: gas_limit * (messages.len() as u64),
         granter: None,
         payer: None,
     };
@@ -130,10 +135,10 @@ pub async fn send_messages(
     cosmos_key: CosmosPrivateKey,
     gas_price: (f64, String),
     messages: Vec<Msg>,
+    gas_limit: u64,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
-
-    let gas_limit = 500_000 * messages.len() as u64;
+    let gas_limit = gas_limit * messages.len() as u64;
 
     let fee_amount: f64 = (gas_limit as f64) * gas_price.0;
     let fee_amount: u64 = fee_amount.abs().ceil() as u64;
@@ -176,11 +181,24 @@ pub async fn send_main_loop(
     cosmos_key: CosmosPrivateKey,
     gas_price: (f64, String),
     mut rx: tokio::sync::mpsc::Receiver<Vec<Msg>>,
+    gas_limit: u64,
+    msg_batch_size: usize,
+
 ) {
     while let Some(messages) = rx.recv().await {
-        match send_messages(contact, cosmos_key, gas_price.to_owned(), messages).await {
-            Ok(res) => trace!("okay: {:?}", res),
-            Err(err) => error!("fail: {}", err),
+        for msg_chunk in messages.chunks(msg_batch_size) {
+            match send_messages(
+                contact,
+                cosmos_key,
+                gas_price.to_owned(),
+                msg_chunk.to_vec(),
+                gas_limit,
+            )
+            .await
+            {
+                Ok(res) => trace!("okay: {:?}", res),
+                Err(err) => error!("fail: {}", err),
+            }
         }
     }
 }

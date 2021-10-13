@@ -1,5 +1,5 @@
 use crate::{application::APP, prelude::*};
-use abscissa_core::{Command, Options, Runnable};
+use abscissa_core::{Command, Clap, Runnable};
 use clarity::address::Address as EthAddress;
 use gravity_utils::connection_prep::{
     check_delegate_addresses, check_for_eth, check_for_fee_denom, create_rpc_connections,
@@ -11,13 +11,17 @@ use orchestrator::main_loop::{
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
 use std::cmp::min;
 
-#[derive(Command, Debug, Options)]
+/// Start the Orchestrator
+#[derive(Command, Debug, Clap)]
 pub struct StartCommand {
-    #[options(help = "cosmos key name")]
+    #[clap(short, long)]
     cosmos_key: String,
 
-    #[options(help = "ethereum key name")]
+    #[clap(short, long)]
     ethereum_key: String,
+
+    #[clap(short, long)]
+    orchestrator_only: bool,
 }
 
 impl Runnable for StartCommand {
@@ -93,7 +97,10 @@ impl Runnable for StartCommand {
                 gas_price,
                 &config.metrics.listen_addr,
                 config.ethereum.gas_price_multiplier,
-                config.ethereum.blocks_to_search as u128
+                config.ethereum.blocks_to_search as u128,
+                config.cosmos.gas_limit,
+                self.orchestrator_only,
+                config.cosmos.msg_batch_size,
             )
             .await;
         })

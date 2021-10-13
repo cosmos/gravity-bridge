@@ -88,6 +88,8 @@ pub struct CosmosSection {
     pub key_derivation_path: String,
     pub grpc: String,
     pub prefix: String,
+    pub gas_limit: u64,
+    pub msg_batch_size:u32,
     pub gas_price: GasPrice,
 }
 
@@ -98,6 +100,8 @@ impl Default for CosmosSection {
             grpc: "http://localhost:9090".to_owned(),
             prefix: "cosmos".to_owned(),
             gas_price: GasPrice::default(),
+            gas_limit: 500_000u64,
+            msg_batch_size: 5,
         }
     }
 }
