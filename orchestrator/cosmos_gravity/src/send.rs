@@ -164,7 +164,12 @@ pub async fn send_messages(
         }
     };
 
-    let args = contact.get_message_args(cosmos_address, fee).await?;
+
+    let mut args = contact.get_message_args(cosmos_address, fee).await?;
+
+    let gas= contact.simulate_tx(&messages, args.clone(), MEMO).await?;
+
+    args.fee.gas_limit = gas.gas_used;
 
     let msg_bytes = cosmos_key.sign_std_msg(&messages, args, MEMO)?;
 

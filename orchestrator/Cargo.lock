@@ -989,7 +989,7 @@ dependencies = [
  "bytes 1.0.1",
  "clarity",
  "cosmos-sdk-proto",
- "deep_space 2.4.3",
+ "deep_space 2.4.7",
  "env_logger",
  "ethereum_gravity",
  "gravity_proto",
@@ -1134,8 +1134,8 @@ dependencies = [
 
 [[package]]
 name = "deep_space"
-version = "2.4.3"
-source = "git+https://github.com/iqlusioninc/deep_space/?branch=master#2c4621774ec70d15b4af8085902b2fff752497a5"
+version = "2.4.7"
+source = "git+https://github.com/iqlusioninc/deep_space/?branch=master#fa025493fa6c865f28791befbf373cb3877f7386"
 dependencies = [
  "base64",
  "bech32 0.8.0",
@@ -1146,7 +1146,7 @@ dependencies = [
  "num-bigint 0.4.0",
  "num-traits",
  "num256",
- "pbkdf2 0.8.0",
+ "pbkdf2 0.9.0",
  "prost",
  "prost-types",
  "rand 0.8.3",
@@ -1294,7 +1294,7 @@ name = "ethereum_gravity"
 version = "0.1.0"
 dependencies = [
  "clarity",
- "deep_space 2.4.3",
+ "deep_space 2.4.7",
  "gravity_utils",
  "log",
  "num256",
@@ -1550,7 +1550,7 @@ dependencies = [
  "clap",
  "clarity",
  "cosmos_gravity",
- "deep_space 2.4.3",
+ "deep_space 2.4.7",
  "env_logger",
  "ethereum_gravity",
  "gravity_proto",
@@ -1610,7 +1610,7 @@ dependencies = [
  "actix",
  "clarity",
  "cosmos-sdk-proto",
- "deep_space 2.4.3",
+ "deep_space 2.4.7",
  "gravity_proto",
  "log",
  "num-bigint 0.4.0",
@@ -2371,7 +2371,7 @@ dependencies = [
  "axum",
  "clarity",
  "cosmos_gravity",
- "deep_space 2.4.3",
+ "deep_space 2.4.7",
  "docopt",
  "env_logger",
  "ethereum_gravity",
@@ -2434,9 +2434,9 @@ dependencies = [
 
 [[package]]
 name = "password-hash"
-version = "0.2.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1a5d4e9c205d2c1ae73b84aab6240e98218c0e72e63b50422cfb2d1ca952282"
+checksum = "1d791538a6dcc1e7cb7fe6f6b58aca40e7f79403c45b2bc274008b5e647af1d8"
 dependencies = [
  "base64ct",
  "rand_core 0.6.2",
@@ -2470,7 +2470,15 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d95f5254224e617595d2cc3cc73ff0a5eaf2637519e25f03388154e9378b6ffa"
 dependencies = [
- "base64ct",
+ "crypto-mac 0.11.0",
+]
+
+[[package]]
+name = "pbkdf2"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f05894bce6a1ba4be299d0c5f29563e08af2bc18bb7d48313113bed71e904739"
+dependencies = [
  "crypto-mac 0.11.0",
  "hmac 0.11.0",
  "password-hash",
@@ -2882,7 +2890,7 @@ dependencies = [
  "clarity",
  "contact",
  "cosmos_gravity",
- "deep_space 2.4.3",
+ "deep_space 2.4.7",
  "docopt",
  "env_logger",
  "ethereum_gravity",
@@ -2906,7 +2914,7 @@ dependencies = [
  "actix-rt 2.2.0",
  "clarity",
  "cosmos_gravity",
- "deep_space 2.4.3",
+ "deep_space 2.4.7",
  "docopt",
  "env_logger",
  "ethereum_gravity",
@@ -3433,7 +3441,7 @@ dependencies = [
  "actix-web",
  "clarity",
  "cosmos_gravity",
- "deep_space 2.4.3",
+ "deep_space 2.4.7",
  "docopt",
  "env_logger",
  "ethereum_gravity",
