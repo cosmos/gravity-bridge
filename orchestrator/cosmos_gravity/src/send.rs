@@ -139,7 +139,7 @@ pub async fn send_messages(
 
     let fee = Fee {
         amount: Vec::new(),
-        gas_limit: 0, // TODO: Does this value matter when calling get_message_args ?
+        gas_limit: 0,
         granter: None,
         payer: None,
     };
