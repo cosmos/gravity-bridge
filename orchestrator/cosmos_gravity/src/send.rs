@@ -110,18 +110,21 @@ async fn __send_messages(
     gas_adjustment: f64,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
-
-    // TODO: Update Fee
     let fee = Fee {
         amount: vec![fee],
-        gas_limit: gas_limit * (messages.len() as u64),
+        gas_limit: 0,
         granter: None,
         payer: None,
     };
 
-    let args = contact.get_message_args(cosmos_address, fee).await?;
-    let msg_bytes = cosmos_key.sign_std_msg(&messages, args, MEMO)?;
+    let mut args = contact.get_message_args(cosmos_address, fee).await?;
+    let gas = contact.simulate_tx(&messages, args.clone(), MEMO).await?;
 
+    // multiply the estimated gas by the configured gas adjustment
+    let gas_limit: f64 = (gas.gas_used as f64) * gas_adjustment;
+    args.fee.gas_limit = gas_limit as u64;
+
+    let msg_bytes = cosmos_key.sign_std_msg(&messages, args, MEMO)?;
     let response = contact
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
@@ -137,7 +140,6 @@ pub async fn send_messages(
     gas_adjustment: f64,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
-
     let fee = Fee {
         amount: Vec::new(),
         gas_limit: 0,
