@@ -60,7 +60,7 @@ pub async fn update_gravity_delegate_addresses(
     };
     let msg = Msg::new("/gravity.v1.MsgDelegateKeys", msg);
 
-    __send_messages(contact, cosmos_key, fee, vec![msg], gas_limit).await
+    __send_messages(contact, cosmos_key, fee, vec![msg], gas_adjustment).await
 }
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
