@@ -26,7 +26,7 @@ pub async fn update_gravity_delegate_addresses(
     cosmos_key: CosmosPrivateKey,
     etheruem_key: EthPrivateKey,
     fee: Coin,
-    gas_limit: u64
+    gas_limit: u64,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_valoper_address = cosmos_key
         .to_address(&contact.get_prefix())
@@ -71,7 +71,7 @@ pub async fn send_to_eth(
     amount: Coin,
     fee: Coin,
     contact: &Contact,
-    gas_limit: u64
+    gas_limit: u64,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
@@ -107,7 +107,7 @@ async fn __send_messages(
     cosmos_key: CosmosPrivateKey,
     fee: Coin,
     messages: Vec<Msg>,
-    gas_limit: u64
+    gas_limit: u64,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
@@ -119,7 +119,6 @@ async fn __send_messages(
     };
 
     let args = contact.get_message_args(cosmos_address, fee).await?;
-
     let msg_bytes = cosmos_key.sign_std_msg(&messages, args, MEMO)?;
 
     let response = contact
@@ -134,45 +133,34 @@ pub async fn send_messages(
     cosmos_key: CosmosPrivateKey,
     gas_price: (f64, String),
     messages: Vec<Msg>,
-    gas_limit: u64,
+    gas_adjustment: f64,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
-    let gas_limit = gas_limit * messages.len() as u64;
 
-    let fee_amount: f64 = (gas_limit as f64) * gas_price.0;
-    let fee_amount: u64 = fee_amount.abs().ceil() as u64;
-
-    let fee = if fee_amount > 0 {
-        let fee_amount = Coin {
-            denom: gas_price.1,
-            amount: fee_amount.into(),
-        };
-
-        let gas_limit = gas_limit as u64;
-        Fee {
-            amount: vec![fee_amount],
-            gas_limit,
-            granter: None,
-            payer: None,
-        }
-    } else {
-        Fee {
-            amount: Vec::new(),
-            gas_limit,
-            granter: None,
-            payer: None,
-        }
+    let fee = Fee {
+        amount: Vec::new(),
+        gas_limit: 0, // TODO: Does this value matter when calling get_message_args ?
+        granter: None,
+        payer: None,
     };
 
-
     let mut args = contact.get_message_args(cosmos_address, fee).await?;
+    let gas = contact.simulate_tx(&messages, args.clone(), MEMO).await?;
 
-    let gas= contact.simulate_tx(&messages, args.clone(), MEMO).await?;
+    // multiply the estimated gas by the configured gas adjustment
+    let gas_limit: f64 = (gas.gas_used as f64) * gas_adjustment;
+    args.fee.gas_limit = gas_limit as u64;
 
-    args.fee.gas_limit = gas.gas_used;
+    // compute the fee as fee=ceil(gas_limit * gas_price)
+    let fee_amount: f64 = gas_limit * gas_price.0;
+    let fee_amount: u64 = fee_amount.abs().ceil() as u64;
+    let fee_amount = Coin {
+        denom: gas_price.1,
+        amount: fee_amount.into(),
+    };
+    args.fee.amount = vec![fee_amount];
 
     let msg_bytes = cosmos_key.sign_std_msg(&messages, args, MEMO)?;
-
     let response = contact
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
@@ -187,7 +175,6 @@ pub async fn send_main_loop(
     mut rx: tokio::sync::mpsc::Receiver<Vec<Msg>>,
     gas_limit: u64,
     msg_batch_size: usize,
-
 ) {
     while let Some(messages) = rx.recv().await {
         for msg_chunk in messages.chunks(msg_batch_size) {
