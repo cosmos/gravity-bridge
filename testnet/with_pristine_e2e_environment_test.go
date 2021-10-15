@@ -381,7 +381,7 @@ prefix = "gravity"
 			Entrypoint: []string{
 				"sh",
 				"-c",
-				"chmod +x /root/gorc/gorc_bootstrap.sh && /root/gorc/gorc_bootstrap.sh",
+				"chmod +x /root/gorc/gorc_test_bootstrap.sh && /root/gorc/gorc_test_bootstrap.sh",
 			},
 		}
 
