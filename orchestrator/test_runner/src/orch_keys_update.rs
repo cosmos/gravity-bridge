@@ -82,7 +82,7 @@ pub async fn orch_keys_update(
             k.validator_key,
             k.eth_key,
             get_fee(),
-            1.0,
+            2.0,
         )
         .await
         .expect("Failed to set delegate addresses!");
