@@ -12,6 +12,7 @@ use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastMode;
 use gravity_proto::gravity as proto;
 use prost::Message;
+use std::cmp;
 use std::time::Duration;
 
 pub const MEMO: &str = "Sent using Althea Orchestrator";
@@ -122,7 +123,7 @@ async fn __send_messages(
 
     // multiply the estimated gas by the configured gas adjustment
     let gas_limit: f64 = (gas.gas_used as f64) * gas_adjustment;
-    args.fee.gas_limit = gas_limit as u64;
+    args.fee.gas_limit = cmp::max(gas_limit as u64, 500000);
 
     let msg_bytes = cosmos_key.sign_std_msg(&messages, args, MEMO)?;
     let response = contact
@@ -152,7 +153,7 @@ pub async fn send_messages(
 
     // multiply the estimated gas by the configured gas adjustment
     let gas_limit: f64 = (gas.gas_used as f64) * gas_adjustment;
-    args.fee.gas_limit = gas_limit as u64;
+    args.fee.gas_limit = cmp::max(gas_limit as u64, 500000);
 
     // compute the fee as fee=ceil(gas_limit * gas_price)
     let fee_amount: f64 = gas_limit * gas_price.0;
