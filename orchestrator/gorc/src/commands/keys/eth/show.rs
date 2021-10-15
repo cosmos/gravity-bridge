@@ -9,7 +9,7 @@ pub struct ShowEthKeyCmd {
     #[clap(short, long)]
     pub show_private_key: bool,
 
-    #[clap(short, long)]
+    #[clap(short = 'n', long)]
     pub show_name: bool,
 }
 
