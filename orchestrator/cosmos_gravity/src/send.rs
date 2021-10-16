@@ -119,7 +119,9 @@ async fn __send_messages(
     };
 
     let mut args = contact.get_message_args(cosmos_address, fee).await?;
-    let gas = contact.simulate_tx(&messages, args.clone(), MEMO).await?;
+
+    let tx_parts = cosmos_key.build_tx(&messages, args.clone(), MEMO)?;
+    let gas = contact.simulate_tx(tx_parts).await?;
 
     // multiply the estimated gas by the configured gas adjustment
     let gas_limit: f64 = (gas.gas_used as f64) * gas_adjustment;
@@ -149,7 +151,9 @@ pub async fn send_messages(
     };
 
     let mut args = contact.get_message_args(cosmos_address, fee).await?;
-    let gas = contact.simulate_tx(&messages, args.clone(), MEMO).await?;
+
+    let tx_parts = cosmos_key.build_tx(&messages, args.clone(), MEMO)?;
+    let gas = contact.simulate_tx(tx_parts).await?;
 
     // multiply the estimated gas by the configured gas adjustment
     let gas_limit: f64 = (gas.gas_used as f64) * gas_adjustment;
