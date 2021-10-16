@@ -1,5 +1,5 @@
 use crate::{application::APP, prelude::*};
-use abscissa_core::{Command, Clap, Runnable};
+use abscissa_core::{Clap, Command, Runnable};
 use clarity::address::Address as EthAddress;
 use gravity_utils::connection_prep::{
     check_delegate_addresses, check_for_eth, check_for_fee_denom, create_rpc_connections,
@@ -27,7 +27,7 @@ pub struct StartCommand {
 impl Runnable for StartCommand {
     fn run(&self) {
         openssl_probe::init_ssl_cert_env_vars();
-        
+
         let config = APP.config();
         let cosmos_prefix = config.cosmos.prefix.clone();
 
@@ -98,7 +98,7 @@ impl Runnable for StartCommand {
                 &config.metrics.listen_addr,
                 config.ethereum.gas_price_multiplier,
                 config.ethereum.blocks_to_search as u128,
-                config.cosmos.gas_limit,
+                config.cosmos.gas_adjustment,
                 self.orchestrator_only,
                 config.cosmos.msg_batch_size,
             )
