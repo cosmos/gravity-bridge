@@ -62,7 +62,7 @@ func (b EthereumSigners) Hash() []byte {
 // if the total on chain voting power increases by 1% due to inflation, we shouldn't have to generate a new validator
 // set, after all the validators retained their relative percentages during inflation and normalized Gravity bridge power
 // shows no difference.
-func (b EthereumSigners) PowerDiff(c EthereumSigners) float64 {
+func (b EthereumSigners) PowerDiff(c EthereumSigners) int64 {
 	// loop over b and initialize the map with their powers
 	powers := map[string]int64{}
 	for _, bv := range b {
@@ -79,13 +79,20 @@ func (b EthereumSigners) PowerDiff(c EthereumSigners) float64 {
 		}
 	}
 
-	var delta float64
+	var delta int64
 	for _, v := range powers {
 		// NOTE: we care about the absolute value of the changes
-		delta += math.Abs(float64(v))
+		delta += absInt(v)
 	}
 
-	return math.Abs(delta / float64(math.MaxUint32))
+	return absInt(delta / math.MaxUint32)
+}
+
+func absInt(x int64) int64 {
+	if x < 0 {
+		x = -x
+	}
+	return x
 }
 
 // TotalPower returns the total power in the bridge validator set
