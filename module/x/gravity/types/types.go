@@ -79,13 +79,20 @@ func (b EthereumSigners) PowerDiff(c EthereumSigners) float64 {
 		}
 	}
 
-	var delta float64
+	var delta int64
 	for _, v := range powers {
 		// NOTE: we care about the absolute value of the changes
-		delta += math.Abs(float64(v))
+		delta += absInt(v)
 	}
 
-	return math.Abs(delta / float64(math.MaxUint32))
+	return math.Abs(float64(delta) / float64(math.MaxUint32))
+}
+
+func absInt(x int64) int64 {
+	if x < 0 {
+		x = -x
+	}
+	return x
 }
 
 // TotalPower returns the total power in the bridge validator set
