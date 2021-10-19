@@ -1,5 +1,5 @@
 use crate::application::APP;
-use abscissa_core::{status_err, Application, Command, Clap, Runnable};
+use abscissa_core::{status_err, Application, Clap, Command, Runnable};
 use clarity::Address as EthAddress;
 use clarity::Uint256;
 use cosmos_gravity::send::{send_request_batch_tx, send_to_eth};
@@ -144,7 +144,7 @@ impl Runnable for CosmosToEthCmd {
                 amount.clone(),
                 bridge_fee.clone(),
                 &contact,
-                200000
+                1.0
             )
             .await;
             match res {
@@ -155,7 +155,7 @@ impl Runnable for CosmosToEthCmd {
 
         if !self.flag_no_batch {
             println!("Requesting a batch to push transaction along immediately");
-            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact,500000)
+            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact,1.0)
                 .await
                 .expect("Failed to request batch");
         } else {

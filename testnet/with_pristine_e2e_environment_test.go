@@ -351,7 +351,7 @@ prefix = "gravity"
 			validator.instanceName(),
 			"0.0001",
 			"stake",
-			)
+		)
 
 		gorcConfigPath := filepath.Join(wd, chain.DataDir, chain.ID, orchestrator.instanceName(), "gorc")
 		err = os.MkdirAll(gorcConfigPath, 0755)

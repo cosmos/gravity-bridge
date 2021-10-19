@@ -1,9 +1,9 @@
 //! `cosmos subcommands` subcommand
 
 use crate::{application::APP, prelude::*, utils::*};
-use abscissa_core::{Command, Clap, Runnable};
+use abscissa_core::{Clap, Command, Runnable};
 use clarity::{Address as EthAddress, Uint256};
-use cosmos_gravity::send::{send_to_eth};
+use cosmos_gravity::send::send_to_eth;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use gravity_proto::gravity::DenomToErc20Request;
 use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
@@ -129,7 +129,7 @@ impl Runnable for SendToEth {
                 amount.clone(),
                 bridge_fee.clone(),
                 &contact,
-                200000
+                1.0
             )
             .await;
             match res {

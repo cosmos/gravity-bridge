@@ -322,7 +322,7 @@ async fn test_batch(
         },
         bridge_denom_fee.clone(),
         &contact,
-        500000
+        1.0,
     )
     .await
     .unwrap();
@@ -334,7 +334,7 @@ async fn test_batch(
         token_name.clone(),
         get_fee(),
         &contact,
-        500000
+        1.0,
     )
     .await
     .unwrap();
@@ -442,7 +442,7 @@ async fn submit_duplicate_erc20_send(
         );
 
         let gas_price = get_gas_price();
-        let res = send::send_messages(contact, cosmos_key, gas_price, messages,500000).await;
+        let res = send::send_messages(contact, cosmos_key, gas_price, messages, 1.0).await;
         let res = res.unwrap();
         trace!("Submitted duplicate sendToCosmos event: {:?}", res);
     }

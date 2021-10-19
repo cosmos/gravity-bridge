@@ -55,14 +55,21 @@ pub async fn orchestrator_main_loop(
     gas_price: (f64, String),
     metrics_listen: &net::SocketAddr,
     eth_gas_multiplier: f32,
-    blocks_to_search:u128,
-    gas_limit: u64,
+    blocks_to_search: u128,
+    gas_adjustment: f64,
     relayer_opt_out: bool,
     cosmos_msg_batch_size: u32,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
-    let a = send_main_loop(&contact, cosmos_key, gas_price, rx,gas_limit,cosmos_msg_batch_size.try_into().unwrap());
+    let a = send_main_loop(
+        &contact,
+        cosmos_key,
+        gas_price,
+        rx,
+        gas_adjustment,
+        cosmos_msg_batch_size.try_into().unwrap(),
+    );
 
     let b = eth_oracle_main_loop(
         cosmos_key,
@@ -110,7 +117,7 @@ pub async fn eth_oracle_main_loop(
     contact: Contact,
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
-    blocks_to_search:u128,
+    blocks_to_search: u128,
     msg_sender: tokio::sync::mpsc::Sender<Vec<Msg>>,
 ) {
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
@@ -382,10 +389,7 @@ pub async fn eth_signer_main_loop(
 }
 
 pub async fn check_for_eth(orchestrator_address: EthAddress, web3: Web3) {
-    let balance = web3
-        .eth_get_balance(orchestrator_address)
-        .await
-        .unwrap();
+    let balance = web3.eth_get_balance(orchestrator_address).await.unwrap();
     if balance == 0u8.into() {
         warn!("You don't have any Ethereum! You will need to send some to {} for this program to work. Dust will do for basic operations, more info about average relaying costs will be presented as the program runs", orchestrator_address);
     }
