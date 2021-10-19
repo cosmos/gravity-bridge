@@ -36,6 +36,10 @@ pub async fn send_eth_valset_update(
         return Ok(());
     }
 
+    for val_member in new_valset.clone().members {
+        info!("new valset member: {:?}", val_member)
+    }
+
     let payload = encode_valset_payload(new_valset, old_valset, confirms, gravity_id)?;
 
     let tx = web3

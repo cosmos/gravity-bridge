@@ -517,13 +517,13 @@ func (k Keeper) setLastObservedSignerSetTx(ctx sdk.Context, signerSet types.Sign
 
 // CreateContractCallTx xxx
 func (k Keeper) CreateContractCallTx(ctx sdk.Context, invalidationNonce uint64, invalidationScope tmbytes.HexBytes,
-	payload []byte, tokens []types.ERC20Token, fees []types.ERC20Token) *types.ContractCallTx {
+	address common.Address, payload []byte, tokens []types.ERC20Token, fees []types.ERC20Token) *types.ContractCallTx {
 	params := k.GetParams(ctx)
 
 	newContractCallTx := &types.ContractCallTx{
 		InvalidationNonce: invalidationNonce,
 		InvalidationScope: invalidationScope,
-		Address:           k.getBridgeContractAddress(ctx),
+		Address:           address.String(),
 		Payload:           payload,
 		Timeout:           params.TargetEthTxTimeout,
 		Tokens:            tokens,
