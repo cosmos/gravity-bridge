@@ -143,6 +143,7 @@ impl Runnable for CosmosToEthCmd {
                 eth_dest,
                 amount.clone(),
                 bridge_fee.clone(),
+                config.cosmos.gas_price.as_tuple(),
                 &contact,
                 1.0
             )
@@ -155,7 +156,7 @@ impl Runnable for CosmosToEthCmd {
 
         if !self.flag_no_batch {
             println!("Requesting a batch to push transaction along immediately");
-            send_request_batch_tx(cosmos_key, gravity_denom, bridge_fee, &contact,1.0)
+            send_request_batch_tx(cosmos_key, gravity_denom,config.cosmos.gas_price.as_tuple(), &contact,config.cosmos.gas_adjustment)
                 .await
                 .expect("Failed to request batch");
         } else {

@@ -321,6 +321,7 @@ async fn test_batch(
             amount: amount.clone(),
         },
         bridge_denom_fee.clone(),
+        (10f64,"footoken".to_string()),
         &contact,
         1.0,
     )
@@ -332,7 +333,7 @@ async fn test_batch(
     send_request_batch_tx(
         requester_cosmos_private_key,
         token_name.clone(),
-        get_fee(),
+        (10f64,"footoken".to_string()),
         &contact,
         1.0,
     )

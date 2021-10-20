@@ -81,7 +81,7 @@ pub async fn orch_keys_update(
             cosmos_address,
             k.validator_key,
             k.eth_key,
-            get_fee(),
+            (0f64,"".to_string()),
             2.0,
         )
         .await
