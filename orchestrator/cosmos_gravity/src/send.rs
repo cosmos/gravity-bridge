@@ -130,19 +130,15 @@ async fn __send_messages(
     args.fee.gas_limit = cmp::max(gas_limit as u64, 500000 * messages.len() as u64);
 
     // compute the fee as fee=ceil(gas_limit * gas_price)
+
     let fee_amount: f64 = gas_limit * gas_price.0;
     let fee_amount: u64 = fee_amount.abs().ceil() as u64;
     let fee_amount = Coin {
         denom: gas_price.1,
         amount: fee_amount.into(),
     };
+    args.fee.amount = vec![fee_amount];
 
-    let fee = Fee {
-        amount: vec![fee_amount],
-        gas_limit: 0,
-        granter: None,
-        payer: None,
-    };
 
     let msg_bytes = cosmos_key.sign_std_msg(&messages, args, MEMO)?;
     let response = contact
