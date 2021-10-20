@@ -26,7 +26,7 @@ pub async fn update_gravity_delegate_addresses(
     delegate_cosmos_address: Address,
     cosmos_key: CosmosPrivateKey,
     etheruem_key: EthPrivateKey,
-    fee: Coin,
+    gas_price: (f64, String),
     gas_adjustment: f64,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_valoper_address = cosmos_key
@@ -61,7 +61,7 @@ pub async fn update_gravity_delegate_addresses(
     };
     let msg = Msg::new("/gravity.v1.MsgDelegateKeys", msg);
 
-    __send_messages(contact, cosmos_key, fee, vec![msg], gas_adjustment).await
+    __send_messages(contact, cosmos_key, gas_price, vec![msg], gas_adjustment).await
 }
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
@@ -70,7 +70,8 @@ pub async fn send_to_eth(
     cosmos_key: CosmosPrivateKey,
     destination: EthAddress,
     amount: Coin,
-    fee: Coin,
+    bridge_fee: Coin,
+    gas_price: (f64, String),
     contact: &Contact,
     gas_adjustment: f64,
 ) -> Result<TxResponse, CosmosGrpcError> {
@@ -80,16 +81,16 @@ pub async fn send_to_eth(
         sender: cosmos_address.to_string(),
         ethereum_recipient: destination.to_string(),
         amount: Some(amount.into()),
-        bridge_fee: Some(fee.clone().into()),
+        bridge_fee: Some(bridge_fee.clone().into()),
     };
     let msg = Msg::new("/gravity.v1.MsgSendToEthereum", msg);
-    __send_messages(contact, cosmos_key, fee, vec![msg], gas_adjustment).await
+    __send_messages(contact, cosmos_key, gas_price, vec![msg], gas_adjustment).await
 }
 
 pub async fn send_request_batch_tx(
     cosmos_key: CosmosPrivateKey,
     denom: String,
-    fee: Coin,
+    gas_price: (f64, String),
     contact: &Contact,
     gas_adjustment: f64,
 ) -> Result<TxResponse, CosmosGrpcError> {
@@ -99,20 +100,21 @@ pub async fn send_request_batch_tx(
         denom,
     };
     let msg = Msg::new("/gravity.v1.MsgRequestBatchTx", msg_request_batch);
-    __send_messages(contact, cosmos_key, fee, vec![msg], gas_adjustment).await
+    __send_messages(contact, cosmos_key, gas_price, vec![msg], gas_adjustment).await
 }
 
 // TODO(Levi) teach this branch to accept gas_prices
 async fn __send_messages(
     contact: &Contact,
     cosmos_key: CosmosPrivateKey,
-    fee: Coin,
+    gas_price: (f64, String),
     messages: Vec<Msg>,
     gas_adjustment: f64,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
+
     let fee = Fee {
-        amount: vec![fee],
+        amount: Vec::new(),
         gas_limit: 0,
         granter: None,
         payer: None,
@@ -126,6 +128,21 @@ async fn __send_messages(
     // multiply the estimated gas by the configured gas adjustment
     let gas_limit: f64 = (gas.gas_used as f64) * gas_adjustment;
     args.fee.gas_limit = cmp::max(gas_limit as u64, 500000 * messages.len() as u64);
+
+    // compute the fee as fee=ceil(gas_limit * gas_price)
+    let fee_amount: f64 = gas_limit * gas_price.0;
+    let fee_amount: u64 = fee_amount.abs().ceil() as u64;
+    let fee_amount = Coin {
+        denom: gas_price.1,
+        amount: fee_amount.into(),
+    };
+
+    let fee = Fee {
+        amount: vec![fee_amount],
+        gas_limit: 0,
+        granter: None,
+        payer: None,
+    };
 
     let msg_bytes = cosmos_key.sign_std_msg(&messages, args, MEMO)?;
     let response = contact
@@ -143,13 +160,13 @@ pub async fn send_messages(
     gas_adjustment: f64,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
+
     let fee = Fee {
         amount: Vec::new(),
         gas_limit: 0,
         granter: None,
         payer: None,
     };
-
     let mut args = contact.get_message_args(cosmos_address, fee).await?;
 
     let tx_parts = cosmos_key.build_tx(&messages, args.clone(), MEMO)?;
