@@ -1540,7 +1540,7 @@ checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
 
 [[package]]
 name = "gorc"
-version = "0.2.21"
+version = "0.2.22"
 dependencies = [
  "abscissa_core",
  "abscissa_tokio",
