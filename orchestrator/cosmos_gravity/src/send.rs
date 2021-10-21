@@ -113,8 +113,13 @@ async fn __send_messages(
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
+    let fee_amount = Coin {
+        denom: gas_price.1.clone(),
+        amount: 0u32.into(),
+    };
+
     let fee = Fee {
-        amount: Vec::new(),
+        amount: vec![fee_amount],
         gas_limit: 0,
         granter: None,
         payer: None,
@@ -157,12 +162,18 @@ pub async fn send_messages(
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
+    let fee_amount = Coin {
+        denom: gas_price.1.clone(),
+        amount: 0u32.into(),
+    };
+
     let fee = Fee {
-        amount: Vec::new(),
+        amount: vec![fee_amount],
         gas_limit: 0,
         granter: None,
         payer: None,
     };
+
     let mut args = contact.get_message_args(cosmos_address, fee).await?;
 
     let tx_parts = cosmos_key.build_tx(&messages, args.clone(), MEMO)?;
