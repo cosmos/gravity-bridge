@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/cosmos/cosmos-sdk v0.43.0
 	github.com/cosmos/ibc-go v1.0.1
-	github.com/ethereum/go-ethereum v1.9.25
+	github.com/ethereum/go-ethereum v1.10.10
 	github.com/gogo/protobuf v1.3.3
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
