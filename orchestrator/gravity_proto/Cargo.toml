@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 prost = "0.7"
-prost-types = "0.7"
+prost-types = "0.8"
 bytes = "1"
 cosmos-sdk-proto = {git="http://github.com/cosmos/cosmos-rust", branch="main"}
 tonic = "0.4"
