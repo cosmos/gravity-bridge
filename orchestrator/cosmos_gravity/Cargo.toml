@@ -17,7 +17,7 @@ serde = "1.0"
 num256 = "0.3"
 log = "0.4"
 sha3 = "0.9"
-tokio = "1.4"
+tokio = "1.8"
 web30 = "0.14.4"
 tonic = "0.4"
 cosmos-sdk-proto = {git="http://github.com/cosmos/cosmos-rust", branch="main"}
