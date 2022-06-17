@@ -38,7 +38,7 @@ futures = "0.3"
 openssl-probe = "0.1"
 
 axum = "0.1.2"
-hyper = "0.14.11"
+hyper = "0.14.12"
 prometheus = "0.12.0"
 
 # this is a dirty trick, we depent transitively on OpenSSL it's never
